@@ -576,7 +576,7 @@ function PerfilScreen({
       </View>
 
       <View style={styles.infoCard}>
-        <InfoRow icon="building" label="Academia" value={profile?.gym?.name || '—'} />
+        <InfoRow icon="business" label="Academia" value={profile?.gym?.name || '—'} />
         <InfoRow icon="flag" label="Objetivo" value={profile?.goal || '—'} />
         <InfoRow icon="trophy" label="Nível" value={profile?.level || '—'} />
         <InfoRow icon="pulse" label="Status" value={profile?.status || '—'} highlight />
