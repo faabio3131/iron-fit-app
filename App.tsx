@@ -9,9 +9,28 @@ import {
   StyleSheet,
   Linking,
   ActivityIndicator,
+  Image,
+  StatusBar,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const API_URL = 'https://gym-saas-backend-t9ej.onrender.com/api/v1';
+
+// Cores da marca IronCloud
+const COLORS = {
+  bg: '#0a0e1a',
+  surface: '#131826',
+  card: '#1a2035',
+  cardBorder: '#252d47',
+  primary: '#8b5cf6',
+  primaryDark: '#6d28d9',
+  accent: '#f59e0b',
+  success: '#10b981',
+  danger: '#ef4444',
+  text: '#f1f5f9',
+  textMuted: '#94a3b8',
+  textDim: '#64748b',
+};
 
 async function api(path: string, token?: string, options?: any) {
   const res = await fetch(`${API_URL}${path}`, {
@@ -30,13 +49,29 @@ async function api(path: string, token?: string, options?: any) {
 
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
 
-  if (!token) {
-    return <Login onLogin={setToken} />;
-  }
-  return <Main token={token} onLogout={() => setToken(null)} />;
+  useEffect(() => {
+    if (token) {
+      api('/me/profile', token)
+        .then(setProfile)
+        .catch(() => null);
+    }
+  }, [token]);
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+      {!token ? (
+        <Login onLogin={setToken} />
+      ) : (
+        <Main token={token} profile={profile} onLogout={() => setToken(null)} />
+      )}
+    </SafeAreaView>
+  );
 }
 
+// ============ LOGIN ============
 function Login({ onLogin }: { onLogin: (t: string) => void }) {
   const [email, setEmail] = useState('joao.silva@email.com');
   const [password, setPassword] = useState('aluno123');
@@ -53,67 +88,157 @@ function Login({ onLogin }: { onLogin: (t: string) => void }) {
       });
       onLogin(data.access_token);
     } catch (e: any) {
-      setError('Falha no login. Verifique email e senha.');
+      setError('Credenciais inválidas. Tente novamente.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.loginBox}>
-        <Text style={styles.logo}>GYM SAAS</Text>
-        <Text style={styles.subtitle}>Area do Aluno</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          placeholder="Email"
-          placeholderTextColor="#888"
-        />
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholder="Senha"
-          placeholderTextColor="#888"
-        />
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Entrar</Text>}
-        </TouchableOpacity>
+    <ScrollView contentContainerStyle={styles.loginContainer} keyboardShouldPersistTaps="handled">
+      <View style={styles.loginContent}>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoBadge}>
+            <Ionicons name="cloud" size={48} color={COLORS.text} />
+            <Ionicons name="barbell" size={28} color={COLORS.primary} style={styles.logoBarbell} />
+          </View>
+          <Text style={styles.logoTitle}>IronCloud</Text>
+          <Text style={styles.logoTagline}>A força da sua academia,{'\n'}na nuvem.</Text>
+        </View>
+
+        <View style={styles.loginCard}>
+          <Text style={styles.loginWelcome}>Bem-vindo de volta</Text>
+          <Text style={styles.loginSub}>Entre para acessar seus treinos</Text>
+
+          <View style={styles.inputGroup}>
+            <Ionicons name="mail-outline" size={20} color={COLORS.textDim} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              placeholder="Email"
+              placeholderTextColor={COLORS.textDim}
+              keyboardType="email-address"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Ionicons name="lock-closed-outline" size={20} color={COLORS.textDim} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholder="Senha"
+              placeholderTextColor={COLORS.textDim}
+            />
+          </View>
+
+          {error ? (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle" size={16} color={COLORS.danger} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+
+          <TouchableOpacity
+            style={[styles.primaryButton, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            {loading ? (
+              <ActivityIndicator color={COLORS.text} />
+            ) : (
+              <>
+                <Text style={styles.primaryButtonText}>Entrar</Text>
+                <Ionicons name="arrow-forward" size={20} color={COLORS.text} />
+              </>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>área do aluno</Text>
+            <View style={styles.dividerLine} />
+          </View>
+        </View>
+
+        <Text style={styles.footerText}>IronCloud © 2026</Text>
       </View>
-    </SafeAreaView>
+    </ScrollView>
   );
 }
 
-function Main({ token, onLogout }: { token: string; onLogout: () => void }) {
+// ============ MAIN ============
+function Main({
+  token,
+  profile,
+  onLogout,
+}: {
+  token: string;
+  profile: any;
+  onLogout: () => void;
+}) {
   const [tab, setTab] = useState<'treino' | 'progresso' | 'perfil'>('treino');
 
   return (
-    <SafeAreaView style={styles.screen}>
-      {tab === 'treino' && <TreinoScreen token={token} />}
-      {tab === 'progresso' && <ProgressoScreen token={token} />}
-      {tab === 'perfil' && <PerfilScreen token={token} onLogout={onLogout} />}
+    <View style={styles.mainContainer}>
+      {tab === 'treino' && <TreinoScreen token={token} profile={profile} />}
+      {tab === 'progresso' && <ProgressoScreen token={token} profile={profile} />}
+      {tab === 'perfil' && <PerfilScreen token={token} profile={profile} onLogout={onLogout} />}
 
       <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tab} onPress={() => setTab('treino')}>
-          <Text style={[styles.tabText, tab === 'treino' && styles.tabActive]}>Treino</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab} onPress={() => setTab('progresso')}>
-          <Text style={[styles.tabText, tab === 'progresso' && styles.tabActive]}>Progresso</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab} onPress={() => setTab('perfil')}>
-          <Text style={[styles.tabText, tab === 'perfil' && styles.tabActive]}>Perfil</Text>
-        </TouchableOpacity>
+        <TabItem
+          active={tab === 'treino'}
+          icon="barbell"
+          label="Treino"
+          onPress={() => setTab('treino')}
+        />
+        <TabItem
+          active={tab === 'progresso'}
+          icon="trending-up"
+          label="Progresso"
+          onPress={() => setTab('progresso')}
+        />
+        <TabItem
+          active={tab === 'perfil'}
+          icon="person"
+          label="Perfil"
+          onPress={() => setTab('perfil')}
+        />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
-function TreinoScreen({ token }: { token: string }) {
+function TabItem({
+  active,
+  icon,
+  label,
+  onPress,
+}: {
+  active: boolean;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity style={styles.tabItem} onPress={onPress} activeOpacity={0.7}>
+      <Ionicons
+        name={icon as any}
+        size={22}
+        color={active ? COLORS.primary : COLORS.textDim}
+      />
+      <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
+      {active && <View style={styles.tabIndicator} />}
+    </TouchableOpacity>
+  );
+}
+
+// ============ TREINO ============
+function TreinoScreen({ token, profile }: { token: string; profile: any }) {
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -124,57 +249,118 @@ function TreinoScreen({ token }: { token: string }) {
       .finally(() => setLoading(false));
   }, [token]);
 
-  if (loading) {
-    return <ActivityIndicator style={styles.loader} color="#7c3aed" />;
-  }
-
   return (
-    <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.title}>Meus Treinos</Text>
-      {workouts.length === 0 ? <Text style={styles.empty}>Nenhum treino aprovado ainda.</Text> : null}
-      {workouts.map((w) => (
-        <View key={w.id} style={styles.card}>
-          <Text style={styles.cardTitle}>{w.goal || 'Treino'}</Text>
-          <Text style={styles.cardSub}>
-            {w.weeklyFrequency ? `${w.weeklyFrequency}x por semana | ` : ''}{w.status}
-          </Text>
-          {(w.sessions || []).map((s: any) => (
-            <View key={s.id} style={styles.session}>
-              <Text style={styles.sessionTitle}>{s.name}</Text>
-              {(s.exercises || []).map((ex: any, i: number) => (
-                <View key={ex.id} style={styles.exercise}>
-                  <Text style={styles.exerciseName}>
-                    {i + 1}. {ex.exercise?.name}
-                  </Text>
-                  <Text style={styles.exerciseDetail}>
-                    {ex.sets ? `${ex.sets} series` : ''} {ex.reps ? `x ${ex.reps} reps` : ''}
-                    {ex.restSeconds ? ` | descanso ${ex.restSeconds}s` : ''}
-                  </Text>
-                  {ex.suggestedLoad ? (
-                    <Text style={styles.exerciseDetail}>Carga sugerida: {ex.suggestedLoad}</Text>
-                  ) : null}
-                  {ex.equipment?.name ? (
-                    <Text style={styles.exerciseDetail}>Aparelho: {ex.equipment.name}</Text>
-                  ) : null}
-                  {ex.exercise?.videoUrl ? (
-                    <TouchableOpacity
-                      style={styles.videoButton}
-                      onPress={() => Linking.openURL(ex.exercise.videoUrl)}
-                    >
-                      <Text style={styles.videoText}>Ver video</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-              ))}
-            </View>
-          ))}
+    <ScrollView style={styles.scrollContent} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerGreeting}>Olá, {profile?.name?.split(' ')[0] || 'Atleta'}</Text>
+          <Text style={styles.headerSub}>Bora treinar hoje? 💪</Text>
         </View>
-      ))}
+        <View style={styles.avatar}>
+          <Ionicons name="person" size={24} color={COLORS.primary} />
+        </View>
+      </View>
+
+      <View style={styles.statsRow}>
+        <StatCard
+          icon="barbell"
+          value={String(workouts.length)}
+          label="Treinos"
+          color={COLORS.primary}
+        />
+        <StatCard
+          icon="calendar"
+          value={String(workouts.reduce((acc, w) => acc + (w.weeklyFrequency || 0), 0))}
+          label="Dias/semana"
+          color={COLORS.accent}
+        />
+      </View>
+
+      <Text style={styles.sectionTitle}>Seus Treinos</Text>
+
+      {loading ? (
+        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+      ) : workouts.length === 0 ? (
+        <EmptyState
+          icon="barbell-outline"
+          title="Nenhum treino ainda"
+          subtitle="Seu instrutor ainda não liberou treinos para você."
+        />
+      ) : (
+        workouts.map((w) => (
+          <View key={w.id} style={styles.workoutCard}>
+            <View style={styles.workoutHeader}>
+              <View style={styles.workoutBadge}>
+                <Ionicons name="barbell" size={16} color={COLORS.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.workoutTitle}>{w.goal || 'Treino Personalizado'}</Text>
+                <Text style={styles.workoutMeta}>
+                  {w.weeklyFrequency || 0}x por semana · Status: {w.status}
+                </Text>
+              </View>
+              <View style={styles.statusBadge}>
+                <Ionicons name="checkmark-circle" size={14} color={COLORS.success} />
+                <Text style={styles.statusText}>Aprovado</Text>
+              </View>
+            </View>
+
+            {(w.sessions || []).map((s: any) => (
+              <View key={s.id} style={styles.sessionBlock}>
+                <Text style={styles.sessionTitle}>{s.name}</Text>
+                {(s.exercises || []).map((ex: any, i: number) => (
+                  <View key={ex.id} style={styles.exerciseRow}>
+                    <View style={styles.exerciseNumber}>
+                      <Text style={styles.exerciseNumberText}>{i + 1}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.exerciseName}>{ex.exercise?.name}</Text>
+                      <View style={styles.exerciseDetailsRow}>
+                        {ex.sets && ex.reps && (
+                          <View style={styles.chip}>
+                            <Ionicons name="repeat" size={12} color={COLORS.textMuted} />
+                            <Text style={styles.chipText}>
+                              {ex.sets}x{ex.reps}
+                            </Text>
+                          </View>
+                        )}
+                        {ex.restSeconds && (
+                          <View style={styles.chip}>
+                            <Ionicons name="time" size={12} color={COLORS.textMuted} />
+                            <Text style={styles.chipText}>{ex.restSeconds}s</Text>
+                          </View>
+                        )}
+                        {ex.suggestedLoad && (
+                          <View style={[styles.chip, styles.chipAccent]}>
+                            <Ionicons name="fitness" size={12} color={COLORS.accent} />
+                            <Text style={[styles.chipText, styles.chipTextAccent]}>{ex.suggestedLoad}</Text>
+                          </View>
+                        )}
+                      </View>
+                      {ex.exercise?.videoUrl && (
+                        <TouchableOpacity
+                          style={styles.videoBtn}
+                          onPress={() => Linking.openURL(ex.exercise.videoUrl)}
+                          activeOpacity={0.8}
+                        >
+                          <Ionicons name="play-circle" size={16} color={COLORS.primary} />
+                          <Text style={styles.videoBtnText}>Ver vídeo</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 }
 
-function ProgressoScreen({ token }: { token: string }) {
+// ============ PROGRESSO ============
+function ProgressoScreen({ token, profile }: { token: string; profile: any }) {
   const [assessments, setAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -185,120 +371,593 @@ function ProgressoScreen({ token }: { token: string }) {
       .finally(() => setLoading(false));
   }, [token]);
 
-  if (loading) {
-    return <ActivityIndicator style={styles.loader} color="#7c3aed" />;
-  }
-
   return (
-    <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.title}>Minha Evolucao</Text>
-      {assessments.length === 0 ? <Text style={styles.empty}>Nenhuma avaliacao ainda.</Text> : null}
-      {assessments.map((a) => (
-        <View key={a.id} style={styles.card}>
-          <Text style={styles.cardTitle}>
-            {a.weight ? `${a.weight} kg` : '--'} | IMC {a.bmi ?? '--'}
-          </Text>
-          <Text style={styles.cardSub}>
-            {a.bodyFatPercent ? `Gordura: ${a.bodyFatPercent}%` : ''}
-          </Text>
-          <Text style={styles.exerciseDetail}>
-            {new Date(a.createdAt).toLocaleDateString('pt-BR')}
-          </Text>
+    <ScrollView style={styles.scrollContent} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerGreeting}>Sua evolução</Text>
+          <Text style={styles.headerSub}>Acompanhe seu progresso 📈</Text>
         </View>
-      ))}
+        <View style={styles.avatar}>
+          <Ionicons name="trending-up" size={24} color={COLORS.accent} />
+        </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>Avaliações Físicas</Text>
+
+      {loading ? (
+        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+      ) : assessments.length === 0 ? (
+        <EmptyState
+          icon="analytics-outline"
+          title="Nenhuma avaliação"
+          subtitle="Peça ao seu instrutor para fazer sua avaliação física."
+        />
+      ) : (
+        assessments.map((a) => (
+          <View key={a.id} style={styles.progressCard}>
+            <View style={styles.progressDate}>
+              <Ionicons name="calendar" size={14} color={COLORS.textMuted} />
+              <Text style={styles.progressDateText}>
+                {new Date(a.createdAt).toLocaleDateString('pt-BR')}
+              </Text>
+            </View>
+            <View style={styles.progressGrid}>
+              <Metric label="Peso" value={a.weight ? `${a.weight} kg` : '—'} icon="scale" />
+              <Metric label="IMC" value={a.bmi ? a.bmi.toFixed(1) : '—'} icon="body" />
+              <Metric
+                label="Gordura"
+                value={a.bodyFatPercent ? `${a.bodyFatPercent}%` : '—'}
+                icon="flame"
+              />
+            </View>
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 }
 
-function PerfilScreen({ token, onLogout }: { token: string; onLogout: () => void }) {
-  const [profile, setProfile] = useState<any>(null);
-
-  useEffect(() => {
-    api('/me/profile', token).then(setProfile).catch(() => null);
-  }, [token]);
-
+function Metric({ label, value, icon }: { label: string; value: string; icon: any }) {
   return (
-    <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.title}>Meu Perfil</Text>
-      {profile ? (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>{profile.name}</Text>
-          <Text style={styles.cardSub}>{profile.email}</Text>
-          <Text style={styles.exerciseDetail}>Academia: {profile.gym?.name}</Text>
-          <Text style={styles.exerciseDetail}>Objetivo: {profile.goal || '--'}</Text>
-          <Text style={styles.exerciseDetail}>Nivel: {profile.level || '--'}</Text>
-          <Text style={styles.exerciseDetail}>Status: {profile.status}</Text>
+    <View style={styles.metricBox}>
+      <Ionicons name={icon} size={20} color={COLORS.primary} />
+      <Text style={styles.metricValue}>{value}</Text>
+      <Text style={styles.metricLabel}>{label}</Text>
+    </View>
+  );
+}
+
+// ============ PERFIL ============
+function PerfilScreen({
+  token,
+  profile,
+  onLogout,
+}: {
+  token: string;
+  profile: any;
+  onLogout: () => void;
+}) {
+  return (
+    <ScrollView style={styles.scrollContent} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.profileHeader}>
+        <View style={styles.profileAvatar}>
+          <Text style={styles.profileAvatarText}>
+            {profile?.name?.[0]?.toUpperCase() || '?'}
+          </Text>
         </View>
-      ) : null}
-      <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-        <Text style={styles.buttonText}>Sair</Text>
+        <Text style={styles.profileName}>{profile?.name || '—'}</Text>
+        <Text style={styles.profileEmail}>{profile?.email || '—'}</Text>
+      </View>
+
+      <View style={styles.infoCard}>
+        <InfoRow icon="building" label="Academia" value={profile?.gym?.name || '—'} />
+        <InfoRow icon="flag" label="Objetivo" value={profile?.goal || '—'} />
+        <InfoRow icon="trophy" label="Nível" value={profile?.level || '—'} />
+        <InfoRow icon="pulse" label="Status" value={profile?.status || '—'} highlight />
+      </View>
+
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={onLogout}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="log-out-outline" size={20} color={COLORS.text} />
+        <Text style={styles.logoutText}>Sair da conta</Text>
       </TouchableOpacity>
+
+      <Text style={styles.versionText}>IronCloud v0.1.0</Text>
     </ScrollView>
   );
 }
 
+// ============ COMPONENTES AUXILIARES ============
+function StatCard({
+  icon,
+  value,
+  label,
+  color,
+}: {
+  icon: any;
+  value: string;
+  label: string;
+  color: string;
+}) {
+  return (
+    <View style={styles.statCard}>
+      <View style={[styles.statIconBox, { backgroundColor: color + '20' }]}>
+        <Ionicons name={icon} size={20} color={color} />
+      </View>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: any;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <View style={styles.emptyState}>
+      <Ionicons name={icon} size={64} color={COLORS.textDim} />
+      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={styles.emptySubtitle}>{subtitle}</Text>
+    </View>
+  );
+}
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  highlight,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <View style={styles.infoRow}>
+      <View style={styles.infoIconBox}>
+        <Ionicons name={icon} size={18} color={COLORS.primary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.infoLabel}>{label}</Text>
+        <Text
+          style={[styles.infoValue, highlight && { color: COLORS.success, fontWeight: '700' }]}
+        >
+          {value}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+// ============ STYLES ============
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0f172a' },
-  loginBox: { flex: 1, justifyContent: 'center', padding: 24 },
-  logo: { color: '#7c3aed', fontSize: 32, fontWeight: '800', textAlign: 'center' },
-  subtitle: { color: '#94a3b8', textAlign: 'center', marginBottom: 24 },
-  input: {
-    backgroundColor: '#1e293b',
-    color: '#fff',
-    borderRadius: 10,
+  screen: { flex: 1, backgroundColor: COLORS.bg },
+
+  // LOGIN
+  loginContainer: { flexGrow: 1 },
+  loginContent: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  },
+  logoContainer: { alignItems: 'center', marginBottom: 40 },
+  logoBadge: {
+    width: 110,
+    height: 110,
+    borderRadius: 30,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  logoBarbell: { position: 'absolute', bottom: 22 },
+  logoTitle: {
+    color: COLORS.text,
+    fontSize: 36,
+    fontWeight: '800',
+    letterSpacing: -1,
+  },
+  logoTagline: {
+    color: COLORS.textMuted,
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 22,
+  },
+  loginCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  loginWelcome: {
+    color: COLORS.text,
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  loginSub: { color: COLORS.textMuted, fontSize: 14, marginBottom: 24 },
+  inputGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
     paddingHorizontal: 14,
-    paddingVertical: 12,
     marginBottom: 12,
   },
-  error: { color: '#f87171', marginBottom: 8, textAlign: 'center' },
-  button: {
-    backgroundColor: '#7c3aed',
-    borderRadius: 10,
-    paddingVertical: 14,
+  inputIcon: { marginRight: 10 },
+  input: { flex: 1, color: COLORS.text, paddingVertical: 14, fontSize: 15 },
+  errorBox: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  buttonText: { color: '#fff', fontWeight: '700' },
-  logoutButton: {
-    backgroundColor: '#dc2626',
+    backgroundColor: COLORS.danger + '15',
+    borderWidth: 1,
+    borderColor: COLORS.danger + '40',
     borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 12,
+    padding: 12,
+    marginBottom: 16,
   },
-  content: { flex: 1 },
-  contentContainer: { padding: 16, paddingBottom: 80 },
-  title: { color: '#fff', fontSize: 24, fontWeight: '800', marginBottom: 12 },
-  empty: { color: '#94a3b8' },
-  card: {
-    backgroundColor: '#1e293b',
+  errorText: { color: COLORS.danger, fontSize: 13, marginLeft: 8, flex: 1 },
+  primaryButton: {
+    backgroundColor: COLORS.primary,
     borderRadius: 12,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  buttonDisabled: { opacity: 0.6 },
+  primaryButtonText: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '700',
+    marginRight: 8,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: COLORS.cardBorder },
+  dividerText: {
+    color: COLORS.textDim,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    paddingHorizontal: 12,
+    letterSpacing: 1,
+  },
+  footerText: {
+    color: COLORS.textDim,
+    textAlign: 'center',
+    marginTop: 24,
+    fontSize: 12,
+  },
+
+  // MAIN
+  mainContainer: { flex: 1 },
+  scrollContent: { flex: 1 },
+  contentContainer: { padding: 20, paddingBottom: 100 },
+
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  headerGreeting: {
+    color: COLORS.text,
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  headerSub: { color: COLORS.textMuted, fontSize: 14, marginTop: 2 },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // STATS
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  statCard: {
+    flex: 1,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  statIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  statValue: {
+    color: COLORS.text,
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -1,
+  },
+  statLabel: { color: COLORS.textMuted, fontSize: 12, marginTop: 2 },
+
+  sectionTitle: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+    letterSpacing: -0.3,
+  },
+
+  // WORKOUT CARDS
+  workoutCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  workoutHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.cardBorder,
+  },
+  workoutBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  workoutTitle: { color: COLORS.text, fontSize: 16, fontWeight: '700' },
+  workoutMeta: { color: COLORS.textMuted, fontSize: 12, marginTop: 2 },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.success + '20',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  statusText: { color: COLORS.success, fontSize: 11, fontWeight: '600', marginLeft: 4 },
+
+  sessionBlock: { marginBottom: 12 },
+  sessionTitle: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  exerciseRow: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.cardBorder,
+  },
+  exerciseNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  exerciseNumberText: { color: COLORS.primary, fontWeight: '700', fontSize: 12 },
+  exerciseName: { color: COLORS.text, fontSize: 15, fontWeight: '600', marginBottom: 6 },
+  exerciseDetailsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  chipAccent: { backgroundColor: COLORS.accent + '20' },
+  chipText: { color: COLORS.textMuted, fontSize: 11, fontWeight: '600' },
+  chipTextAccent: { color: COLORS.accent },
+
+  videoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary + '15',
+    borderWidth: 1,
+    borderColor: COLORS.primary + '40',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+    gap: 6,
+  },
+  videoBtnText: { color: COLORS.primary, fontWeight: '600', fontSize: 13 },
+
+  // PROGRESS
+  progressCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
   },
-  cardTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  cardSub: { color: '#94a3b8', marginBottom: 8 },
-  session: { marginTop: 8 },
-  sessionTitle: { color: '#7c3aed', fontWeight: '700', marginBottom: 4 },
-  exercise: { borderBottomColor: '#334155', borderBottomWidth: 1, paddingVertical: 8 },
-  exerciseName: { color: '#fff', fontWeight: '600' },
-  exerciseDetail: { color: '#94a3b8', fontSize: 12 },
-  videoButton: {
-    backgroundColor: '#334155',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    alignSelf: 'flex-start',
+  progressDate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 6,
+  },
+  progressDateText: { color: COLORS.textMuted, fontSize: 12 },
+  progressGrid: { flexDirection: 'row', gap: 8 },
+  metricBox: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+  },
+  metricValue: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: '800',
     marginTop: 6,
+    letterSpacing: -0.5,
   },
-  videoText: { color: '#7c3aed', fontWeight: '700' },
-  loader: { flex: 1, justifyContent: 'center', marginTop: 100 },
+  metricLabel: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+
+  // PERFIL
+  profileHeader: { alignItems: 'center', marginBottom: 24 },
+  profileAvatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  profileAvatarText: { color: COLORS.text, fontSize: 36, fontWeight: '800' },
+  profileName: { color: COLORS.text, fontSize: 22, fontWeight: '800' },
+  profileEmail: { color: COLORS.textMuted, fontSize: 13, marginTop: 4 },
+  infoCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    marginBottom: 24,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.cardBorder,
+  },
+  infoIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: COLORS.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  infoLabel: { color: COLORS.textMuted, fontSize: 11, marginBottom: 2 },
+  infoValue: { color: COLORS.text, fontSize: 15, fontWeight: '600' },
+
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.danger,
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  logoutText: { color: COLORS.text, fontWeight: '700', fontSize: 15 },
+  versionText: {
+    color: COLORS.textDim,
+    textAlign: 'center',
+    fontSize: 11,
+    marginTop: 16,
+  },
+
+  // EMPTY STATE
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    color: COLORS.text,
+    fontSize: 17,
+    fontWeight: '700',
+    marginTop: 16,
+  },
+  emptySubtitle: {
+    color: COLORS.textMuted,
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 6,
+    lineHeight: 20,
+  },
+
+  // TAB BAR
   tabBar: {
     flexDirection: 'row',
-    borderTopColor: '#1e293b',
+    backgroundColor: COLORS.surface,
     borderTopWidth: 1,
-    backgroundColor: '#0f172a',
+    borderTopColor: COLORS.cardBorder,
+    paddingBottom: 16,
   },
-  tab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  tabText: { color: '#64748b', fontWeight: '700' },
-  tabActive: { color: '#7c3aed' },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    position: 'relative',
+  },
+  tabLabel: {
+    color: COLORS.textDim,
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  tabLabelActive: { color: COLORS.primary },
+  tabIndicator: {
+    position: 'absolute',
+    top: 0,
+    width: 24,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: COLORS.primary,
+  },
+
+  loader: { flex: 1, justifyContent: 'center', marginTop: 100 },
 });
