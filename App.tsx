@@ -198,7 +198,7 @@ function Main({
     <View style={styles.mainContainer}>
       {tab === 'treino' && <TreinoScreen token={token} profile={profile} />}
       {tab === 'agenda' && <AgendaScreen token={token} />}
-      {tab === 'progresso' && <ProgressoScreen token={token} />}
+      {tab === 'progresso' && <ProgressoScreen token={token} profile={profile} />}
       {tab === 'financeiro' && <FinanceiroScreen token={token} />}
       {tab === 'perfil' && <PerfilScreen token={token} profile={profile} onLogout={onLogout} />}
 
