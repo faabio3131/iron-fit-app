@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-const API_URL = 'http://192.168.100.16:3333/api/v1';
+const API_URL = 'https://gym-saas-backend-t9ej.onrender.com/api/v1';
 
 async function api(path: string, token?: string, options?: any) {
   const res = await fetch(`${API_URL}${path}`, {
