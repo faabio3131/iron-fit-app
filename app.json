@@ -36,12 +36,16 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "displayName": "Iron Fit",
     "icon": "./assets/icon.png",
-    "splash": {
-      "backgroundColor": "#0F172A",
-      "resizeMode": "contain",
-      "image": "./assets/splash.png"
-    }
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0F172A",
+          "image": "./assets/splash.png",
+          "resizeMode": "contain"
+        }
+      ]
+    ]
   }
 }
