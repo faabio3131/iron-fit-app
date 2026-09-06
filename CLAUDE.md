@@ -119,6 +119,41 @@ A certificação da FASE 6 significa que a configuração de packaging e a estei
 
 Risco residual conhecido: `npm ci` reporta atualmente 11 vulnerabilidades moderadas transitivas. Não executar `npm audit fix --force` sem uma fase própria de compatibilidade e regressão.
 
+## Bundle Verification, E2E Smoke e Release Certification
+
+**Status: MOBILE RELEASE: 100% STORE READY & CERTIFIED.**
+
+A FASE 7 adiciona certificação de bundle de produção e smoke E2E sobre a arquitetura real do aplicativo. O teste `__tests__/e2e-smoke.test.tsx` percorre `App -> AuthProvider -> RootNavigator -> screens -> services`, mockando apenas as bordas externas `fetch` e SecureStore, e certifica:
+- login bem-sucedido com persistência segura de access/refresh token;
+- seleção multi-unidade com hidratação do tenant ativo;
+- carregamento de `/me/workouts` com renderização do treino e failover gracioso do Iron Intelligence;
+- carregamento de `/me/charges`, navegação para Perfil e logout com limpeza segura da sessão.
+
+Verificação canônica do bundle Android de produção:
+- `NODE_ENV=production npx expo export --platform android` deve completar sem erro crítico de módulo/asset.
+- O export certificado processou 677 módulos e produziu bundle Hermes `.hbc` de aproximadamente 1,9 MB com `metadata.json` válido.
+- Foram resolvidos 19 assets de fontes de `@expo/vector-icons`, incluindo `Ionicons.ttf`.
+- O gate inspeciona o bytecode final e rejeita marcadores de `@testing-library/react-native`, `jest-expo`, `eslint-config-expo` e `__tests__/`, evitando empacotamento de dependências de teste/desenvolvimento verificáveis por esse controle.
+- Expo SDK 57 / React Native 0.86 usam `compileSdkVersion: 36` e `targetSdkVersion: 36` como baseline de Android.
+- Android permanece com package `com.faabio3131.ironfit`, permissão explícita de câmera e permissões amplas/legadas de armazenamento/mídia bloqueadas.
+
+Atalhos canônicos de build:
+- `npm run build:check` = typecheck + lint + Jest + Expo Doctor.
+- `npm run build:android:preview` = `eas build --platform android --profile preview`.
+- `npm run build:android:prod` = `eas build --platform android --profile production`.
+
+Promoção canônica da FASE 7:
+- PR #6: `[CORE-MOBILE] Production Bundle Verification & E2E Release Certification`.
+- HEAD certificado da branch: `b15d68f625aa4b59c9462bff04ed02b5b57c42c2`.
+- Mobile CI da branch: `34040688182` — SUCCESS, 9/9 suítes, 29/29 testes PASS, Expo Doctor 21/21 PASS, export Android e bundle integrity PASS.
+- Mobile CI da PR: `34040862249` — SUCCESS.
+- Squash merge funcional na `main`: `88f970c82992d0354bb43c8a1c736c4ee7bcc238`.
+- Mobile CI pós-merge: `34040989649` — SUCCESS.
+
+A classificação **100% STORE READY & CERTIFIED** significa que o código mobile, manifesto, dependências nativas, perfis EAS, quality gates, smoke E2E e bundle estático de produção estão certificados para a etapa de emissão do binário. Não significa que um APK/AAB de cloud build já tenha sido assinado, enviado ao Google Play ou publicado; essas ações continuam dependentes das credenciais EAS/Android e do ambiente de produção.
+
+Débitos não bloqueantes conhecidos: `npm ci` reporta 11 vulnerabilidades moderadas transitivas; os testes também expõem o aviso de depreciação de `SafeAreaView` do React Native. Nenhum dos dois foi alterado nesta fase para evitar extrapolação de escopo e regressão.
+
 ## Quality Gate
 
-Toda alteração mobile deve preservar `npm run typecheck`, `npm run lint` e `npm test` verdes no workflow permanente `Mobile CI` antes e depois da promoção para `main`. A partir da FASE 6, o workflow também deve executar `npm run release:check`, que inclui Expo Doctor. O workflow mobile usa Node 22 e valida também branches `feat/**`, compatível com o baseline do Expo SDK 57.
+Toda alteração mobile deve preservar `npm run typecheck`, `npm run lint` e `npm test` verdes no workflow permanente `Mobile CI` antes e depois da promoção para `main`. A partir da FASE 6, o workflow executa também `npm run release:check`; a partir da FASE 7, executa ainda `npm run build:check`, `expo export --platform android` em modo production e a verificação de integridade do bundle Hermes. O workflow mobile usa Node 22 e valida também branches `feat/**`, compatível com o baseline do Expo SDK 57.
