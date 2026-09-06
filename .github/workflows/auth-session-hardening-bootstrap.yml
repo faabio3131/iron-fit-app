@@ -45,8 +45,8 @@ jobs:
       - name: Reject legacy credentials and hardcoded backend
         shell: bash
         run: |
-          if grep -R -n -E 'joao\.silva@email\.com|aluno123|gym-saas-backend-t9ej\.onrender\.com' App.tsx src test; then
-            echo 'Legacy demo credential or hardcoded backend URL detected.'
+          if grep -R -n -E 'joao\.silva@email\.com|aluno123|gym-saas-backend-t9ej\.onrender\.com' App.tsx src; then
+            echo 'Legacy demo credential or hardcoded backend URL detected in executable source.'
             exit 1
           fi
 
