@@ -35,7 +35,10 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "release:check": "npm run typecheck && npm run lint && npm test -- --runInBand && npx --yes expo-doctor@1.20.4"
+    "release:check": "npm run typecheck && npm run lint && npm test -- --runInBand && npx --yes expo-doctor@1.20.4",
+    "build:check": "npm run typecheck && npm run lint && npm test && npx expo-doctor",
+    "build:android:preview": "eas build --platform android --profile preview",
+    "build:android:prod": "eas build --platform android --profile production"
   },
   "private": true
 }
