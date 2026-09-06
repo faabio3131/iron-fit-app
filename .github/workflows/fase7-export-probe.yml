@@ -1,0 +1,38 @@
+name: Fase 7 export probe
+
+on:
+  push:
+    branches:
+      - feat/mobile-e2e-release-build-verification
+
+jobs:
+  export-probe:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+      EXPO_PUBLIC_API_URL: https://example.invalid/api/v1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Expo Doctor
+        run: npx --yes expo-doctor@1.20.4
+
+      - name: Export Android production bundle
+        run: npx expo export --platform android --output-dir dist
+
+      - name: Inspect export output
+        run: |
+          echo '--- dist files ---'
+          find dist -type f -maxdepth 8 -print | sort
+          echo '--- file sizes ---'
+          find dist -type f -maxdepth 8 -printf '%s %p\n' | sort -n
