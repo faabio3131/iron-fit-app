@@ -30,8 +30,8 @@ jobs:
       - name: Apply auth and session hardening
         run: node scripts/apply-auth-hardening.mjs
 
-      - name: Install secure token storage and refresh lockfile
-        run: npm install expo-secure-store@~57.0.3 --save
+      - name: Install secure storage and declared UI dependency
+        run: npm install expo-secure-store@~57.0.3 @expo/vector-icons@^15.0.3 --save
 
       - name: Typecheck
         run: npm run typecheck
