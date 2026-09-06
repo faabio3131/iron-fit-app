@@ -32,7 +32,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "release:check": "npm run typecheck && npm run lint && npm test -- --runInBand && npx --yes expo-doctor@1.20.4"
   },
   "private": true
 }
