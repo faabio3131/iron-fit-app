@@ -46,6 +46,8 @@ describe('release packaging configuration', () => {
       'android.permission.READ_MEDIA_VIDEO',
       'android.permission.READ_MEDIA_AUDIO',
     ]));
+    expect(appConfig.expo.displayName).toBeUndefined();
+    expect(appConfig.expo.splash).toBeUndefined();
   });
 
   test('EAS profiles produce debug APK, preview APK and production AAB', () => {
@@ -60,10 +62,15 @@ describe('release packaging configuration', () => {
   });
 
   test('release assets exist and are valid PNG files', () => {
+    const splashPlugin = appConfig.expo.plugins.find(
+      (plugin: unknown) => Array.isArray(plugin) && plugin[0] === 'expo-splash-screen',
+    ) as [string, { image: string }] | undefined;
+
+    expect(splashPlugin).toBeTruthy();
     expectPngAsset(appConfig.expo.icon);
     expectPngAsset(appConfig.expo.android.adaptiveIcon.foregroundImage);
     expectPngAsset(appConfig.expo.android.adaptiveIcon.monochromeImage);
-    expectPngAsset(appConfig.expo.splash.image);
+    expectPngAsset(splashPlugin![1].image);
   });
 
   test('release check aggregates all mandatory quality gates and Expo Doctor', () => {
