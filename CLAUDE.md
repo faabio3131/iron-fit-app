@@ -88,6 +88,37 @@ A camada de inteligência é complementar e nunca pode se tornar dependência ob
 
 O backend canônico ainda não publica as rotas opcionais de IA; portanto a certificação desta FASE 5 refere-se à arquitetura e experiência mobile governada/fail-open, não à disponibilidade de inferência no backend.
 
+## Packaging, EAS e Store Readiness
+
+**Status: MOBILE STORE READINESS: FASE 6 PROMOVIDA E CERTIFICADA NA MAIN.**
+
+Configuração canônica de release:
+- `eas.json` define `development`, `preview` e `production`.
+- `development` usa `:app:assembleDebug`, distribuição interna e não requer credenciais de store para o build de depuração.
+- `preview` produz APK para homologação interna.
+- `production` usa distribuição `store` e `android.buildType: app-bundle`, preparando Android App Bundle (AAB) para Google Play.
+- Node canônico dos perfis EAS: `22.23.2`.
+- Identificador Android de produção: `com.faabio3131.ironfit`.
+- Versão da aplicação: `1.0.0`; Android `versionCode: 1`; iOS `buildNumber: 1`.
+- O manifesto Android permite explicitamente apenas `android.permission.CAMERA` para a futura leitura de QR de check-in e bloqueia permissões amplas/legadas de armazenamento e mídia.
+- O check-in homologado existente permanece inalterado; a FASE 6 prepara o packaging/permissão para câmera, mas não declara scanner QR implementado.
+- Splash usa o plugin `expo-splash-screen`; `displayName` e `splash` legados foram removidos do schema do SDK 57.
+- `expo` está alinhado a `~57.0.20`, com `expo-font ~57.0.3` e `expo-splash-screen ~57.0.8` instalados explicitamente para integridade nativa fora do Expo Go.
+- `release:check` executa typecheck, lint, Jest em série e `expo-doctor@1.20.4`.
+- Assets de icon, adaptive icon, monochrome icon e splash são validados por teste de integridade.
+
+Promoção canônica da FASE 6:
+- PR #5: `[CORE-MOBILE] Store Packaging, EAS & Android Release Readiness`.
+- HEAD certificado da branch: `6358a490e5d916cafe77820b0fa152c8f7f75148`.
+- Mobile CI da branch: `34039238475` — SUCCESS, 8/8 suítes, 25/25 testes PASS e Expo Doctor 21/21 PASS.
+- Mobile CI da PR: `34039346436` — SUCCESS.
+- Squash merge funcional na `main`: `0270b3afd5b744f80352f136111ab687904f4e50`.
+- Mobile CI pós-merge: `34039453937` — SUCCESS.
+
+A certificação da FASE 6 significa que a configuração de packaging e a esteira de validação estão prontas para geração de release. Ela não significa que um AAB já foi gerado, assinado, enviado ou publicado. A execução real de EAS Build/Google Play exige projeto EAS, credenciais de assinatura e variáveis/segredos de produção corretamente configurados.
+
+Risco residual conhecido: `npm ci` reporta atualmente 11 vulnerabilidades moderadas transitivas. Não executar `npm audit fix --force` sem uma fase própria de compatibilidade e regressão.
+
 ## Quality Gate
 
-Toda alteração mobile deve preservar `npm run typecheck`, `npm run lint` e `npm test` verdes no workflow permanente `Mobile CI` antes e depois da promoção para `main`. O workflow mobile usa Node 22 e valida também branches `feat/**`, compatível com o baseline do Expo SDK 57.
+Toda alteração mobile deve preservar `npm run typecheck`, `npm run lint` e `npm test` verdes no workflow permanente `Mobile CI` antes e depois da promoção para `main`. A partir da FASE 6, o workflow também deve executar `npm run release:check`, que inclui Expo Doctor. O workflow mobile usa Node 22 e valida também branches `feat/**`, compatível com o baseline do Expo SDK 57.
