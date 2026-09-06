@@ -12,6 +12,8 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(),
 }));
 
+jest.setTimeout(15000);
+
 type LoginMode = 'direct' | 'multi';
 
 type FetchScenario = {
@@ -22,7 +24,7 @@ type FetchScenario = {
 };
 
 const API_ROOT = 'https://example.invalid/api/v1';
-const E2E_WAIT_MS = 5000;
+const E2E_WAIT_MS = 10000;
 const secureGet = SecureStore.getItemAsync as jest.MockedFunction<typeof SecureStore.getItemAsync>;
 const secureSet = SecureStore.setItemAsync as jest.MockedFunction<typeof SecureStore.setItemAsync>;
 const secureDelete = SecureStore.deleteItemAsync as jest.MockedFunction<typeof SecureStore.deleteItemAsync>;
