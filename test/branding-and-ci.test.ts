@@ -31,8 +31,9 @@ test('mobile quality scripts are canonical', () => {
   expect(pkg.scripts.test).toBe('jest');
 });
 
-test('mobile CI runs install, typecheck, lint and tests on Node 20', () => {
-  expect(workflow).toMatch(/node-version:\s*20/);
+test('mobile CI runs install, typecheck, lint and tests on the Expo 57 Node baseline', () => {
+  expect(workflow).toMatch(/node-version:\s*22/);
+  expect(workflow).toContain("'feat/**'");
   expect(workflow).toContain('npm ci');
   expect(workflow).toContain('npm run typecheck');
   expect(workflow).toContain('npm run lint');
