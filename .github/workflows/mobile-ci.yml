@@ -39,3 +39,30 @@ jobs:
 
       - name: Release readiness
         run: npm run release:check
+
+      - name: Build verification
+        run: npm run build:check
+
+      - name: Export Android production bundle
+        env:
+          NODE_ENV: production
+        run: |
+          rm -rf dist expo-export.log
+          npx expo export --platform android --output-dir dist 2>&1 | tee expo-export.log
+
+      - name: Verify production bundle integrity
+        run: |
+          test -s dist/metadata.json
+          BUNDLE="$(find dist/_expo/static/js/android -type f -name '*.hbc' -size +100k -print -quit)"
+          test -n "$BUNDLE"
+          grep -q 'Ionicons.ttf' expo-export.log
+          grep -q 'Android Bundled' expo-export.log
+          if grep -Eqi 'Unable to resolve|Cannot find module|Module not found|error:.*asset' expo-export.log; then
+            echo 'Critical module/asset resolution error found in production export.'
+            exit 1
+          fi
+          if strings "$BUNDLE" | grep -E '@testing-library/react-native|jest-expo|eslint-config-expo|__tests__/' ; then
+            echo 'Development/test-only module marker found in production bundle.'
+            exit 1
+          fi
+          echo "Certified production bundle: $BUNDLE"
