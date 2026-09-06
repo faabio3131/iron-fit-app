@@ -26,7 +26,11 @@ beforeEach(() => {
 test('valid AI response renders recommendations', async () => {
   mockApi.mockResolvedValueOnce(validInsight);
 
-  const view = render(<AIInsightCard workoutCount={2} weeklyFrequency={4} onOpenAssistant={() => undefined} />);
+  const view = render(React.createElement(AIInsightCard, {
+    workoutCount: 2,
+    weeklyFrequency: 4,
+    onOpenAssistant: () => undefined,
+  }));
 
   await waitFor(() => {
     expect(view.getByText('Progressão controlada')).toBeTruthy();
@@ -43,7 +47,11 @@ test('5xx or offline activates graceful fallback without breaking the UI', async
   expect(insight.recommendations[0].title).toBe('Consistência primeiro');
 
   mockApi.mockRejectedValueOnce(new Error('offline'));
-  const view = render(<AIInsightCard workoutCount={1} weeklyFrequency={3} onOpenAssistant={() => undefined} />);
+  const view = render(React.createElement(AIInsightCard, {
+    workoutCount: 1,
+    weeklyFrequency: 3,
+    onOpenAssistant: () => undefined,
+  }));
   expect(view.getByText('Consistência primeiro')).toBeTruthy();
 });
 
