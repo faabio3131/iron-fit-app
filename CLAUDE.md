@@ -62,3 +62,9 @@ Os wrappers `src/api.ts`, `src/auth-session.ts` e `src/config.ts` permanecem com
 ## Quality Gate
 
 Toda alteração mobile deve preservar `npm run typecheck`, `npm run lint` e `npm test` verdes no workflow permanente `Mobile CI` antes e depois da promoção para `main`.
+
+## Governança IRON Intelligence
+
+**Status: IRON INTELLIGENCE: ATIVO / EM FASE 5.**
+
+A camada de inteligência é complementar e nunca pode se tornar dependência obrigatória dos fluxos homologados. Falha, timeout, indisponibilidade de rede ou ausência dos endpoints de IA deve degradar para conteúdo local seguro sem bloquear `/me/workouts`, `/me/assessments`, autenticação, navegação ou demais funções do aluno. Credenciais, tokens, senhas e dados financeiros sensíveis são proibidos nos payloads enviados à camada de IA.
