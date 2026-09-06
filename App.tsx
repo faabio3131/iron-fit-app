@@ -12,8 +12,8 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const API_URL = 'https://gym-saas-backend-t9ej.onrender.com/api/v1';
+import { api, logoutSession, setSessionInvalidatedHandler } from './src/api';
+import { AuthSession, restoreSession, saveSession } from './src/auth-session';
 
 const COLORS = {
   bg: '#0a0e1a',
@@ -30,21 +30,6 @@ const COLORS = {
   textDim: '#64748b',
 };
 
-async function api(path: string, token?: string, options?: any) {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Erro inesperado');
-  }
-  return res.json();
-}
-
 function fmtDate(d?: string) {
   if (!d) return '';
   const dt = new Date(d);
@@ -59,6 +44,30 @@ function fmtMoney(v?: any) {
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [sessionReady, setSessionReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    setSessionInvalidatedHandler(() => {
+      if (!mounted) return;
+      setToken(null);
+      setProfile(null);
+    });
+
+    restoreSession()
+      .then((session) => {
+        if (mounted) setToken(session?.accessToken ?? null);
+      })
+      .finally(() => {
+        if (mounted) setSessionReady(true);
+      });
+
+    return () => {
+      mounted = false;
+      setSessionInvalidatedHandler(null);
+    };
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -68,40 +77,106 @@ export default function App() {
     }
   }, [token]);
 
+  async function handleAuthenticated(session: AuthSession) {
+    await saveSession(session);
+    setToken(session.accessToken);
+  }
+
+  async function handleLogout() {
+    try {
+      await logoutSession();
+    } finally {
+      setToken(null);
+      setProfile(null);
+    }
+  }
+
+  if (!sessionReady) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+        <View style={styles.sessionBoot}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
       {!token ? (
-        <Login onLogin={setToken} />
+        <Login onLogin={handleAuthenticated} />
       ) : (
-        <Main token={token} profile={profile} onLogout={() => setToken(null)} />
+        <Main token={token} profile={profile} onLogout={handleLogout} />
       )}
     </SafeAreaView>
   );
 }
 
 // ============ LOGIN ============
-function Login({ onLogin }: { onLogin: (t: string) => void }) {
-  const [email, setEmail] = useState('joao.silva@email.com');
-  const [password, setPassword] = useState('aluno123');
+type TenantOption = { id: string; name: string };
+
+function Login({ onLogin }: { onLogin: (session: AuthSession) => Promise<void> }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [tenants, setTenants] = useState<TenantOption[]>([]);
+  const [selectedGymId, setSelectedGymId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  function resetTenantSelection() {
+    setTenants([]);
+    setSelectedGymId(null);
+  }
+
   async function handleLogin() {
+    if (!email.trim() || !password) {
+      setError('Informe email e senha.');
+      return;
+    }
+    if (tenants.length > 0 && !selectedGymId) {
+      setError('Selecione a sua unidade.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
       const data = await api('/auth/login', undefined, {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        auth: false,
+        retryOnUnauthorized: false,
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          ...(selectedGymId ? { gymId: selectedGymId } : {}),
+        }),
       });
-      onLogin(data.access_token);
+
+      if (data?.requires_tenant_selection === true) {
+        const available = Array.isArray(data.tenants)
+          ? data.tenants.filter((tenant: any) => tenant && typeof tenant.id === 'string' && typeof tenant.name === 'string')
+          : [];
+        if (available.length === 0) throw new Error('Nenhuma unidade disponível para esta conta.');
+        setTenants(available);
+        setSelectedGymId(null);
+        return;
+      }
+
+      if (typeof data?.access_token !== 'string' || typeof data?.refresh_token !== 'string') {
+        throw new Error('Resposta de autenticação incompleta.');
+      }
+
+      await onLogin({ accessToken: data.access_token, refreshToken: data.refresh_token });
     } catch (e: any) {
-      setError('Credenciais inválidas. Tente novamente.');
+      setError(e?.message || 'Não foi possível autenticar. Tente novamente.');
     } finally {
       setLoading(false);
     }
   }
+
+  const loginDisabled = loading || !email.trim() || !password || (tenants.length > 0 && !selectedGymId);
 
   return (
     <ScrollView contentContainerStyle={styles.loginContainer} keyboardShouldPersistTaps="handled">
@@ -124,8 +199,12 @@ function Login({ onLogin }: { onLogin: (t: string) => void }) {
             <TextInput
               style={styles.input}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(value) => {
+                setEmail(value);
+                resetTenantSelection();
+              }}
               autoCapitalize="none"
+              autoCorrect={false}
               placeholder="Email"
               placeholderTextColor={COLORS.textDim}
               keyboardType="email-address"
@@ -137,12 +216,40 @@ function Login({ onLogin }: { onLogin: (t: string) => void }) {
             <TextInput
               style={styles.input}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(value) => {
+                setPassword(value);
+                resetTenantSelection();
+              }}
               secureTextEntry
               placeholder="Senha"
               placeholderTextColor={COLORS.textDim}
             />
           </View>
+
+          {tenants.length > 0 ? (
+            <View style={styles.tenantSelector}>
+              <Text style={styles.tenantTitle}>Escolha sua unidade</Text>
+              <Text style={styles.tenantHint}>Sua conta possui acesso a mais de uma academia.</Text>
+              {tenants.map((tenant) => {
+                const selected = selectedGymId === tenant.id;
+                return (
+                  <TouchableOpacity
+                    key={tenant.id}
+                    style={[styles.tenantOption, selected && styles.tenantOptionSelected]}
+                    onPress={() => {
+                      setSelectedGymId(tenant.id);
+                      setError('');
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="business-outline" size={20} color={selected ? COLORS.primary : COLORS.textMuted} />
+                    <Text style={[styles.tenantOptionText, selected && styles.tenantOptionTextSelected]}>{tenant.name}</Text>
+                    <Ionicons name={selected ? 'radio-button-on' : 'radio-button-off'} size={20} color={selected ? COLORS.primary : COLORS.textDim} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : null}
 
           {error ? (
             <View style={styles.errorBox}>
@@ -152,16 +259,16 @@ function Login({ onLogin }: { onLogin: (t: string) => void }) {
           ) : null}
 
           <TouchableOpacity
-            style={[styles.primaryButton, loading && styles.buttonDisabled]}
+            style={[styles.primaryButton, loginDisabled && styles.buttonDisabled]}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={loginDisabled}
             activeOpacity={0.8}
           >
             {loading ? (
               <ActivityIndicator color={COLORS.text} />
             ) : (
               <>
-                <Text style={styles.primaryButtonText}>Entrar</Text>
+                <Text style={styles.primaryButtonText}>{tenants.length > 0 ? 'Entrar nesta unidade' : 'Entrar'}</Text>
                 <Ionicons name="arrow-forward" size={20} color={COLORS.text} />
               </>
             )}
@@ -632,6 +739,7 @@ function InfoRow({ icon, label, value, highlight }: { icon: any; label: string; 
 // ============ STYLES ============
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg },
+  sessionBoot: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   loginContainer: { flexGrow: 1 },
   loginContent: { flex: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
@@ -647,6 +755,16 @@ const styles = StyleSheet.create({
   loginCard: { backgroundColor: COLORS.card, borderRadius: 20, padding: 24, borderWidth: 1, borderColor: COLORS.cardBorder },
   loginWelcome: { color: COLORS.text, fontSize: 22, fontWeight: '700', marginBottom: 4 },
   loginSub: { color: COLORS.textMuted, fontSize: 14, marginBottom: 24 },
+  tenantSelector: { marginBottom: 16 },
+  tenantTitle: { color: COLORS.text, fontSize: 15, fontWeight: '700', marginBottom: 4 },
+  tenantHint: { color: COLORS.textMuted, fontSize: 12, marginBottom: 10, lineHeight: 18 },
+  tenantOption: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface,
+    borderRadius: 12, borderWidth: 1, borderColor: COLORS.cardBorder, padding: 12, marginBottom: 8, gap: 10,
+  },
+  tenantOptionSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primary + '12' },
+  tenantOptionText: { flex: 1, color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
+  tenantOptionTextSelected: { color: COLORS.text },
   inputGroup: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface,
     borderRadius: 12, borderWidth: 1, borderColor: COLORS.cardBorder, paddingHorizontal: 14, marginBottom: 12,
