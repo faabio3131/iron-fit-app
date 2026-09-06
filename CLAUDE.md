@@ -74,10 +74,20 @@ Esses endpoints são opcionais para a experiência mobile. Enquanto o backend n�
 
 ## Governança IRON Intelligence
 
-**Status: IRON INTELLIGENCE: ATIVO / EM FASE 5.**
+**Status: IRON INTELLIGENCE: FASE 5 PROMOVIDA E CERTIFICADA NA MAIN.**
+
+Promoção canônica:
+- PR #4: `[CORE-MOBILE] Iron Intelligence & Governed Graceful Fallback`.
+- HEAD certificado da branch: `d9d343de8af4d84ba24cdd1b692ecd4a985ea8cb`.
+- Mobile CI da branch: `34012229734` — SUCCESS, 7/7 suítes e 20/20 testes PASS.
+- Mobile CI da PR: `34012303016` — SUCCESS.
+- Squash merge funcional na `main`: `582c2d738b318070754124b4401bda8c902c1e88`.
+- Mobile CI pós-merge: `34012347000` — SUCCESS.
 
 A camada de inteligência é complementar e nunca pode se tornar dependência obrigatória dos fluxos homologados. Falha, timeout, indisponibilidade de rede ou ausência dos endpoints de IA deve degradar para conteúdo local seguro sem bloquear `/me/workouts`, `/me/assessments`, autenticação, navegação ou demais funções do aluno. Credenciais, tokens, senhas e dados financeiros sensíveis são proibidos nos payloads enviados à camada de IA.
 
+O backend canônico ainda não publica as rotas opcionais de IA; portanto a certificação desta FASE 5 refere-se à arquitetura e experiência mobile governada/fail-open, não à disponibilidade de inferência no backend.
+
 ## Quality Gate
 
-Toda alteração mobile deve preservar `npm run typecheck`, `npm run lint` e `npm test` verdes no workflow permanente `Mobile CI` antes e depois da promoção para `main`.
+Toda alteração mobile deve preservar `npm run typecheck`, `npm run lint` e `npm test` verdes no workflow permanente `Mobile CI` antes e depois da promoção para `main`. O workflow mobile usa Node 22 e valida também branches `feat/**`, compatível com o baseline do Expo SDK 57.
