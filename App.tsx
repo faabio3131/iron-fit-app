@@ -70,11 +70,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (token) {
-      api('/me/profile', token).then(setProfile).catch(() => null);
-    } else {
-      setProfile(null);
-    }
+    if (!token) return;
+
+    let cancelled = false;
+    api('/me/profile', token)
+      .then((nextProfile) => {
+        if (!cancelled) setProfile(nextProfile);
+      })
+      .catch(() => null);
+
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   async function handleAuthenticated(session: AuthSession) {
@@ -186,7 +193,7 @@ function Login({ onLogin }: { onLogin: (session: AuthSession) => Promise<void> }
             <Ionicons name="cloud" size={48} color={COLORS.text} />
             <Ionicons name="barbell" size={28} color={COLORS.primary} style={styles.logoBarbell} />
           </View>
-          <Text style={styles.logoTitle}>IronCloud</Text>
+          <Text style={styles.logoTitle}>Iron Fit</Text>
           <Text style={styles.logoTagline}>A força da sua academia,{'\n'}na nuvem.</Text>
         </View>
 
@@ -281,7 +288,7 @@ function Login({ onLogin }: { onLogin: (session: AuthSession) => Promise<void> }
           </View>
         </View>
 
-        <Text style={styles.footerText}>IronCloud © 2026</Text>
+        <Text style={styles.footerText}>Iron Fit © 2026</Text>
       </View>
     </ScrollView>
   );
@@ -694,7 +701,7 @@ function PerfilScreen({
         <Text style={styles.logoutText}>Sair da conta</Text>
       </TouchableOpacity>
 
-      <Text style={styles.versionText}>IronCloud v0.2.0</Text>
+      <Text style={styles.versionText}>Iron Fit v0.2.0</Text>
     </ScrollView>
   );
 }

@@ -1,12 +1,13 @@
 {
   "expo": {
-    "name": "IronCloud",
-    "slug": "ironcloud",
+    "name": "Iron Fit",
+    "slug": "iron-fit-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ironfit.app"
     },
     "android": {
       "predictiveBackGestureEnabled": false,
@@ -14,12 +15,12 @@
         "backgroundColor": "#0F172A",
         "foregroundImage": "./assets/icon.png"
       },
-      "package": "com.ironcloud.app"
+      "package": "com.ironfit.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "displayName": "IronCloud",
+    "displayName": "Iron Fit",
     "icon": "./assets/icon.png",
     "splash": {
       "backgroundColor": "#0F172A",
