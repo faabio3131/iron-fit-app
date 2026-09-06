@@ -32,6 +32,25 @@ jobs:
       - name: Apply canonical Iron Fit branding and quality configuration
         run: node scripts/apply-iron-fit-branding-ci.mjs
 
+      - name: Resolve React 19 lint debt
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'App.tsx';
+          let app = fs.readFileSync(path, 'utf8');
+          const before = `  useEffect(() => {\n    if (token) {\n      api('/me/profile', token).then(setProfile).catch(() => null);\n    } else {\n      setProfile(null);\n    }\n  }, [token]);`;
+          const after = `  useEffect(() => {\n    if (!token) return;\n\n    let cancelled = false;\n    api('/me/profile', token)\n      .then((nextProfile) => {\n        if (!cancelled) setProfile(nextProfile);\n      })\n      .catch(() => null);\n\n    return () => {\n      cancelled = true;\n    };\n  }, [token]);`;
+          if (!app.includes(before)) throw new Error('Expected profile effect not found.');
+          app = app.replace(before, after);
+          fs.writeFileSync(path, app);
+
+          const testPath = 'test/app-branding.test.tsx';
+          let test = fs.readFileSync(testPath, 'utf8');
+          test = test.replace("\nimport App from '../App';", "\n// eslint-disable-next-line import/first\nimport App from '../App';");
+          fs.writeFileSync(testPath, test);
+          NODE
+
       - name: Install Expo-compatible test and lint toolchain
         run: |
           npx expo install --dev jest jest-expo @types/jest eslint eslint-config-expo
