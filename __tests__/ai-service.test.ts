@@ -52,7 +52,11 @@ test('5xx or offline activates graceful fallback without breaking the UI', async
     weeklyFrequency: 3,
     onOpenAssistant: () => undefined,
   }));
-  expect(view.getByText('Consistência primeiro')).toBeTruthy();
+
+  await waitFor(() => {
+    expect(mockApi).toHaveBeenCalledTimes(2);
+    expect(view.getByText('Consistência primeiro')).toBeTruthy();
+  });
 });
 
 test('timeout activates the same safe fallback', async () => {
