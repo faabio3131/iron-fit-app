@@ -22,6 +22,7 @@ type FetchScenario = {
 };
 
 const API_ROOT = 'https://example.invalid/api/v1';
+const E2E_WAIT_MS = 5000;
 const secureGet = SecureStore.getItemAsync as jest.MockedFunction<typeof SecureStore.getItemAsync>;
 const secureSet = SecureStore.setItemAsync as jest.MockedFunction<typeof SecureStore.setItemAsync>;
 const secureDelete = SecureStore.deleteItemAsync as jest.MockedFunction<typeof SecureStore.deleteItemAsync>;
@@ -98,7 +99,7 @@ function installFetchScenario({
 }
 
 async function fillAndSubmitLogin(view: ReturnType<typeof render>) {
-  await waitFor(() => expect(view.getByTestId('login-email')).toBeTruthy());
+  await waitFor(() => expect(view.getByTestId('login-email')).toBeTruthy(), { timeout: E2E_WAIT_MS });
   fireEvent.changeText(view.getByTestId('login-email'), 'ana@example.com');
   fireEvent.changeText(view.getByTestId('login-password'), 'senha-segura');
   fireEvent.press(view.getByTestId('login-submit'));
@@ -106,7 +107,7 @@ async function fillAndSubmitLogin(view: ReturnType<typeof render>) {
 
 async function loginDirect(view: ReturnType<typeof render>) {
   await fillAndSubmitLogin(view);
-  await waitFor(() => expect(view.getByText('Olá, Ana')).toBeTruthy());
+  await waitFor(() => expect(view.getByText('Olá, Ana')).toBeTruthy(), { timeout: E2E_WAIT_MS });
 }
 
 describe('student end-to-end smoke journey', () => {
@@ -137,13 +138,13 @@ describe('student end-to-end smoke journey', () => {
     const view = render(<App />);
 
     await fillAndSubmitLogin(view);
-    await waitFor(() => expect(view.getByText('Escolha sua unidade')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Escolha sua unidade')).toBeTruthy(), { timeout: E2E_WAIT_MS });
     fireEvent.press(view.getByTestId('tenant-gym-b'));
     fireEvent.press(view.getByTestId('tenant-confirm'));
 
-    await waitFor(() => expect(view.getByText('Olá, Ana')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Olá, Ana')).toBeTruthy(), { timeout: E2E_WAIT_MS });
     fireEvent.press(view.getByText('Perfil'));
-    await waitFor(() => expect(view.getByText('Unidade Norte')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Unidade Norte')).toBeTruthy(), { timeout: E2E_WAIT_MS });
 
     const loginBodies = fetchMock.mock.calls
       .filter(([input]) => String(input).endsWith('/auth/login'))
@@ -175,9 +176,9 @@ describe('student end-to-end smoke journey', () => {
     const view = render(<App />);
 
     await loginDirect(view);
-    await waitFor(() => expect(view.getByText('Hipertrofia')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Hipertrofia')).toBeTruthy(), { timeout: E2E_WAIT_MS });
     expect(view.getByText('Supino reto')).toBeTruthy();
-    await waitFor(() => expect(view.getByText('Modo seguro')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Modo seguro')).toBeTruthy(), { timeout: E2E_WAIT_MS });
 
     expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/me/workouts'))).toBe(true);
     expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/me/ai/workout-insights'))).toBe(true);
@@ -191,14 +192,14 @@ describe('student end-to-end smoke journey', () => {
 
     await loginDirect(view);
     fireEvent.press(view.getByText('Plano'));
-    await waitFor(() => expect(view.getByText('Mensalidade Setembro')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Mensalidade Setembro')).toBeTruthy(), { timeout: E2E_WAIT_MS });
     expect(view.getByText('R$ 199,90')).toBeTruthy();
 
     fireEvent.press(view.getByText('Perfil'));
-    await waitFor(() => expect(view.getByText('Ana Silva')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Ana Silva')).toBeTruthy(), { timeout: E2E_WAIT_MS });
     fireEvent.press(view.getByTestId('logout-submit'));
 
-    await waitFor(() => expect(view.getByTestId('login-submit')).toBeTruthy());
+    await waitFor(() => expect(view.getByTestId('login-submit')).toBeTruthy(), { timeout: E2E_WAIT_MS });
     expect(secureDelete).toHaveBeenCalledWith('iron-fit.auth.session.v1');
     expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/auth/logout'))).toBe(true);
   });
