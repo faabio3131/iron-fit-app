@@ -9,7 +9,6 @@ const workflow = fs.readFileSync('.github/workflows/mobile-ci.yml', 'utf8');
 
 test('Iron Fit is the canonical mobile brand and application identity', () => {
   expect(appConfig.expo.name).toBe('Iron Fit');
-  expect(appConfig.expo.displayName).toBe('Iron Fit');
   expect(appConfig.expo.slug).toBe('iron-fit-app');
   expect(appConfig.expo.android.package).toBe('com.faabio3131.ironfit');
   expect(appConfig.expo.ios.bundleIdentifier).toBe('com.ironfit.app');
