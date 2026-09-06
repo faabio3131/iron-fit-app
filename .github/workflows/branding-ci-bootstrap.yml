@@ -1,0 +1,68 @@
+name: Iron Fit Branding and CI Bootstrap
+
+on:
+  push:
+    branches:
+      - refactor/iron-fit-branding-and-modular-architecture
+
+permissions:
+  contents: write
+
+jobs:
+  migrate-and-certify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_API_URL: https://example.invalid/api/v1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install baseline dependencies
+        run: npm ci
+
+      - name: Apply canonical Iron Fit branding and quality configuration
+        run: node scripts/apply-iron-fit-branding-ci.mjs
+
+      - name: Install Expo-compatible test and lint toolchain
+        run: |
+          npx expo install --dev jest jest-expo @types/jest @testing-library/react-native react-test-renderer eslint eslint-config-expo
+          npm install --save-dev @types/node
+
+      - name: Verify deterministic lockfile
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Jest tests
+        run: npm test
+
+      - name: Reject legacy mobile brand identifiers
+        shell: bash
+        run: |
+          if grep -R -n -E 'IronCloud|com\.ironcloud|"ironcloud"|gym-saas-app' App.tsx app.json package.json src; then
+            echo 'Legacy IronCloud identity detected in executable/configuration source.'
+            exit 1
+          fi
+
+      - name: Commit certified branding and CI candidate
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/branding-ci-bootstrap.yml scripts/apply-iron-fit-branding-ci.mjs
+          git add -A
+          git commit -m 'refactor(mobile): align Iron Fit branding and quality gates'
+          git push origin HEAD:refactor/iron-fit-branding-and-modular-architecture
