@@ -14,17 +14,17 @@ function expectPngAsset(path: string) {
 }
 
 describe('release packaging configuration', () => {
-  test('required API URL fails explicitly when missing and normalizes when present', () => {
+  test('required API URL fails explicitly when missing and normalizes when present', async () => {
     const original = process.env.EXPO_PUBLIC_API_URL;
 
     try {
       delete process.env.EXPO_PUBLIC_API_URL;
       jest.resetModules();
-      expect(() => require('../src/config/env')).toThrow('EXPO_PUBLIC_API_URL não configurada');
+      await expect(import('../src/config/env')).rejects.toThrow('EXPO_PUBLIC_API_URL não configurada');
 
       process.env.EXPO_PUBLIC_API_URL = 'https://api.ironfit.example/api/v1///';
       jest.resetModules();
-      const { API_URL } = require('../src/config/env') as { API_URL: string };
+      const { API_URL } = await import('../src/config/env');
       expect(API_URL).toBe('https://api.ironfit.example/api/v1');
     } finally {
       if (original === undefined) delete process.env.EXPO_PUBLIC_API_URL;
