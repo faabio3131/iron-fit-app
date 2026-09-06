@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { AIProjectionCard } from '../components/AIProjectionCard';
 import { EmptyState } from '../components/EmptyState';
 import { Metric } from '../components/Metric';
 import { api } from '../services/api';
@@ -27,6 +28,7 @@ export function EvolutionScreen() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.header}><View><Text style={styles.heading}>Sua evolução</Text><Text style={styles.sub}>Acompanhe seu progresso 📈</Text></View><Ionicons name="trending-up" size={24} color="#f59e0b" /></View>
+      <AIProjectionCard assessmentCount={assessments.length} latestAssessmentDate={assessments[0]?.createdAt} />
       <Text style={styles.sectionTitle}>Avaliações Físicas</Text>
       {loading ? <ActivityIndicator size="large" color="#8b5cf6" style={styles.loading} /> : assessments.length === 0 ? (
         <EmptyState icon="analytics-outline" title="Nenhuma avaliação" subtitle="Peça ao seu instrutor para fazer sua avaliação física." />
