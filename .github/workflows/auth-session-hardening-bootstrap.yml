@@ -1,0 +1,61 @@
+name: Mobile Auth Session Hardening Bootstrap
+
+on:
+  push:
+    branches:
+      - fix/auth-and-session-hardening
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install baseline dependencies
+        run: npm ci
+
+      - name: Apply auth and session hardening
+        run: node scripts/apply-auth-hardening.mjs
+
+      - name: Install secure token storage and refresh lockfile
+        run: npm install expo-secure-store@~57.0.3 --save
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Permanent regression tests
+        run: npm test
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Reject legacy credentials and hardcoded backend
+        shell: bash
+        run: |
+          if grep -R -n -E 'joao\.silva@email\.com|aluno123|gym-saas-backend-t9ej\.onrender\.com' App.tsx src test; then
+            echo 'Legacy demo credential or hardcoded backend URL detected.'
+            exit 1
+          fi
+
+      - name: Commit hardened candidate
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/auth-session-hardening-bootstrap.yml scripts/apply-auth-hardening.mjs
+          git add App.tsx .gitignore .env.example package.json package-lock.json src test
+          git commit -m 'fix(auth): harden mobile tenant selection and session lifecycle'
+          git push origin HEAD:fix/auth-and-session-hardening
