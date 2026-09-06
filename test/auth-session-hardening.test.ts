@@ -1,20 +1,23 @@
 import fs from 'node:fs';
 
-const app = fs.readFileSync('App.tsx', 'utf8');
-const api = fs.readFileSync('src/api.ts', 'utf8');
-const session = fs.readFileSync('src/auth-session.ts', 'utf8');
-const config = fs.readFileSync('src/config.ts', 'utf8');
+const login = fs.readFileSync('src/screens/LoginScreen.tsx', 'utf8');
+const tenant = fs.readFileSync('src/screens/TenantSelectionScreen.tsx', 'utf8');
+const context = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
+const api = fs.readFileSync('src/services/api.ts', 'utf8');
+const session = fs.readFileSync('src/storage/token-storage.ts', 'utf8');
+const config = fs.readFileSync('src/config/env.ts', 'utf8');
 
 test('login starts without demo credentials', () => {
-  expect(app).toMatch(/useState\(''\)/);
-  expect(app).not.toMatch(/joao\.silva@email\.com|aluno123/);
+  expect(login).toMatch(/useState\(''\)/);
+  expect(login).not.toMatch(/joao\.silva@email\.com|aluno123/);
 });
 
 test('multi-tenant login selects tenant and resubmits gymId', () => {
-  expect(app).toMatch(/requires_tenant_selection/);
-  expect(app).toMatch(/data\.tenants/);
-  expect(app).toMatch(/selectedGymId/);
-  expect(app).toMatch(/gymId: selectedGymId/);
+  expect(context).toMatch(/requires_tenant_selection/);
+  expect(context).toMatch(/data\.tenants/);
+  expect(context).toMatch(/\.\.\.\(gymId \? \{ gymId \} : \{\}\)/);
+  expect(tenant).toMatch(/selectedGymId/);
+  expect(tenant).toMatch(/selectTenant\(selectedGymId\)/);
 });
 
 test('mobile session persists both access and refresh tokens in SecureStore', () => {
@@ -39,5 +42,5 @@ test('logout revokes backend refresh session before local cleanup', () => {
 
 test('backend URL is centralized in EXPO_PUBLIC_API_URL', () => {
   expect(config).toMatch(/EXPO_PUBLIC_API_URL/);
-  expect(app).not.toMatch(/gym-saas-backend-t9ej\.onrender\.com/);
+  expect(login).not.toMatch(/gym-saas-backend-t9ej\.onrender\.com/);
 });

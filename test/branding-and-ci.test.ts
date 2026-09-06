@@ -3,6 +3,8 @@ import fs from 'node:fs';
 const appConfig = JSON.parse(fs.readFileSync('app.json', 'utf8'));
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const app = fs.readFileSync('App.tsx', 'utf8');
+const login = fs.readFileSync('src/screens/LoginScreen.tsx', 'utf8');
+const profile = fs.readFileSync('src/screens/ProfileScreen.tsx', 'utf8');
 const workflow = fs.readFileSync('.github/workflows/mobile-ci.yml', 'utf8');
 
 test('Iron Fit is the canonical mobile brand and application identity', () => {
@@ -12,8 +14,15 @@ test('Iron Fit is the canonical mobile brand and application identity', () => {
   expect(appConfig.expo.android.package).toBe('com.ironfit.app');
   expect(appConfig.expo.ios.bundleIdentifier).toBe('com.ironfit.app');
   expect(pkg.name).toBe('iron-fit-mobile');
-  expect(app).toContain('Iron Fit');
-  expect(app).not.toContain('IronCloud');
+  expect(`${login}\n${profile}`).toContain('Iron Fit');
+  expect(`${app}\n${login}\n${profile}`).not.toContain('IronCloud');
+});
+
+test('App.tsx is a strict provider and navigator bootstrap', () => {
+  expect(app).toContain('SafeAreaProvider');
+  expect(app).toContain('AuthProvider');
+  expect(app).toContain('RootNavigator');
+  expect(app).not.toMatch(/fetch\(|api\(|useState|useEffect|TextInput|ScrollView/);
 });
 
 test('mobile quality scripts are canonical', () => {

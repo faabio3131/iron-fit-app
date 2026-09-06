@@ -1,27 +1,15 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
 
-jest.mock('@expo/vector-icons', () => ({
-  Ionicons: () => null,
-}));
-
-jest.mock('../src/auth-session', () => ({
-  restoreSession: jest.fn(async () => null),
-  saveSession: jest.fn(async () => undefined),
-}));
-
-jest.mock('../src/api', () => ({
-  api: jest.fn(),
-  logoutSession: jest.fn(async () => undefined),
-  setSessionInvalidatedHandler: jest.fn(),
+jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
+jest.mock('../src/context/AuthContext', () => ({
+  useAuth: () => ({ login: jest.fn() }),
 }));
 
 // eslint-disable-next-line import/first
-import App from '../App';
+import { LoginScreen } from '../src/screens/LoginScreen';
 
-test('login renders the canonical Iron Fit brand', async () => {
-  const view = render(<App />);
-  await waitFor(() => {
-    expect(view.getAllByText('Iron Fit').length).toBeGreaterThan(0);
-  }, { timeout: 5000 });
+test('login renders the canonical Iron Fit brand', () => {
+  const view = render(<LoginScreen />);
+  expect(view.getAllByText('Iron Fit').length).toBeGreaterThan(0);
 });
