@@ -34,8 +34,8 @@ jobs:
 
       - name: Install Expo-compatible test and lint toolchain
         run: |
-          npx expo install --dev jest jest-expo @types/jest @testing-library/react-native react-test-renderer eslint eslint-config-expo
-          npm install --save-dev @types/node
+          npx expo install --dev jest jest-expo @types/jest eslint eslint-config-expo
+          npm install --save-dev @testing-library/react-native@13.3.3 react-test-renderer@19.2.3 @types/node
 
       - name: Verify deterministic lockfile
         run: npm ci
