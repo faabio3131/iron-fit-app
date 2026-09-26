@@ -68,7 +68,8 @@ test('B6 student mobile surface reads the same canonical backend domain through 
   expect(schedules).toContain("api('/me/schedules')");
   expect(evolution).toContain("api('/me/assessments')");
   expect(financial).toContain("api('/me/charges')");
-  expect(profile).toContain("api('/me/profile')");
+  expect(auth).toContain("api('/me/profile')");
+  expect(profile).toContain('useAuth()');
 });
 
 test('B6 trial Web uses canonical public provisioning and never invents commercial authority', () => {
