@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { AccountSecurityPanel } from '../components/AccountSecurityPanel';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
-type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'schedule' | 'access' | 'financial' | 'entitlements' | 'creator';
+type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'schedule' | 'access' | 'financial' | 'security' | 'entitlements' | 'creator';
 type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; value: boolean | number | string[] | null; source?: string; reason?: string | null };
 type ModuleDefinition = { key: ModuleKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name']; roles?: string[]; entitlement?: string[] };
 
@@ -22,6 +23,7 @@ const modules: ModuleDefinition[] = [
   { key: 'schedule', label: 'Agenda', icon: 'calendar-outline', roles: staff },
   { key: 'access', label: 'Acessos', icon: 'key-outline', roles: operational },
   { key: 'financial', label: 'Financeiro', icon: 'wallet-outline', roles: operational },
+  { key: 'security', label: 'Segurança', icon: 'shield-checkmark-outline' },
   { key: 'entitlements', label: 'Plano e configurações', icon: 'layers-outline', roles: ['OWNER', 'MANAGER'] },
   { key: 'creator', label: 'Creator Network', icon: 'images-outline', roles: ['OWNER', 'MANAGER'], entitlement: ['content.external_youtube', 'content.iron_managed', 'content.tenant_private'] },
 ];
@@ -218,7 +220,7 @@ export function CommercialWebApp() {
     return <><Section title="Assinatura SaaS atual"><Data value={data.subscription ? [data.subscription] : []} /></Section><Section title="Capabilities e configurações" subtitle="Configurações só podem estreitar o plano efetivo; o backend permanece autoridade.">{features.map((feature: any) => <View key={feature.featureKey} style={styles.row}><Text style={styles.rowTitle}>{feature.featureKey}</Text><Text style={styles.muted}>Tipo: {feature.kind} · Efetivo: {JSON.stringify(feature.value)} · Fonte: {feature.source ?? '—'} {feature.reason ? `· ${feature.reason}` : ''}</Text>{feature.kind !== 'FEATURE' ? <Field label={feature.kind === 'LIMIT' ? 'Novo limite' : 'Policies separadas por vírgula'} value={configDraft[feature.featureKey] ?? ''} onChangeText={(value) => setConfigDraft((current) => ({ ...current, [feature.featureKey]: value }))} /> : null}<View style={styles.actions}><Button label={feature.kind === 'FEATURE' ? 'Desativar no tenant' : 'Aplicar configuração'} disabled={saving || feature.source === 'FAIL_CLOSED_DEFAULT'} onPress={() => { void configure(feature); }} /><Button secondary label="Herdar do plano" disabled={saving} onPress={() => void mutate(() => api(`/product-entitlements/tenant/configurations/${feature.featureKey}`, undefined, { method: 'DELETE' }))} /></View></View>)}</Section><Section title="Configurações persistidas"><Data value={data.configurations} /></Section></>;
   }
   function content() {
-    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'financial') return financialView(); if (active === 'entitlements') return entitlementsView(); return <><Section title="Creator Network"><Data value={data.overview ? [data.overview] : []} /></Section><Section title="Conteúdo"><Data value={data.items} /></Section><Section title="Analytics"><Data value={data.analytics ? [data.analytics] : []} /></Section></>;
+    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'financial') return financialView(); if (active === 'security') return <AccountSecurityPanel />; if (active === 'entitlements') return entitlementsView(); return <><Section title="Creator Network"><Data value={data.overview ? [data.overview] : []} /></Section><Section title="Conteúdo"><Data value={data.items} /></Section><Section title="Analytics"><Data value={data.analytics ? [data.analytics] : []} /></Section></>;
   }
 
   const topBar = <View style={styles.top}><View><Text style={styles.brand}>IRON</Text><Text style={styles.muted}>Gestão da academia</Text></View><View style={styles.actions}><Text style={styles.muted}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;

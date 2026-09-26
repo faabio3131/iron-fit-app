@@ -84,11 +84,11 @@ test('visitor creates trial, authenticates and reaches tenant-scoped commercial 
   fireEvent.changeText(view.getByTestId('trial-name'), 'Owner Web');
   fireEvent.changeText(view.getByTestId('trial-gym-name'), 'Academia Web');
   fireEvent.changeText(view.getByTestId('trial-email'), 'OWNER@EXAMPLE.COM');
-  fireEvent.changeText(view.getByTestId('trial-password'), 'senha-segura');
+  fireEvent.changeText(view.getByTestId('trial-password'), 'Strong-Pass-2026!');
   fireEvent.press(view.getByTestId('trial-submit'));
 
   await waitFor(() => expect(view.getByTestId('login-notice')).toBeTruthy());
-  fireEvent.changeText(view.getByTestId('login-password'), 'senha-segura');
+  fireEvent.changeText(view.getByTestId('login-password'), 'Strong-Pass-2026!');
   fireEvent.press(view.getByTestId('login-submit'));
 
   await waitFor(() => expect(view.getByTestId('commercial-web-app')).toBeTruthy());

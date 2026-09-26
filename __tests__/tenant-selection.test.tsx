@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
-const mockSelectTenant = jest.fn(async () => undefined);
+const mockSelectTenant = jest.fn(async () => ({ requiresTenantSelection: false, requiresMfa: false }));
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('../src/context/AuthContext', () => ({
@@ -28,5 +28,7 @@ test('renders tenants and dispatches the selected gymId', async () => {
   expect(view.getByText('Iron Fit Norte')).toBeTruthy();
   fireEvent.press(view.getByTestId('tenant-gym-b'));
   fireEvent.press(view.getByTestId('tenant-confirm'));
-  await waitFor(() => expect(mockSelectTenant).toHaveBeenCalledWith('gym-b'));
+  await waitFor(() =>
+    expect(mockSelectTenant).toHaveBeenCalledWith('gym-b', undefined, undefined),
+  );
 });

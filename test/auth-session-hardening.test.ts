@@ -12,12 +12,14 @@ test('login starts without demo credentials', () => {
   expect(login).not.toMatch(/joao\.silva@email\.com|aluno123/);
 });
 
-test('multi-tenant login selects tenant and resubmits gymId', () => {
+test('multi-tenant login selects tenant and can complete MFA without duplicating client authority', () => {
   expect(context).toMatch(/requires_tenant_selection/);
   expect(context).toMatch(/data\.tenants/);
   expect(context).toMatch(/\.\.\.\(gymId \? \{ gymId \} : \{\}\)/);
   expect(tenant).toMatch(/selectedGymId/);
-  expect(tenant).toMatch(/selectTenant\(selectedGymId\)/);
+  expect(tenant).toMatch(/selectTenant\([\s\S]*selectedGymId/);
+  expect(tenant).toMatch(/tenant-mfa-code/);
+  expect(tenant).toMatch(/tenant-recovery-code/);
 });
 
 test('mobile session persists both access and refresh tokens in SecureStore', () => {
@@ -43,4 +45,19 @@ test('logout revokes backend refresh session before local cleanup', () => {
 test('backend URL is centralized in EXPO_PUBLIC_API_URL', () => {
   expect(config).toMatch(/EXPO_PUBLIC_API_URL/);
   expect(login).not.toMatch(/gym-saas-backend-t9ej\.onrender\.com/);
+});
+
+test('commercial identity UI exposes MFA, recovery and account security through backend endpoints', () => {
+  const security = fs.readFileSync('src/components/AccountSecurityPanel.tsx', 'utf8');
+  const recovery = fs.readFileSync('src/screens/PasswordRecoveryScreen.tsx', 'utf8');
+  expect(login).toMatch(/login-mfa-code/);
+  expect(login).toMatch(/login-recovery-code/);
+  expect(recovery).toMatch(/password\/reset\/request/);
+  expect(recovery).toMatch(/password\/reset\/confirm/);
+  expect(security).toMatch(/auth\/sessions/);
+  expect(security).toMatch(/auth\/mfa\/setup/);
+  expect(security).toMatch(/auth\/mfa\/confirm/);
+  expect(security).toMatch(/auth\/password\/change/);
+  expect(security).toMatch(/auth\/email\/change\/request/);
+  expect(security).not.toMatch(/localStorage/);
 });

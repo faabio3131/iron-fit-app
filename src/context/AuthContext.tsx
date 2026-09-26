@@ -17,9 +17,13 @@ type PendingTenantSelection = {
   email: string;
   password: string;
   tenants: TenantOption[];
+  requiresMfa: boolean;
 };
 
-type LoginResult = { requiresTenantSelection: boolean };
+export type LoginResult = {
+  requiresTenantSelection: boolean;
+  requiresMfa: boolean;
+};
 
 type AuthContextValue = {
   sessionReady: boolean;
@@ -27,10 +31,21 @@ type AuthContextValue = {
   profile: any;
   activeTenantId: string | null;
   pendingTenantSelection: PendingTenantSelection | null;
-  login: (email: string, password: string, gymId?: string) => Promise<LoginResult>;
-  selectTenant: (gymId: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    gymId?: string,
+    mfaCode?: string,
+    recoveryCode?: string,
+  ) => Promise<LoginResult>;
+  selectTenant: (
+    gymId: string,
+    mfaCode?: string,
+    recoveryCode?: string,
+  ) => Promise<LoginResult>;
   cancelTenantSelection: () => void;
   logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -53,7 +68,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(null);
-  const [pendingTenantSelection, setPendingTenantSelection] = useState<PendingTenantSelection | null>(null);
+  const [pendingTenantSelection, setPendingTenantSelection] =
+    useState<PendingTenantSelection | null>(null);
 
   const clearAuthState = useCallback(() => {
     setSession(null);
@@ -75,20 +91,28 @@ export function AuthProvider({ children }: PropsWithChildren) {
             ...studentProfile,
             roles: authProfile.roles,
             permissions: authProfile.permissions,
-            activeGymId: authProfile.activeGymId ?? authProfile.gymId ?? studentProfile?.gym?.id,
-            gymId: authProfile.gymId ?? authProfile.activeGymId ?? studentProfile?.gym?.id,
+            activeGymId:
+              authProfile.activeGymId ??
+              authProfile.gymId ??
+              studentProfile?.gym?.id,
+            gymId:
+              authProfile.gymId ??
+              authProfile.activeGymId ??
+              studentProfile?.gym?.id,
             isSuperAdmin: authProfile.isSuperAdmin,
             scope: authProfile.scope,
+            mfaEnabled: authProfile.mfaEnabled,
+            emailVerified: authProfile.emailVerified,
           };
         } catch {
-          // A identidade JWT continua sendo a autoridade; o enriquecimento de aluno é opcional.
+          // A identidade JWT continua sendo a autoridade; enriquecimento de aluno é opcional.
         }
       }
 
       setProfile(nextProfile);
       setActiveTenantId(tenantIdFrom(nextProfile));
     } catch {
-      // 401 é tratado pelo cliente HTTP. Outras falhas não devem inventar perfil local.
+      // 401 é tratado pelo cliente HTTP. Falhas não inventam perfil local.
     }
   }, []);
 
@@ -114,48 +138,101 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, [clearAuthState, refreshProfile]);
 
-  const login = useCallback(async (email: string, password: string, gymId?: string): Promise<LoginResult> => {
-    const normalizedEmail = email.trim();
-    if (!normalizedEmail || !password) throw new Error('Informe email e senha.');
+  const login = useCallback(
+    async (
+      email: string,
+      password: string,
+      gymId?: string,
+      mfaCode?: string,
+      recoveryCode?: string,
+    ): Promise<LoginResult> => {
+      const normalizedEmail = email.trim();
+      if (!normalizedEmail || !password) throw new Error('Informe email e senha.');
 
-    const data = await api('/auth/login', undefined, {
-      method: 'POST',
-      auth: false,
-      retryOnUnauthorized: false,
-      body: JSON.stringify({
-        email: normalizedEmail,
-        password,
-        ...(gymId ? { gymId } : {}),
-      }),
-    });
+      const data = await api('/auth/login', undefined, {
+        method: 'POST',
+        auth: false,
+        retryOnUnauthorized: false,
+        body: JSON.stringify({
+          email: normalizedEmail,
+          password,
+          ...(gymId ? { gymId } : {}),
+          ...(mfaCode?.trim() ? { mfaCode: mfaCode.trim() } : {}),
+          ...(recoveryCode?.trim()
+            ? { recoveryCode: recoveryCode.trim().toUpperCase() }
+            : {}),
+        }),
+      });
 
-    if (data?.requires_tenant_selection === true) {
-      const tenants = Array.isArray(data.tenants)
-        ? data.tenants.filter((tenant: any) => tenant && typeof tenant.id === 'string' && typeof tenant.name === 'string')
-        : [];
-      if (tenants.length === 0) throw new Error('Nenhuma unidade disponível para esta conta.');
-      setPendingTenantSelection({ email: normalizedEmail, password, tenants });
-      return { requiresTenantSelection: true };
-    }
+      if (data?.requires_tenant_selection === true) {
+        const tenants = Array.isArray(data.tenants)
+          ? data.tenants.filter(
+              (tenant: any) =>
+                tenant &&
+                typeof tenant.id === 'string' &&
+                typeof tenant.name === 'string',
+            )
+          : [];
+        if (tenants.length === 0) {
+          throw new Error('Nenhuma unidade disponível para esta conta.');
+        }
+        setPendingTenantSelection({
+          email: normalizedEmail,
+          password,
+          tenants,
+          requiresMfa: data?.requires_mfa === true,
+        });
+        return {
+          requiresTenantSelection: true,
+          requiresMfa: data?.requires_mfa === true,
+        };
+      }
 
-    if (typeof data?.access_token !== 'string' || typeof data?.refresh_token !== 'string') {
-      throw new Error('Resposta de autenticação incompleta.');
-    }
+      if (data?.requires_mfa === true) {
+        return { requiresTenantSelection: false, requiresMfa: true };
+      }
 
-    const nextSession = { accessToken: data.access_token, refreshToken: data.refresh_token };
-    await saveSession(nextSession);
-    setSession(nextSession);
-    setPendingTenantSelection(null);
-    setProfile(data?.user ?? null);
-    setActiveTenantId(tenantIdFrom(data?.user) ?? gymId ?? null);
-    await refreshProfile();
-    return { requiresTenantSelection: false };
-  }, [refreshProfile]);
+      if (
+        typeof data?.access_token !== 'string' ||
+        typeof data?.refresh_token !== 'string'
+      ) {
+        throw new Error('Resposta de autenticação incompleta.');
+      }
 
-  const selectTenant = useCallback(async (gymId: string) => {
-    if (!pendingTenantSelection) throw new Error('Seleção de unidade expirada. Faça login novamente.');
-    await login(pendingTenantSelection.email, pendingTenantSelection.password, gymId);
-  }, [login, pendingTenantSelection]);
+      const nextSession = {
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+      };
+      await saveSession(nextSession);
+      setSession(nextSession);
+      setPendingTenantSelection(null);
+      setProfile(data?.user ?? null);
+      setActiveTenantId(tenantIdFrom(data?.user) ?? gymId ?? null);
+      await refreshProfile();
+      return { requiresTenantSelection: false, requiresMfa: false };
+    },
+    [refreshProfile],
+  );
+
+  const selectTenant = useCallback(
+    async (
+      gymId: string,
+      mfaCode?: string,
+      recoveryCode?: string,
+    ): Promise<LoginResult> => {
+      if (!pendingTenantSelection) {
+        throw new Error('Seleção de unidade expirada. Faça login novamente.');
+      }
+      return login(
+        pendingTenantSelection.email,
+        pendingTenantSelection.password,
+        gymId,
+        mfaCode,
+        recoveryCode,
+      );
+    },
+    [login, pendingTenantSelection],
+  );
 
   const cancelTenantSelection = useCallback(() => {
     setPendingTenantSelection(null);
@@ -169,27 +246,32 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, [clearAuthState]);
 
-  const value = useMemo<AuthContextValue>(() => ({
-    sessionReady,
-    session,
-    profile,
-    activeTenantId,
-    pendingTenantSelection,
-    login,
-    selectTenant,
-    cancelTenantSelection,
-    logout,
-  }), [
-    activeTenantId,
-    cancelTenantSelection,
-    login,
-    logout,
-    pendingTenantSelection,
-    profile,
-    selectTenant,
-    session,
-    sessionReady,
-  ]);
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      sessionReady,
+      session,
+      profile,
+      activeTenantId,
+      pendingTenantSelection,
+      login,
+      selectTenant,
+      cancelTenantSelection,
+      logout,
+      refreshProfile,
+    }),
+    [
+      activeTenantId,
+      cancelTenantSelection,
+      login,
+      logout,
+      pendingTenantSelection,
+      profile,
+      refreshProfile,
+      selectTenant,
+      session,
+      sessionReady,
+    ],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

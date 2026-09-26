@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { EvolutionScreen } from '../screens/EvolutionScreen';
 import { FinancialScreen } from '../screens/FinancialScreen';
 import { LoginScreen } from '../screens/LoginScreen';
+import { PasswordRecoveryScreen } from '../screens/PasswordRecoveryScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SchedulesScreen } from '../screens/SchedulesScreen';
 import { TenantSelectionScreen } from '../screens/TenantSelectionScreen';
@@ -21,13 +22,21 @@ function isStudentProfile(profile: any) {
 export function RootNavigator() {
   const { sessionReady, session, profile, pendingTenantSelection } = useAuth();
   const [tab, setTab] = useState<Tab>('treino');
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   if (!sessionReady) {
     return <View style={styles.boot}><StatusBar barStyle="light-content" backgroundColor="#0a0e1a" /><ActivityIndicator size="large" color="#8b5cf6" /></View>;
   }
 
   if (!session && pendingTenantSelection) return <TenantSelectionScreen />;
-  if (!session) return Platform.OS === 'web' ? <WebAuthEntry /> : <LoginScreen />;
+  if (!session && Platform.OS !== 'web' && recoveryMode) {
+    return <PasswordRecoveryScreen onBack={() => setRecoveryMode(false)} />;
+  }
+  if (!session) {
+    return Platform.OS === 'web'
+      ? <WebAuthEntry />
+      : <LoginScreen onForgotPassword={() => setRecoveryMode(true)} />;
+  }
 
   if (Platform.OS === 'web' && profile && !isStudentProfile(profile)) {
     return <CommercialWebApp />;
