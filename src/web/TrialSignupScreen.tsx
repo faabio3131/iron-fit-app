@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { api } from '../services/api';
+import { PASSWORD_POLICY_TEXT, strongPassword } from '../security/password-policy';
 
 function uuidV4() {
   const runtimeCrypto = (globalThis as typeof globalThis & { crypto?: { randomUUID?: () => string } }).crypto;
@@ -31,7 +32,7 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const disabled = loading || name.trim().length < 2 || gymName.trim().length < 2 || !email.trim() || password.length < 6 || !timezone.trim();
+  const disabled = loading || name.trim().length < 2 || gymName.trim().length < 2 || !email.trim() || !strongPassword(password) || !timezone.trim();
 
   async function submit() {
     if (disabled) return;
@@ -72,6 +73,7 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
         <TextInput testID="trial-email" style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="E-mail" placeholderTextColor="#64748b" />
         <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Telefone (opcional)" placeholderTextColor="#64748b" />
         <TextInput testID="trial-password" style={styles.input} value={password} onChangeText={setPassword} secureTextEntry placeholder="Senha" placeholderTextColor="#64748b" />
+        <Text style={styles.policy}>{PASSWORD_POLICY_TEXT}</Text>
         <TextInput style={styles.input} value={timezone} onChangeText={setTimezone} autoCapitalize="none" placeholder="Timezone IANA" placeholderTextColor="#64748b" />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -94,6 +96,7 @@ const styles = StyleSheet.create({
   title: { color: '#f8fafc', fontSize: 30, fontWeight: '900', marginTop: 8 },
   subtitle: { color: '#94a3b8', fontSize: 14, lineHeight: 21, marginTop: 7, marginBottom: 20 },
   input: { color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 11, paddingHorizontal: 13, paddingVertical: 13, fontSize: 15, marginBottom: 10 },
+  policy: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginBottom: 10 },
   error: { color: '#fca5a5', fontSize: 13, marginBottom: 10 },
   primary: { backgroundColor: '#7c3aed', borderRadius: 11, minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   primaryText: { color: '#fff', fontWeight: '800', fontSize: 15 },

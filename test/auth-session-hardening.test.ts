@@ -44,3 +44,6 @@ test('backend URL is centralized in EXPO_PUBLIC_API_URL', () => {
   expect(config).toMatch(/EXPO_PUBLIC_API_URL/);
   expect(login).not.toMatch(/gym-saas-backend-t9ej\.onrender\.com/);
 });
+
+
+test('commercial identity UI exposes MFA, recovery and account security through backend endpoints', () => {\n  const security = fs.readFileSync('src/components/AccountSecurityPanel.tsx', 'utf8');\n  const recovery = fs.readFileSync('src/screens/PasswordRecoveryScreen.tsx', 'utf8');\n  expect(login).toMatch(/login-mfa-code/);\n  expect(login).toMatch(/login-recovery-code/);\n  expect(recovery).toMatch(/password\\/reset\\/request/);\n  expect(recovery).toMatch(/password\\/reset\\/confirm/);\n  expect(security).toMatch(/auth\\/sessions/);\n  expect(security).toMatch(/auth\\/mfa\\/setup/);\n  expect(security).toMatch(/auth\\/mfa\\/confirm/);\n  expect(security).toMatch(/auth\\/password\\/change/);\n  expect(security).toMatch(/auth\\/email\\/change\\/request/);\n  expect(security).not.toMatch(/localStorage/);\n});\n
