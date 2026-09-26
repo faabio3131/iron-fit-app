@@ -21,7 +21,7 @@ function browserTimezone() {
 }
 
 export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => void; onCreated: (email: string, trialEndsAt?: string) => void }) {
-  const requestId = useMemo(uuidV4, []);
+  const requestId = useMemo(() => uuidV4(), []);
   const [name, setName] = useState('');
   const [gymName, setGymName] = useState('');
   const [email, setEmail] = useState('');

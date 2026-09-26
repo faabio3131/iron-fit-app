@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,10 +15,6 @@ export function LoginScreen({ initialEmail = '', notice = '', onStartTrial }: Lo
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (initialEmail) setEmail(initialEmail);
-  }, [initialEmail]);
 
   async function handleLogin() {
     if (!email.trim() || !password) {

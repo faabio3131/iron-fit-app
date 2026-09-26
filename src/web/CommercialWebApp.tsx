@@ -134,8 +134,18 @@ export function CommercialWebApp() {
     } catch (reason) { setError(message(reason)); setData({}); } finally { setLoading(false); }
   }, [activeTenantId, can, enabled, selectedStudent, subscription]);
 
-  useEffect(() => { loadShell().catch((reason) => setError(message(reason))); }, [loadShell]);
-  useEffect(() => { void loadModule(active); }, [active, loadModule]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void loadShell().catch((reason) => setError(message(reason)));
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadShell]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void loadModule(active);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [active, loadModule]);
   async function mutate(operation: () => Promise<unknown>, reset?: () => void) {
     setSaving(true); setError('');
     try { await operation(); reset?.(); await loadShell(); await loadModule(active); } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
