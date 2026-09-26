@@ -73,6 +73,7 @@ export function CommercialWebApp() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [shellReady, setShellReady] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedFinancialStudent, setSelectedFinancialStudent] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
@@ -93,20 +94,24 @@ export function CommercialWebApp() {
   const entitlementMap = useMemo(() => new Map(entitlements.map((item) => [item.featureKey, item])), [entitlements]);
   const enabled = useCallback((key: string) => entitlementMap.get(key)?.value === true, [entitlementMap]);
   const allowed = useCallback((item: ModuleDefinition) => (!item.roles || item.roles.some((role) => roles.includes(role))) && (!item.entitlement || item.entitlement.some(enabled)), [enabled, roles]);
-  const visible = useMemo(() => modules.filter(allowed), [allowed]);
   const can = useCallback((...targets: string[]) => targets.some((role) => roles.includes(role)), [roles]);
+  const blocked = shellReady && (!subscription || trial?.status === 'EXPIRED' || trial?.status === 'INACTIVE' || subscription?.status === 'SUSPENDED');
+  const visible = useMemo(() => blocked ? [] : modules.filter(allowed), [allowed, blocked]);
 
   const loadShell = useCallback(async () => {
+    setShellReady(false);
+    setError('');
     const [features, current, trialState, onboardingState] = await Promise.all([
-      api('/product-entitlements/tenant/features').catch(() => []),
-      api('/product-entitlements/tenant/current').catch(() => null),
-      api('/commercial/trial/status').catch(() => null),
-      can('OWNER', 'MANAGER') ? api('/commercial/onboarding').catch(() => null) : Promise.resolve(null),
+      api('/product-entitlements/tenant/features'),
+      api('/product-entitlements/tenant/current'),
+      api('/commercial/trial/status'),
+      can('OWNER', 'MANAGER') ? api('/commercial/onboarding') : Promise.resolve(null),
     ]);
     setEntitlements(Array.isArray(features) ? features : []);
     setSubscription(current);
     setTrial(trialState);
     setOnboarding(onboardingState);
+    setShellReady(true);
   }, [can]);
 
   const loadModule = useCallback(async (key: ModuleKey) => {
@@ -136,19 +141,20 @@ export function CommercialWebApp() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      void loadShell().catch((reason) => setError(message(reason)));
+      void loadShell().catch((reason) => { setError(message(reason)); setLoading(false); });
     }, 0);
     return () => clearTimeout(timer);
   }, [loadShell]);
   useEffect(() => {
+    if (!shellReady || blocked) return undefined;
     const timer = setTimeout(() => {
       void loadModule(active);
     }, 0);
     return () => clearTimeout(timer);
-  }, [active, loadModule]);
+  }, [active, blocked, loadModule, shellReady]);
   async function mutate(operation: () => Promise<unknown>, reset?: () => void) {
     setSaving(true); setError('');
-    try { await operation(); reset?.(); await loadShell(); await loadModule(active); } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
+    try { await operation(); reset?.(); await loadShell(); } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
   }
 
   function overview() {
@@ -200,8 +206,10 @@ export function CommercialWebApp() {
     if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return <Section title="Histórico de acessos"><Data value={data.events} /></Section>; if (active === 'financial') return financialView(); if (active === 'entitlements') return entitlementsView(); return <><Section title="Creator Network"><Data value={data.overview ? [data.overview] : []} /></Section><Section title="Conteúdo"><Data value={data.items} /></Section><Section title="Analytics"><Data value={data.analytics ? [data.analytics] : []} /></Section></>;
   }
 
-  const blocked = trial?.status === 'EXPIRED' || trial?.status === 'INACTIVE' || subscription?.status === 'SUSPENDED';
-  return <View style={styles.app} testID="commercial-web-app"><View style={styles.top}><View><Text style={styles.brand}>IRON</Text><Text style={styles.muted}>Gestão da academia</Text></View><View style={styles.actions}><Text style={styles.muted}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>{blocked ? <View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Trial expirado, assinatura inativa ou suspensa. Recursos protegidos permanecem fail-closed.</Text></View> : null}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#ddd6fe' : '#94a3b8'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>Tenant derivado da sessão autenticada · {activeTenantId ?? 'sem tenant ativo'}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading ? <View style={styles.loading}><ActivityIndicator color="#8b5cf6" /><Text style={styles.muted}>Carregando dados canônicos…</Text></View> : content()}</ScrollView></View></View>;
+  const topBar = <View style={styles.top}><View><Text style={styles.brand}>IRON</Text><Text style={styles.muted}>Gestão da academia</Text></View><View style={styles.actions}><Text style={styles.muted}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
+  if (!shellReady) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={styles.contentInner}>{error ? <Text style={styles.error}>{error}</Text> : <View style={styles.loading}><ActivityIndicator color="#8b5cf6" /><Text style={styles.muted}>Validando assinatura, trial e capabilities…</Text></View>}</View></View>;
+  if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Trial expirado, assinatura inativa/ausente ou suspensa. A superfície operacional permanece fail-closed.</Text></View><Section title="Estado comercial"><Data value={[{ trialStatus: trial?.status ?? null, subscriptionStatus: subscription?.status ?? null, subscriptionId: subscription?.id ?? null }]} /></Section></View></View>;
+  return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#ddd6fe' : '#94a3b8'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>Tenant derivado da sessão autenticada · {activeTenantId ?? 'sem tenant ativo'}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading ? <View style={styles.loading}><ActivityIndicator color="#8b5cf6" /><Text style={styles.muted}>Carregando dados canônicos…</Text></View> : content()}</ScrollView></View></View>;
 }
 
 const styles = StyleSheet.create({

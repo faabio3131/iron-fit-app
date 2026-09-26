@@ -1,0 +1,29 @@
+# IRON — Web Commercial Parity
+
+Status: CANDIDATE — implementation in certification.
+
+## Architecture
+
+The existing `iron-fit-app` is the canonical IRON client and already supports Expo + React Native Web. The commercial Web surface evolves in that application rather than creating parallel authentication, tenant state, or business authority.
+
+The backend remains authoritative for identity, active tenant, RBAC, trial status, SaaS subscription, Product/Plan/Feature entitlements, onboarding order, and domain mutations. The browser does not submit arbitrary `gymId` for tenant-scoped operations.
+
+## Covered surface
+
+Public Web covers trial signup and canonical login. Authenticated Web covers academy/dashboard, onboarding, students, team and roles/permissions visibility, equipment, exercises, assessments, workouts and governed AI candidate review, schedule, access history, academy/student financial operations, tenant entitlements/configuration and Creator Network reads when entitled.
+
+## Commercial fail-closed behavior
+
+Operational navigation is rendered only after successful resolution of the tenant entitlement set, current SaaS subscription, trial status and OWNER/MANAGER onboarding state. Errors are surfaced rather than converted to empty success states. Missing/inactive subscription, expired/inactive trial or suspended subscription removes the operational surface.
+
+## Session
+
+Mobile remains on Expo SecureStore. Web uses browser `sessionStorage`, never `localStorage`, so a session survives reload within the browser session without becoming durable local storage. Stronger identity/session controls remain a later identity-security gate; this is not a production-security claim.
+
+## Boundary
+
+This block does not implement FM-to-academy pricing, checkout, recurring billing, gateway homologation, dunning, proration, refund or commercial reactivation. Student financial operations are a separate academy-to-student domain.
+
+## Certification
+
+Required gates: typecheck, lint, Jest regression and Web E2E, Expo Doctor, dependency audit at high severity, release/build checks, Android production export, Web production export, branch CI, PR CI/mergeability, and post-merge main CI.
