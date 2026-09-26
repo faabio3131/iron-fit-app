@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const source = (path) => readFile(path, 'utf8');
+const source = (path: string) => readFile(path, 'utf8');
 
 test('B5 Web runtime exports the existing Expo app instead of creating a parallel frontend', async () => {
   const docker = await source('Dockerfile.web');
