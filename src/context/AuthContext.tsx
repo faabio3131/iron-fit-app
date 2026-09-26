@@ -40,6 +40,10 @@ function tenantIdFrom(value: any): string | null {
   return typeof candidate === 'string' && candidate ? candidate : null;
 }
 
+function hasStudentRole(profile: any): boolean {
+  return Array.isArray(profile?.roles) && profile.roles.includes('STUDENT');
+}
+
 export function SafeAreaProvider({ children }: PropsWithChildren) {
   return <SafeAreaView style={styles.safeArea}>{children}</SafeAreaView>;
 }
@@ -60,11 +64,31 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const refreshProfile = useCallback(async () => {
     try {
-      const nextProfile = await api('/me/profile');
+      const authProfile = await api('/auth/me');
+      let nextProfile = authProfile;
+
+      if (hasStudentRole(authProfile)) {
+        try {
+          const studentProfile = await api('/me/profile');
+          nextProfile = {
+            ...authProfile,
+            ...studentProfile,
+            roles: authProfile.roles,
+            permissions: authProfile.permissions,
+            activeGymId: authProfile.activeGymId ?? authProfile.gymId ?? studentProfile?.gym?.id,
+            gymId: authProfile.gymId ?? authProfile.activeGymId ?? studentProfile?.gym?.id,
+            isSuperAdmin: authProfile.isSuperAdmin,
+            scope: authProfile.scope,
+          };
+        } catch {
+          // A identidade JWT continua sendo a autoridade; o enriquecimento de aluno é opcional.
+        }
+      }
+
       setProfile(nextProfile);
       setActiveTenantId(tenantIdFrom(nextProfile));
     } catch {
-      // A falha de perfil não invalida uma sessão ainda válida; 401 é tratado pelo cliente HTTP.
+      // 401 é tratado pelo cliente HTTP. Outras falhas não devem inventar perfil local.
     }
   }, []);
 

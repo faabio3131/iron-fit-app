@@ -1,4 +1,4 @@
-name: Mobile CI
+name: Mobile + Web CI
 
 on:
   push:
@@ -6,6 +6,8 @@ on:
       - main
       - 'refactor/**'
       - 'feat/**'
+      - 'fix/**'
+      - 'stabilization/**'
   pull_request:
     branches:
       - main
@@ -27,6 +29,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Dependency audit (high severity gate)
+        run: npm audit --audit-level=high
 
       - name: Typecheck
         run: npm run typecheck
@@ -50,7 +55,7 @@ jobs:
           rm -rf dist expo-export.log
           npx expo export --platform android --output-dir dist 2>&1 | tee expo-export.log
 
-      - name: Verify production bundle integrity
+      - name: Verify Android production bundle integrity
         run: |
           test -s dist/metadata.json
           BUNDLE="$(find dist/_expo/static/js/android -type f -name '*.hbc' -size +100k -print -quit)"
@@ -58,11 +63,29 @@ jobs:
           grep -q 'Ionicons.ttf' expo-export.log
           grep -q 'Android Bundled' expo-export.log
           if grep -Eqi 'Unable to resolve|Cannot find module|Module not found|error:.*asset' expo-export.log; then
-            echo 'Critical module/asset resolution error found in production export.'
+            echo 'Critical module/asset resolution error found in Android production export.'
             exit 1
           fi
           if strings "$BUNDLE" | grep -E '@testing-library/react-native|jest-expo|eslint-config-expo|__tests__/' ; then
-            echo 'Development/test-only module marker found in production bundle.'
+            echo 'Development/test-only module marker found in Android production bundle.'
             exit 1
           fi
-          echo "Certified production bundle: $BUNDLE"
+          echo "Certified Android production bundle: $BUNDLE"
+
+      - name: Export Web production bundle
+        env:
+          NODE_ENV: production
+        run: |
+          rm -rf dist-web expo-web-export.log
+          npx expo export --platform web --output-dir dist-web 2>&1 | tee expo-web-export.log
+
+      - name: Verify Web production bundle integrity
+        run: |
+          test -s dist-web/index.html
+          find dist-web -type f -name '*.js' -size +20k -print -quit | grep -q .
+          grep -q 'Web Bundled' expo-web-export.log
+          if grep -Eqi 'Unable to resolve|Cannot find module|Module not found|error:.*asset' expo-web-export.log; then
+            echo 'Critical module/asset resolution error found in Web production export.'
+            exit 1
+          fi
+          echo 'Certified Web production export.'
