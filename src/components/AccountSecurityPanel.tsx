@@ -62,7 +62,10 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
   }, []);
 
   useEffect(() => {
-    void loadSessions();
+    const timer = setTimeout(() => {
+      void loadSessions();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [loadSessions]);
 
   function stepUpBody() {
