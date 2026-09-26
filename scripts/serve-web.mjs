@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { createReadStream, existsSync, statSync } from 'node:fs';
-import { extname, join, normalize } from 'node:path';
+import { extname, join } from 'node:path';
 
 const root = join(process.cwd(), 'dist-web');
 const port = Number(process.env.PORT ?? '3000');
