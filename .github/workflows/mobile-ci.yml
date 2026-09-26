@@ -89,3 +89,10 @@ jobs:
             exit 1
           fi
           echo 'Certified Web production export.'
+
+      - name: Build production Web container image
+        run: |
+          docker build --pull \
+            -f Dockerfile.web \
+            --build-arg EXPO_PUBLIC_API_URL=https://example.invalid/api/v1 \
+            -t iron-fit-web-ci:${{ github.sha }} .
