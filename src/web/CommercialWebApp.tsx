@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { AccountSecurityPanel } from '../components/AccountSecurityPanel';
 import { useAuth } from '../context/AuthContext';
+import { strongPassword } from '../security/password-policy';
 import { api } from '../services/api';
 
 type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'schedule' | 'access' | 'financial' | 'security' | 'entitlements' | 'creator';
@@ -82,7 +83,7 @@ export function CommercialWebApp() {
   const [student, setStudent] = useState({ name: '', email: '', phone: '' });
   const [lastStudentInvite, setLastStudentInvite] = useState<any>(null);
   const [member, setMember] = useState({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' });
-  const [equipment, setEquipment] = useState({ name: '', type: '' });
+  const [selectedCatalogEquipment, setSelectedCatalogEquipment] = useState('');
   const [exercise, setExercise] = useState({ name: '', muscleGroup: '', level: '' });
   const [assessment, setAssessment] = useState({ weight: '', height: '', bodyFatPercent: '', notes: '' });
   const [schedule, setSchedule] = useState({ weekday: '1', startTime: '08:00', endTime: '09:00', capacity: '10' });
@@ -179,10 +180,38 @@ export function CommercialWebApp() {
     return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Cadastrar aluno"><View style={styles.form}><Field label="Nome" value={student.name} onChangeText={(name) => setStudent((v) => ({ ...v, name }))} /><Field label="E-mail" value={student.email} onChangeText={(email) => setStudent((v) => ({ ...v, email }))} /><Field label="Telefone" value={student.phone} onChangeText={(phone) => setStudent((v) => ({ ...v, phone }))} /></View><Button testID="student-create" label="Cadastrar aluno" disabled={saving || !student.name.trim() || !student.email.trim()} onPress={() => void mutate(async () => { const created = await api('/students', undefined, { method: 'POST', body: JSON.stringify({ name: student.name.trim(), email: student.email.trim().toLowerCase(), ...(student.phone.trim() ? { phone: student.phone.trim() } : {}) }) }); setLastStudentInvite(created?.onboarding?.required ? created.onboarding : null); return created; }, () => setStudent({ name: '', email: '', phone: '' }))} />{lastStudentInvite ? <View style={styles.invite}><Text style={styles.rowTitle}>Convite de ativação — exibir uma vez</Text><Text selectable style={styles.json}>{lastStudentInvite.token}</Text><Text style={styles.muted}>Expira em: {String(lastStudentInvite.expiresAt ?? '—')}</Text></View> : null}</Section> : null}<Section title="Alunos"><Data value={data.students} /></Section></>;
   }
   function teamView() {
-    return <><Section title="Adicionar membro"><View style={styles.form}><Field label="Nome" value={member.name} onChangeText={(name) => setMember((v) => ({ ...v, name }))} /><Field label="E-mail" value={member.email} onChangeText={(email) => setMember((v) => ({ ...v, email }))} /><Field label="Senha inicial" value={member.password} secureTextEntry onChangeText={(password) => setMember((v) => ({ ...v, password }))} /><Field label="Role" value={member.roleName} onChangeText={(roleName) => setMember((v) => ({ ...v, roleName: roleName.toUpperCase() }))} /></View><Button label="Adicionar à equipe" disabled={saving || member.password.length < 6 || !member.name.trim() || !member.email.trim()} onPress={() => void mutate(() => api('/users', undefined, { method: 'POST', body: JSON.stringify({ name: member.name.trim(), email: member.email.trim().toLowerCase(), password: member.password, roleName: member.roleName.trim(), ...(member.phone.trim() ? { phone: member.phone.trim() } : {}) }) }), () => setMember({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' }))} /></Section><Section title="Equipe"><Data value={data.users} /></Section><Section title="Permissões da sessão"><Data value={permissions.map((name) => ({ name }))} /></Section></>;
+    return <><Section title="Adicionar membro"><View style={styles.form}><Field label="Nome" value={member.name} onChangeText={(name) => setMember((v) => ({ ...v, name }))} /><Field label="E-mail" value={member.email} onChangeText={(email) => setMember((v) => ({ ...v, email }))} /><Field label="Senha inicial" value={member.password} secureTextEntry onChangeText={(password) => setMember((v) => ({ ...v, password }))} /><Field label="Role" value={member.roleName} onChangeText={(roleName) => setMember((v) => ({ ...v, roleName: roleName.toUpperCase() }))} /></View><Button label="Adicionar à equipe" disabled={saving || !strongPassword(member.password) || !member.name.trim() || !member.email.trim()} onPress={() => void mutate(() => api('/users', undefined, { method: 'POST', body: JSON.stringify({ name: member.name.trim(), email: member.email.trim().toLowerCase(), password: member.password, roleName: member.roleName.trim(), ...(member.phone.trim() ? { phone: member.phone.trim() } : {}) }) }), () => setMember({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' }))} /></Section><Section title="Equipe"><Data value={data.users} /></Section><Section title="Permissões da sessão"><Data value={permissions.map((name) => ({ name }))} /></Section></>;
   }
   function equipmentView() {
-    return <>{enabled('equipment.inventory') && can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER') ? <Section title="Adicionar equipamento"><View style={styles.form}><Field label="Nome" value={equipment.name} onChangeText={(name) => setEquipment((v) => ({ ...v, name }))} /><Field label="Tipo" value={equipment.type} onChangeText={(type) => setEquipment((v) => ({ ...v, type }))} /></View><Button label="Adicionar" disabled={saving || !equipment.name.trim()} onPress={() => void mutate(() => api('/equipments', undefined, { method: 'POST', body: JSON.stringify({ name: equipment.name.trim(), ...(equipment.type.trim() ? { type: equipment.type.trim() } : {}) }) }), () => setEquipment({ name: '', type: '' }))} /></Section> : null}<Section title="Inventário"><Data value={data.inventory} /></Section>{enabled('equipment.catalog') ? <Section title="Catálogo canônico"><Data value={data.catalog} /></Section> : null}</>;
+    const catalog = list(data.catalog);
+    return <>
+      {enabled('equipment.inventory') && enabled('equipment.catalog') && can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? (
+        <Section
+          title="Selecionar equipamento do catálogo"
+          subtitle="O catálogo mestre é a autoridade. A academia seleciona apenas itens canônicos para seu inventário."
+        >
+          <Chips
+            rows={catalog}
+            selected={selectedCatalogEquipment}
+            onSelect={setSelectedCatalogEquipment}
+          />
+          <Button
+            testID="equipment-catalog-select"
+            label="Adicionar ao inventário"
+            disabled={saving || !selectedCatalogEquipment}
+            onPress={() => void mutate(
+              () => api('/equipments/catalog/selection', undefined, {
+                method: 'POST',
+                body: JSON.stringify({ catalogItemIds: [selectedCatalogEquipment] }),
+              }),
+              () => setSelectedCatalogEquipment(''),
+            )}
+          />
+        </Section>
+      ) : null}
+      <Section title="Inventário"><Data value={data.inventory} /></Section>
+      {enabled('equipment.catalog') ? <Section title="Catálogo canônico"><Data value={data.catalog} /></Section> : null}
+    </>;
   }
   function exercisesView() {
     return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER') ? <Section title="Novo exercício"><View style={styles.form}><Field label="Nome" value={exercise.name} onChangeText={(name) => setExercise((v) => ({ ...v, name }))} /><Field label="Grupo muscular" value={exercise.muscleGroup} onChangeText={(muscleGroup) => setExercise((v) => ({ ...v, muscleGroup }))} /><Field label="Nível" value={exercise.level} onChangeText={(level) => setExercise((v) => ({ ...v, level }))} /></View><Button label="Criar exercício" disabled={saving || !exercise.name.trim()} onPress={() => void mutate(() => api('/exercises', undefined, { method: 'POST', body: JSON.stringify({ name: exercise.name.trim(), ...(exercise.muscleGroup.trim() ? { muscleGroup: exercise.muscleGroup.trim() } : {}), ...(exercise.level.trim() ? { level: exercise.level.trim() } : {}) }) }), () => setExercise({ name: '', muscleGroup: '', level: '' }))} /></Section> : null}<Section title="Biblioteca"><Data value={data.exercises} /></Section></>;
