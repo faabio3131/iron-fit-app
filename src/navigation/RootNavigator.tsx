@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { TabItem } from '../components/TabItem';
 import { useAuth } from '../context/AuthContext';
 import { EvolutionScreen } from '../screens/EvolutionScreen';
@@ -9,11 +9,17 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { SchedulesScreen } from '../screens/SchedulesScreen';
 import { TenantSelectionScreen } from '../screens/TenantSelectionScreen';
 import { WorkoutsScreen } from '../screens/WorkoutsScreen';
+import { CommercialWebApp } from '../web/CommercialWebApp';
+import { WebAuthEntry } from '../web/WebAuthEntry';
 
 type Tab = 'treino' | 'agenda' | 'progresso' | 'financeiro' | 'perfil';
 
+function isStudentProfile(profile: any) {
+  return Array.isArray(profile?.roles) && profile.roles.includes('STUDENT');
+}
+
 export function RootNavigator() {
-  const { sessionReady, session, pendingTenantSelection } = useAuth();
+  const { sessionReady, session, profile, pendingTenantSelection } = useAuth();
   const [tab, setTab] = useState<Tab>('treino');
 
   if (!sessionReady) {
@@ -21,7 +27,11 @@ export function RootNavigator() {
   }
 
   if (!session && pendingTenantSelection) return <TenantSelectionScreen />;
-  if (!session) return <LoginScreen />;
+  if (!session) return Platform.OS === 'web' ? <WebAuthEntry /> : <LoginScreen />;
+
+  if (Platform.OS === 'web' && profile && !isStudentProfile(profile)) {
+    return <CommercialWebApp />;
+  }
 
   return (
     <View style={styles.container}>
