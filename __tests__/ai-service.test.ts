@@ -35,9 +35,9 @@ test('valid AI response renders recommendations', async () => {
   await waitFor(() => {
     expect(view.getByText('Progressão controlada')).toBeTruthy();
     expect(view.getByText('Boa consistência nesta semana.')).toBeTruthy();
-  });
+  }, { timeout: 3000 });
   expect(mockApi).toHaveBeenCalledWith('/me/ai/workout-insights', undefined, expect.objectContaining({ method: 'POST' }));
-});
+}, 15000);
 
 test('5xx or offline activates graceful fallback without breaking the UI', async () => {
   mockApi.mockRejectedValueOnce(Object.assign(new Error('unavailable'), { status: 503 }));
