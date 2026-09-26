@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -33,9 +33,6 @@ export function LoginScreen({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (initialEmail) setEmail(initialEmail);
-  }, [initialEmail]);
 
   async function handleLogin() {
     if (!email.trim() || !password) {
