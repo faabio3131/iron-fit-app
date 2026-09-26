@@ -21,7 +21,7 @@ test('B5 Web server has healthcheck, SPA fallback and no business API authority'
 });
 
 test('B5 Web Railway config uses Docker and health gate', async () => {
-  const cfg = await source('railway.web.toml');
+  const cfg = await source('railway.toml');
   assert.match(cfg, /dockerfilePath = "Dockerfile\.web"/);
   assert.match(cfg, /healthcheckPath = "\/health"/);
   assert.match(cfg, /restartPolicyType = "ON_FAILURE"/);
