@@ -1,0 +1,11 @@
+node_modules
+dist
+dist-web
+.expo
+.git
+.github
+.env
+.env.*
+coverage
+*.log
+.DS_Store
