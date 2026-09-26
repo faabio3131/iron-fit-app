@@ -22,8 +22,10 @@ const mime = {
 
 function safePath(urlPath) {
   const decoded = decodeURIComponent((urlPath || '/').split('?')[0]);
-  const normalized = normalize(decoded).replace(/^(..(/|\|$))+/, '');
-  return normalized.replace(/^[/\]+/, '');
+  const canonical = decoded.replaceAll('\\\\', '/');
+  const segments = canonical.split('/').filter(Boolean);
+  if (segments.some((segment) => segment === '..')) return null;
+  return segments.join('/');
 }
 
 const server = http.createServer((req, res) => {
@@ -37,6 +39,11 @@ const server = http.createServer((req, res) => {
   }
 
   const relative = safePath(req.url);
+  if (relative === null) {
+    res.writeHead(400);
+    res.end('Bad request');
+    return;
+  }
   let candidate = join(root, relative || 'index.html');
 
   if (!candidate.startsWith(root)) {
