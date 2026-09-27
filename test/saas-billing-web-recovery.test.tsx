@@ -3,10 +3,10 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { readFile } from 'node:fs/promises';
 import { SaasBillingPanel } from '../src/components/SaasBillingPanel';
 
-const apiMock = jest.fn();
+const mockApi = jest.fn();
 
 jest.mock('../src/services/api', () => ({
-  api: (...args: unknown[]) => apiMock(...args),
+  api: (...args: unknown[]) => mockApi(...args),
 }));
 
 function currentState() {
@@ -32,8 +32,8 @@ const prices = [
 
 describe('SaaS billing Web recovery surface', () => {
   beforeEach(() => {
-    apiMock.mockReset();
-    apiMock.mockImplementation(async (path: string) => {
+    mockApi.mockReset();
+    mockApi.mockImplementation(async (path: string) => {
       if (path === '/saas-billing/current') return currentState();
       if (path === '/saas-billing/prices') return prices;
       if (path === '/saas-billing/checkout') {
@@ -59,14 +59,14 @@ describe('SaaS billing Web recovery surface', () => {
     fireEvent.press(view.getByTestId('saas-billing-action-IRON_B6_BASIC_MONTHLY'));
 
     await waitFor(() =>
-      expect(apiMock).toHaveBeenCalledWith(
+      expect(mockApi).toHaveBeenCalledWith(
         '/saas-billing/checkout',
         undefined,
         expect.objectContaining({ method: 'POST' }),
       ),
     );
 
-    const call = apiMock.mock.calls.find(([path]) => path === '/saas-billing/checkout');
+    const call = mockApi.mock.calls.find(([path]) => path === '/saas-billing/checkout');
     const body = JSON.parse(String(call?.[2]?.body ?? '{}'));
     expect(body.priceCode).toBe('IRON_B6_BASIC_MONTHLY');
     expect(typeof body.requestId).toBe('string');
