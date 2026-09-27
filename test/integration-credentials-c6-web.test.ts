@@ -39,12 +39,24 @@ test('C6 Web never lets the browser choose tenant authority', () => {
   expect(web).toContain('Tenant derivado da sessão autenticada');
 });
 
-test('C6 Web derives provider/auth/capabilities/environment from backend catalog rather than hardcoding vendors', () => {
+test('C6 Web derives provider/auth/capabilities from backend catalog and treats environment as server authority', () => {
   expect(panel).toContain('catalog?.providers');
   expect(panel).toContain('catalog?.environment');
   expect(panel).toContain('selectedProvider.authModels');
   expect(panel).toContain('selectedProvider.capabilities');
+  expect(panel).toContain('tenantEntitlementFeatureKey');
+  expect(panel).toContain('Definido pelo servidor');
+  expect(panel).not.toMatch(/providerCode: selectedProvider\.providerCode,\s*environment,/);
   for (const vendor of ['MERCADO_PAGO', 'PAGBANK', 'ASAAS', 'TOTALPASS', 'WELLHUB']) {
     expect(panel).not.toContain(vendor);
   }
+});
+
+test('C6 Web exposes separate replace, rotate, provider-test and revoke actions', () => {
+  expect(panel).toContain("beginAction(connection.id, 'replace')");
+  expect(panel).toContain("beginAction(connection.id, 'rotate')");
+  expect(panel).toContain("beginAction(connection.id, 'verify')");
+  expect(panel).toContain("beginAction(connection.id, 'revoke')");
+  expect(panel).toContain('Testar provider');
+  expect(panel).not.toContain('Testar cofre');
 });
