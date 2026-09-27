@@ -7,9 +7,9 @@ import { clearSession, saveSession } from '../src/storage/token-storage';
 import { API_URL } from '../src/config/env';
 
 jest.mock('expo-secure-store', () => ({
-  getItemAsync: jest.fn(),
-  setItemAsync: jest.fn(),
-  deleteItemAsync: jest.fn(),
+  getItemAsync: jest.fn().mockResolvedValue(null),
+  setItemAsync: jest.fn().mockResolvedValue(undefined),
+  deleteItemAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
 const liveTest = process.env.IRON_LIVE_E2E === 'true' ? test : test.skip;
