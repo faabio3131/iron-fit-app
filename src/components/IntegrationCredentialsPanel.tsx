@@ -16,6 +16,7 @@ type Provider = {
   environments: string[];
   supportsWebhook: boolean;
   supportsOAuth: boolean;
+  tenantEntitlementFeatureKey?: string | null;
 };
 
 type Connection = {
@@ -138,7 +139,7 @@ export function IntegrationCredentialsPanel() {
   const [secret, setSecret] = useState('');
   const [stepUp, setStepUp] = useState<StepUp>(EMPTY_STEP);
   const [selectedConnectionId, setSelectedConnectionId] = useState('');
-  const [action, setAction] = useState<'rotate' | 'verify' | 'revoke' | ''>('');
+  const [action, setAction] = useState<'replace' | 'rotate' | 'verify' | 'revoke' | ''>('');
   const [replacementSecret, setReplacementSecret] = useState('');
   const [actionStepUp, setActionStepUp] = useState<StepUp>(EMPTY_STEP);
   const [loading, setLoading] = useState(true);
@@ -211,7 +212,7 @@ export function IntegrationCredentialsPanel() {
   }
 
   async function createConnection() {
-    if (!selectedProvider || !environment || !authModel || !secret || !stepUp.currentPassword) {
+    if (!selectedProvider || !authModel || !secret || !stepUp.currentPassword) {
       setError('Preencha provider, autenticação, segredo e reautenticação.');
       return;
     }
@@ -236,7 +237,6 @@ export function IntegrationCredentialsPanel() {
         method: 'POST',
         body: JSON.stringify({
           providerCode: selectedProvider.providerCode,
-          environment,
           authModel,
           capabilities,
           publicConfiguration: publicConfig,
@@ -255,7 +255,10 @@ export function IntegrationCredentialsPanel() {
     }
   }
 
-  function beginAction(connectionId: string, next: 'rotate' | 'verify' | 'revoke') {
+  function beginAction(
+    connectionId: string,
+    next: 'replace' | 'rotate' | 'verify' | 'revoke',
+  ) {
     setSelectedConnectionId(connectionId);
     setAction(next);
     setReplacementSecret('');
@@ -269,7 +272,7 @@ export function IntegrationCredentialsPanel() {
       setError('Informe a senha atual para confirmar esta alteração.');
       return;
     }
-    if (action === 'rotate' && !replacementSecret) {
+    if ((action === 'replace' || action === 'rotate') && !replacementSecret) {
       setError('Informe a nova credencial.');
       return;
     }
@@ -282,15 +285,19 @@ export function IntegrationCredentialsPanel() {
         method: 'POST',
         body: JSON.stringify({
           ...stepPayload(actionStepUp),
-          ...(action === 'rotate' ? { secret: replacementSecret } : {}),
+          ...((action === 'replace' || action === 'rotate')
+            ? { secret: replacementSecret }
+            : {}),
         }),
       });
       setNotice(
-        action === 'rotate'
+        action === 'replace'
           ? 'Credencial substituída. O novo valor não será exibido.'
-          : action === 'verify'
-            ? 'Credencial verificada no cofre.'
-            : 'Credencial revogada e bloqueada para uso.',
+          : action === 'rotate'
+            ? 'Credencial rotacionada. O novo valor não será exibido.'
+            : action === 'verify'
+              ? 'Credencial validada pelo provider.'
+              : 'Credencial revogada e bloqueada para uso.',
       );
       setAction('');
       setSelectedConnectionId('');
@@ -321,7 +328,7 @@ export function IntegrationCredentialsPanel() {
       <View style={styles.section}>
         <Text style={styles.title}>Integrações da academia</Text>
         <Text style={styles.muted}>
-          Ambiente: {environment || 'indisponível'} · Tenant derivado da sessão. Segredos são write-only.
+          Ambiente: {environment || 'indisponível'} · Definido pelo servidor. Tenant derivado da sessão. Segredos são write-only.
         </Text>
         {providers.length === 0 ? (
           <Text style={styles.muted}>
@@ -347,6 +354,11 @@ export function IntegrationCredentialsPanel() {
 
             {selectedProvider ? (
               <>
+                {selectedProvider.tenantEntitlementFeatureKey ? (
+                  <Text style={styles.muted}>
+                    Capability comercial exigida: {selectedProvider.tenantEntitlementFeatureKey}. A autorização efetiva vem do plano/configuração do tenant.
+                  </Text>
+                ) : null}
                 <Text style={styles.label}>Modelo de autenticação</Text>
                 <View style={styles.chips}>
                   {selectedProvider.authModels.map((model) => (
@@ -434,8 +446,9 @@ export function IntegrationCredentialsPanel() {
               Rotação: {connection.secretRotatedAt ?? '—'} · Última verificação: {connection.lastVerifiedAt ?? '—'}
             </Text>
             <View style={styles.actions}>
-              <ActionButton label="Substituir / rotacionar" onPress={() => beginAction(connection.id, 'rotate')} />
-              <ActionButton label="Testar cofre" onPress={() => beginAction(connection.id, 'verify')} />
+              <ActionButton label="Substituir" onPress={() => beginAction(connection.id, 'replace')} />
+              <ActionButton label="Rotacionar" onPress={() => beginAction(connection.id, 'rotate')} />
+              <ActionButton label="Testar provider" onPress={() => beginAction(connection.id, 'verify')} />
               <ActionButton danger label="Revogar" onPress={() => beginAction(connection.id, 'revoke')} />
             </View>
           </View>
@@ -445,9 +458,15 @@ export function IntegrationCredentialsPanel() {
       {action ? (
         <View style={styles.section} testID="integration-step-up-action">
           <Text style={styles.title}>
-            {action === 'rotate' ? 'Substituir credencial' : action === 'verify' ? 'Verificar credencial' : 'Revogar credencial'}
+            {action === 'replace'
+              ? 'Substituir credencial'
+              : action === 'rotate'
+                ? 'Rotacionar credencial'
+                : action === 'verify'
+                  ? 'Testar credencial no provider'
+                  : 'Revogar credencial'}
           </Text>
-          {action === 'rotate' ? (
+          {action === 'replace' || action === 'rotate' ? (
             <SecretField
               testID="integration-rotate-secret"
               label="Nova credencial"
