@@ -176,7 +176,10 @@ export function IntegrationSettingsPanel() {
   }, []);
 
   useEffect(() => {
-    void load();
+    const timer = setTimeout(() => {
+      void load();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [load]);
 
   async function run(operation: () => Promise<unknown>, success: string) {
