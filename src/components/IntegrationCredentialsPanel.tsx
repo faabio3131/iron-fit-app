@@ -177,7 +177,10 @@ export function IntegrationCredentialsPanel() {
   }, [selectedProviderCode]);
 
   useEffect(() => {
-    void load();
+    const timer = setTimeout(() => {
+      void load();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [load]);
 
   function selectProvider(provider: Provider) {
