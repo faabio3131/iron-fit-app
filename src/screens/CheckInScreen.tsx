@@ -40,7 +40,7 @@ export function CheckInScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#8b5cf6', borderRadius: 16, padding: 18, marginBottom: 16, gap: 14 },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2583e8', borderRadius: 16, padding: 18, marginBottom: 16, gap: 14 },
   iconBox: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#ffffff25', alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1 },
   title: { color: '#f1f5f9', fontSize: 16, fontWeight: '800' },
