@@ -85,7 +85,7 @@ export function LoginScreen({
             <Ionicons
               name="barbell"
               size={28}
-              color="#8b5cf6"
+              color="#2583e8"
               style={styles.logoBarbell}
             />
           </View>
@@ -253,7 +253,7 @@ export function LoginScreen({
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#0a0e1a' },
+  container: { flexGrow: 1, backgroundColor: '#05080f' },
   content: {
     flex: 1,
     justifyContent: 'center',
@@ -264,10 +264,10 @@ const styles = StyleSheet.create({
   logoBadge: {
     width: 110,
     height: 110,
-    borderRadius: 30,
-    backgroundColor: '#1a2035',
+    borderRadius: 28,
+    backgroundColor: '#0b111d',
     borderWidth: 1,
-    borderColor: '#252d47',
+    borderColor: '#1d2939',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -287,11 +287,11 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   card: {
-    backgroundColor: '#1a2035',
+    backgroundColor: '#0b111d',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#252d47',
+    borderColor: '#1d2939',
   },
   welcome: { color: '#f1f5f9', fontSize: 22, fontWeight: '700', marginBottom: 4 },
   sub: { color: '#94a3b8', fontSize: 14, marginBottom: 18 },
@@ -308,10 +308,10 @@ const styles = StyleSheet.create({
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#131826',
+    backgroundColor: '#060b13',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#252d47',
+    borderColor: '#1d2939',
     paddingHorizontal: 14,
     marginBottom: 12,
   },
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   or: { color: '#64748b', textAlign: 'center', marginBottom: 10, fontSize: 12 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
   button: {
-    backgroundColor: '#8b5cf6',
+    backgroundColor: '#2583e8',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -331,12 +331,12 @@ const styles = StyleSheet.create({
   linkText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
   trialButton: {
     borderWidth: 1,
-    borderColor: '#4c3b78',
+    borderColor: '#1e4d7a',
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: 'center',
   },
-  trialText: { color: '#c4b5fd', fontSize: 14, fontWeight: '700' },
+  trialText: { color: '#93c5fd', fontSize: 14, fontWeight: '700' },
   footer: {
     color: '#64748b',
     textAlign: 'center',
