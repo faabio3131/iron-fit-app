@@ -191,6 +191,10 @@ export function CommercialWebApp({ demoPreview = false }: { demoPreview?: boolea
     return () => clearTimeout(timer);
   }, [active, blocked, loadModule, shellReady]);
   async function mutate(operation: () => Promise<unknown>, reset?: () => void) {
+    if (demoPreview) {
+      setError('Modo demonstração: alterações não são gravadas.');
+      return;
+    }
     setSaving(true); setError('');
     try { await operation(); reset?.(); await loadShell(); await loadModule(active); } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
   }
