@@ -118,6 +118,16 @@ export function CommercialWebApp({ demoPreview = false }: { demoPreview?: boolea
   const visible = useMemo(() => modules.filter((item) => allowed(item) && (!blocked || item.key === 'saasBilling' || item.key === 'security')), [allowed, blocked]);
 
   const loadShell = useCallback(async () => {
+    if (demoPreview) {
+      const demoFeatures: Entitlement[] = Array.from(new Set(modules.flatMap((item) => item.entitlement ?? []))).map((featureKey) => ({ featureKey, kind: 'FEATURE', value: true, source: 'DEMO' }));
+      setEntitlements(demoFeatures);
+      setSubscription({ status: 'ACTIVE', plan: 'IRON PRO DEMO' });
+      setTrial({ status: 'ACTIVE' });
+      setOnboarding({ status: 'COMPLETED' });
+      setShellReady(true);
+      setLoading(false);
+      return;
+    }
     setShellReady(false);
     setError('');
     const [features, current, trialState, onboardingState] = await Promise.all([
@@ -131,7 +141,7 @@ export function CommercialWebApp({ demoPreview = false }: { demoPreview?: boolea
     setTrial(trialState);
     setOnboarding(onboardingState);
     setShellReady(true);
-  }, [can]);
+  }, [can, demoPreview]);
 
   const loadModule = useCallback(async (key: ModuleKey) => {
     setLoading(true); setError('');
