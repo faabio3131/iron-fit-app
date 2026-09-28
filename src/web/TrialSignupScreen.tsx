@@ -90,18 +90,18 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#080c17', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  card: { width: '100%', maxWidth: 560, backgroundColor: '#121a2b', borderWidth: 1, borderColor: '#273248', borderRadius: 20, padding: 28 },
-  kicker: { color: '#8b5cf6', fontWeight: '800', fontSize: 11, letterSpacing: 1.5 },
+  container: { flexGrow: 1, backgroundColor: '#05080f', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  card: { width: '100%', maxWidth: 560, backgroundColor: '#0b111d', borderWidth: 1, borderColor: '#1d2939', borderRadius: 20, padding: 28 },
+  kicker: { color: '#2583e8', fontWeight: '800', fontSize: 11, letterSpacing: 1.5 },
   title: { color: '#f8fafc', fontSize: 30, fontWeight: '900', marginTop: 8 },
   subtitle: { color: '#94a3b8', fontSize: 14, lineHeight: 21, marginTop: 7, marginBottom: 20 },
-  input: { color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 11, paddingHorizontal: 13, paddingVertical: 13, fontSize: 15, marginBottom: 10 },
+  input: { color: '#f8fafc', backgroundColor: '#060b13', borderWidth: 1, borderColor: '#243247', borderRadius: 11, paddingHorizontal: 13, paddingVertical: 13, fontSize: 15, marginBottom: 10 },
   policy: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginBottom: 10 },
   error: { color: '#fca5a5', fontSize: 13, marginBottom: 10 },
-  primary: { backgroundColor: '#7c3aed', borderRadius: 11, minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  primary: { backgroundColor: '#1473e6', borderRadius: 11, minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   primaryText: { color: '#fff', fontWeight: '800', fontSize: 15 },
   secondary: { alignItems: 'center', paddingVertical: 13 },
-  secondaryText: { color: '#c4b5fd', fontWeight: '700' },
+  secondaryText: { color: '#93c5fd', fontWeight: '700' },
   disabled: { opacity: 0.5 },
   finePrint: { color: '#64748b', fontSize: 11, lineHeight: 16, textAlign: 'center', marginTop: 4 },
 });
