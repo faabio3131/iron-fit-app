@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   safeLabel: { color: '#fbbf24', fontSize: 9, fontWeight: '800', marginTop: 5 },
   loading: { alignSelf: 'flex-start', margin: 8 },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 10 },
-  input: { flex: 1, minHeight: 44, maxHeight: 110, backgroundColor: '#131826', color: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 12, paddingVertical: 10 },
-  send: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#7c3aed' },
+  input: { flex: 1, minHeight: 44, maxHeight: 110, backgroundColor: '#080d16', color: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 12, paddingVertical: 10 },
+  send: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1473e6' },
   sendDisabled: { opacity: 0.55 },
 });
