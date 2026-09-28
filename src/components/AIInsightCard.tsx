@@ -57,6 +57,6 @@ const styles = StyleSheet.create({
   recommendation: { backgroundColor: '#0f172a88', borderRadius: 12, padding: 11, marginBottom: 8 },
   recommendationTitle: { color: '#ddd6fe', fontSize: 13, fontWeight: '700', marginBottom: 3 },
   recommendationDetail: { color: '#94a3b8', fontSize: 12, lineHeight: 17 },
-  button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: '#7c3aed', borderRadius: 12, paddingVertical: 11, marginTop: 4 },
+  button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: '#1473e6', borderRadius: 12, paddingVertical: 11, marginTop: 4 },
   buttonText: { color: '#f5f3ff', fontSize: 13, fontWeight: '700' },
 });
