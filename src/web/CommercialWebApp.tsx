@@ -198,7 +198,6 @@ export function CommercialWebApp({ demoPreview = false }: { demoPreview?: boolea
     setSaving(true); setError('');
     try { await operation(); reset?.(); await loadShell(); await loadModule(active); } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
   }
-
   function overview() {
     return <><Section title="Academia e sessão"><Data value={data.gym ? [data.gym] : []} /><Text style={styles.muted}>Usuário: {profile?.name ?? profile?.email ?? '—'} · Papéis: {roles.join(', ') || '—'} · Tenant derivado da sessão: {activeTenantId ?? '—'}</Text></Section><Section title="Dashboard"><Data value={data.summary ? [data.summary] : []} /></Section><Section title="Receita — 30 dias"><Data value={data.revenue} /></Section><Section title="Presença — 7 dias"><Data value={data.attendance} /></Section><Section title="Cobranças vencidas"><Data value={data.overdue} /></Section><Section title="Aniversários"><Data value={data.birthdays} /></Section></>;
   }
@@ -293,7 +292,7 @@ const styles = StyleSheet.create({
   top: { minHeight: 78, paddingHorizontal: 24, paddingVertical: 14, backgroundColor: '#090e18', borderBottomWidth: 1, borderBottomColor: '#1d2939', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   brand: { color: '#f8fafc', fontSize: 23, fontWeight: '900', letterSpacing: 4 },
   body: { flex: 1, flexDirection: 'row' }, bodyCompact: { flexDirection: 'column' },
-  nav: { width: 252, backgroundColor: '#070b13', paddingVertical: 14, borderRightWidth: 1, borderRightColor: '#172033' },
+  nav: { width: 252, minWidth: 252, maxWidth: 252, flexGrow: 0, flexShrink: 0, backgroundColor: '#070b13', paddingVertical: 14, borderRightWidth: 1, borderRightColor: '#172033' },
   navCompact: { width: '100%', maxHeight: 74, borderRightWidth: 0, borderBottomWidth: 1, borderBottomColor: '#172033' },
   navHorizontal: { alignItems: 'center', paddingHorizontal: 8 },
   navItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 13, paddingVertical: 11, marginHorizontal: 8, marginVertical: 3, borderRadius: 12, borderWidth: 1, borderColor: 'transparent' },
