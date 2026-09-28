@@ -66,8 +66,11 @@ function Chips({ rows, selected, onSelect }: { rows: any[]; selected: string; on
   return <View style={styles.chips}>{rows.map((row) => <TouchableOpacity key={row.id} style={[styles.chip, selected === row.id && styles.chipActive]} onPress={() => onSelect(row.id)}><Text style={styles.chipText}>{row.name ?? row.user?.name ?? row.id}</Text></TouchableOpacity>)}</View>;
 }
 
-export function CommercialWebApp() {
-  const { profile, activeTenantId, logout } = useAuth();
+export function CommercialWebApp({ demoPreview = false }: { demoPreview?: boolean } = {}) {
+  const auth = useAuth();
+  const profile = demoPreview ? { name: 'Administrador Demo', email: 'demo@iron.local', roles: ['OWNER'], permissions: ['*'] } : auth.profile;
+  const activeTenantId = demoPreview ? 'iron-demo-academy' : auth.activeTenantId;
+  const logout = auth.logout;
   const compact = useWindowDimensions().width < 980;
   const roles = useMemo<string[]>(() => Array.isArray(profile?.roles) ? profile.roles : [], [profile]);
   const permissions = useMemo<string[]>(() => Array.isArray(profile?.permissions) ? profile.permissions : [], [profile]);
