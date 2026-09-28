@@ -74,14 +74,14 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#0a0e1a' },
+  scroll: { flex: 1, backgroundColor: '#05080f' },
   content: { padding: 20, paddingBottom: 100 },
   header: { alignItems: 'center', marginBottom: 24 },
   avatar: {
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: '#8b5cf6',
+    backgroundColor: '#2583e8',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -90,11 +90,11 @@ const styles = StyleSheet.create({
   name: { color: '#f1f5f9', fontSize: 22, fontWeight: '800' },
   email: { color: '#94a3b8', fontSize: 13, marginTop: 4 },
   infoCard: {
-    backgroundColor: '#1a2035',
+    backgroundColor: '#0b111d',
     borderRadius: 16,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#252d47',
+    borderColor: '#1d2939',
     marginBottom: 16,
   },
   security: {
