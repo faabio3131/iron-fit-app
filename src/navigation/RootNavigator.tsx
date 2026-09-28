@@ -25,7 +25,7 @@ export function RootNavigator() {
   const [recoveryMode, setRecoveryMode] = useState(false);
 
   if (!sessionReady) {
-    return <View style={styles.boot}><StatusBar barStyle="light-content" backgroundColor="#0a0e1a" /><ActivityIndicator size="large" color="#8b5cf6" /></View>;
+    return <View style={styles.boot}><StatusBar barStyle="light-content" backgroundColor="#05080f" /><ActivityIndicator size="large" color="#2583e8" /></View>;
   }
 
   if (!session && pendingTenantSelection) return <TenantSelectionScreen />;
@@ -44,7 +44,7 @@ export function RootNavigator() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0a0e1a" />
+      <StatusBar barStyle="light-content" backgroundColor="#05080f" />
       <View style={styles.screen}>
         {tab === 'treino' ? <WorkoutsScreen /> : null}
         {tab === 'agenda' ? <SchedulesScreen /> : null}
@@ -64,8 +64,8 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0e1a' },
-  boot: { flex: 1, backgroundColor: '#0a0e1a', alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#05080f' },
+  boot: { flex: 1, backgroundColor: '#05080f', alignItems: 'center', justifyContent: 'center' },
   screen: { flex: 1 },
-  tabBar: { flexDirection: 'row', backgroundColor: '#131826', borderTopWidth: 1, borderTopColor: '#252d47', paddingBottom: 16 },
+  tabBar: { flexDirection: 'row', backgroundColor: '#080d16', borderTopWidth: 1, borderTopColor: '#1d2939', paddingBottom: 16 },
 });
