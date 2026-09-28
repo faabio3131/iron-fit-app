@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+
+const DEMO_PREVIEW = process.env.EXPO_PUBLIC_DEMO_PREVIEW === 'true';
 import { ActivityIndicator, Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { TabItem } from '../components/TabItem';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +33,9 @@ export function RootNavigator() {
   if (!session && pendingTenantSelection) return <TenantSelectionScreen />;
   if (!session && Platform.OS !== 'web' && recoveryMode) {
     return <PasswordRecoveryScreen onBack={() => setRecoveryMode(false)} />;
+  }
+  if (!session && Platform.OS === 'web' && DEMO_PREVIEW) {
+    return <CommercialWebApp demoPreview />;
   }
   if (!session) {
     return Platform.OS === 'web'
