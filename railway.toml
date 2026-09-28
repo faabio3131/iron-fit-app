@@ -1,6 +1,7 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile.web"
+watchPatterns = ["src/**", "scripts/**", "package.json", "package-lock.json", "Dockerfile.web", "railway.toml"]
 
 [deploy]
 startCommand = "node scripts/serve-web.mjs"
