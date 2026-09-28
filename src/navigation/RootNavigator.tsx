@@ -13,6 +13,7 @@ import { SchedulesScreen } from '../screens/SchedulesScreen';
 import { TenantSelectionScreen } from '../screens/TenantSelectionScreen';
 import { WorkoutsScreen } from '../screens/WorkoutsScreen';
 import { CommercialWebApp } from '../web/CommercialWebApp';
+import { PremiumDemoApp } from '../web/PremiumDemoApp';
 import { WebAuthEntry } from '../web/WebAuthEntry';
 
 type Tab = 'treino' | 'agenda' | 'progresso' | 'financeiro' | 'perfil';
@@ -35,7 +36,7 @@ export function RootNavigator() {
     return <PasswordRecoveryScreen onBack={() => setRecoveryMode(false)} />;
   }
   if (!session && Platform.OS === 'web' && DEMO_PREVIEW) {
-    return <CommercialWebApp demoPreview />;
+    return <PremiumDemoApp />;
   }
   if (!session) {
     return Platform.OS === 'web'
