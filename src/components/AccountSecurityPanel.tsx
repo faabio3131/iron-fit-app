@@ -217,7 +217,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-      {loading ? <ActivityIndicator color="#8b5cf6" style={styles.loading} /> : null}
+      {loading ? <ActivityIndicator color="#2583e8" style={styles.loading} /> : null}
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Step-up</Text>
@@ -392,26 +392,26 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0a0e1a' },
+  root: { flex: 1, backgroundColor: '#05080f' },
   content: { padding: 16, paddingBottom: 100 },
   back: { alignSelf: 'flex-start', paddingVertical: 8, marginBottom: 4 },
-  backText: { color: '#c4b5fd', fontWeight: '700' },
+  backText: { color: '#93c5fd', fontWeight: '700' },
   title: { color: '#f8fafc', fontSize: 24, fontWeight: '900', marginBottom: 6 },
   muted: { color: '#94a3b8', fontSize: 12, lineHeight: 18 },
   loading: { marginVertical: 8 },
   error: { color: '#fca5a5', backgroundColor: '#301215', padding: 10, borderRadius: 8, marginTop: 10 },
   notice: { color: '#86efac', backgroundColor: '#12301f', padding: 10, borderRadius: 8, marginTop: 10 },
-  card: { backgroundColor: '#111827', borderWidth: 1, borderColor: '#273248', borderRadius: 14, padding: 14, marginTop: 12 },
+  card: { backgroundColor: '#111827', borderWidth: 1, borderColor: '#1d2939', borderRadius: 14, padding: 14, marginTop: 12 },
   cardTitle: { color: '#f1f5f9', fontWeight: '800', fontSize: 15, marginBottom: 8 },
-  input: { color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 9, padding: 11, marginTop: 8 },
+  input: { color: '#f8fafc', backgroundColor: '#060b13', borderWidth: 1, borderColor: '#243247', borderRadius: 9, padding: 11, marginTop: 8 },
   policy: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginTop: 7 },
-  button: { backgroundColor: '#7c3aed', borderRadius: 9, padding: 11, alignItems: 'center', marginTop: 10 },
+  button: { backgroundColor: '#1473e6', borderRadius: 9, padding: 11, alignItems: 'center', marginTop: 10 },
   secondaryButton: { backgroundColor: '#172033', borderWidth: 1, borderColor: '#334155', borderRadius: 9, padding: 11, alignItems: 'center', marginTop: 10 },
   dangerButton: { backgroundColor: '#b91c1c', borderRadius: 9, padding: 11, alignItems: 'center', marginTop: 10 },
   dangerSmall: { backgroundColor: '#991b1b', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
   disabled: { opacity: 0.45 },
   buttonText: { color: '#fff', fontWeight: '800', fontSize: 12 },
-  secret: { color: '#c4b5fd', fontSize: 11, marginTop: 6 },
+  secret: { color: '#93c5fd', fontSize: 11, marginTop: 6 },
   recoveryBox: { marginTop: 12, borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 10 },
   session: { flexDirection: 'row', gap: 10, alignItems: 'center', borderTopWidth: 1, borderTopColor: '#202a3e', paddingVertical: 10 },
   sessionInfo: { flex: 1 },
