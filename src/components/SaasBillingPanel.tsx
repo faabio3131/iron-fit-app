@@ -157,7 +157,7 @@ export function SaasBillingPanel({
           Preços, estado financeiro e entitlement são autoridade do backend. O painel não calcula
           cobrança, proration ou acesso localmente.
         </Text>
-        {loading ? <ActivityIndicator color="#8b5cf6" style={styles.loading} /> : null}
+        {loading ? <ActivityIndicator color="#2583e8" style={styles.loading} /> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {notice ? <Text style={styles.notice}>{notice}</Text> : null}
 
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#111827',
     borderWidth: 1,
-    borderColor: '#273248',
+    borderColor: '#1d2939',
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   button: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#1473e6',
     borderRadius: 9,
     paddingHorizontal: 12,
     paddingVertical: 10,
