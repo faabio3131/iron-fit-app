@@ -54,7 +54,7 @@ export function TenantSelectionScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
-        <Ionicons name="business-outline" size={36} color="#8b5cf6" />
+        <Ionicons name="business-outline" size={36} color="#2583e8" />
         <Text style={styles.title}>Escolha sua unidade</Text>
         <Text style={styles.hint}>
           {mfaRequired
@@ -86,7 +86,7 @@ export function TenantSelectionScreen() {
                   <Ionicons
                     name={selected ? 'radio-button-on' : 'radio-button-off'}
                     size={20}
-                    color={selected ? '#8b5cf6' : '#64748b'}
+                    color={selected ? '#2583e8' : '#64748b'}
                   />
                 </TouchableOpacity>
               );
@@ -175,15 +175,15 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: 'center',
-    backgroundColor: '#0a0e1a',
+    backgroundColor: '#05080f',
     padding: 24,
   },
   card: {
-    backgroundColor: '#1a2035',
+    backgroundColor: '#0b111d',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#252d47',
+    borderColor: '#1d2939',
   },
   title: {
     color: '#f1f5f9',
@@ -202,15 +202,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#252d47',
-    backgroundColor: '#131826',
+    borderColor: '#1d2939',
+    backgroundColor: '#080d16',
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
   },
   optionSelected: {
-    borderColor: '#8b5cf6',
-    backgroundColor: '#8b5cf612',
+    borderColor: '#2583e8',
+    backgroundColor: '#2583e812',
   },
   optionText: { flex: 1, color: '#94a3b8', fontWeight: '600' },
   optionTextSelected: { color: '#f1f5f9' },
@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#131826',
+    backgroundColor: '#080d16',
     borderWidth: 1,
-    borderColor: '#252d47',
+    borderColor: '#1d2939',
     borderRadius: 12,
     paddingHorizontal: 12,
     marginBottom: 10,
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   or: { color: '#64748b', textAlign: 'center', marginBottom: 10 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
   button: {
-    backgroundColor: '#8b5cf6',
+    backgroundColor: '#2583e8',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
