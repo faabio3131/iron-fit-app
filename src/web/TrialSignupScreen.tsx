@@ -117,10 +117,10 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
         <TextInput style={styles.input} value={timezone} onChangeText={setTimezone} autoCapitalize="none" placeholder="Fuso horário (ex.: America/Sao_Paulo)" placeholderTextColor="#9fb0c5" />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <TouchableOpacity testID="trial-submit" style={[styles.primary, loading && styles.disabled]} onPress={submit} disabled={loading}>
+        <TouchableOpacity accessibilityRole="button" testID="trial-submit" style={[styles.primary, loading && styles.disabled]} onPress={submit} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Começar teste grátis</Text>}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.secondary} onPress={onCancel} disabled={loading}>
+        <TouchableOpacity accessibilityRole="button" style={styles.secondary} onPress={onCancel} disabled={loading}>
           <Text style={styles.secondaryText}>Já tenho conta</Text>
         </TouchableOpacity>
         <Text style={styles.finePrint}>Nenhuma cobrança é criada nesta etapa.</Text>

@@ -140,7 +140,7 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
 
         {notice ? <Text testID="recovery-notice" style={styles.notice}>{notice}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <TouchableOpacity style={styles.back} onPress={onBack} disabled={loading}>
+        <TouchableOpacity accessibilityRole="button" style={styles.back} onPress={onBack} disabled={loading}>
           <Text style={styles.backText}>Voltar ao login</Text>
         </TouchableOpacity>
       </View>

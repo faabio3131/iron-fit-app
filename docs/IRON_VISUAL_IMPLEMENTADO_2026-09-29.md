@@ -37,3 +37,12 @@ Próximo passo: CI do novo SHA → deploy do preview real → smoke visual de au
 - CI `36644675234` do commit `55b8a5319a81e33f8d880f7f1f13c916eee0ead7`: SUCCESS, incluindo auditoria high, testes, exports Android/iOS/Web e smoke HTTP do container.
 - Ajuste posterior `bb5c40161ecb1f1d853b5dd0d90b5350d5163a29`: permitir redução de cards e detalhes em larguras estreitas. Typecheck/lint PASS; Jest 70 PASS, 0 FAIL, 1 live ignorado.
 - A atualização de ref desse ajuste retornou erro transitório do conector após aplicar o ref; confirmação por API e git confirmou o SHA. A PR/CI ainda não refletiu o head na consulta seguinte. Este checkpoint mantém rastreabilidade; deploy só após confirmação do CI da árvore final.
+
+## Preview e revisão publicada
+
+- CI final da primeira publicação: `36645161558` SUCCESS, commit `7538ccaafe10bf0cdb77637b7a5ba59592487977`.
+- Render: `dep-dau4jk6gekts73cuf8ig`, LIVE em 29/09/2026 23:30:19 UTC (20:30:19 BRT), preview `https://iron-macro-o-preview.onrender.com/`.
+- Browser: login, trial, recuperação, sessão OWNER real e drill-down Alunos carregaram. Marca carregada; largura do documento 1363px = viewport, sem overflow horizontal desktop. Controle de senha do trial alternou estado com campo vazio. Nenhuma conta/cobrança criada nessa revisão.
+- Backend readiness HTTP 200/Postgres up às 23:31:26 UTC; reidratação inicial da sessão demorou antes de concluir. Não houve certificação de performance nesta rodada.
+- Revisão visual identificou rótulos de datas comprimidos no gráfico de receita. Corrigido com faixa de datas independente das colunas e mensagem explícita quando todos os valores são zero. Novo teste de série zero: 71 PASS, 0 FAIL, 1 live ignorado; typecheck/lint PASS.
+- Capturas do login/trial publicadas acompanham este checkpoint. A captura final do cockpit deve ser feita após republicar a correção do gráfico.

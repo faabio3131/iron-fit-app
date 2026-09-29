@@ -34,3 +34,10 @@ test('record presentation only displays opted-in fields and never nested credent
   expect(view.getByText(/149,90/)).toBeTruthy();
   for (const secret of ['internal-id', 'nested-secret', 'secret-token', 'hash', 'vault-secret']) expect(view.queryByText(secret)).toBeNull();
 });
+
+
+test('a real zero-only series is explained without invented chart activity', () => {
+  const view = render(<DashboardOverview data={{ revenue: [{ date: '2026-09-29', amount: 0 }], attendance: [{ date: '2026-09-29', count: 0 }] }} navigate={jest.fn()} />);
+  expect(view.getByText('Nenhum recebimento no período.')).toBeTruthy();
+  expect(view.getByText('Nenhum check-in no período.')).toBeTruthy();
+});

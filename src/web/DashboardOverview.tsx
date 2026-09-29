@@ -26,11 +26,12 @@ function Panel({ title, subtitle, children }: { title: string; subtitle: string;
 function DailyBars({ rows, financial }: { rows: { date: string; value: number }[]; financial?: boolean }) {
   const valid = rows.filter(row => typeof row.value === 'number' && Number.isFinite(row.value));
   if (!valid.length) return <Text style={styles.empty}>Nenhum dado disponível para este período.</Text>;
+  if (valid.every(row => row.value === 0)) return <Text style={styles.empty}>{financial ? 'Nenhum recebimento no período.' : 'Nenhum check-in no período.'}</Text>;
   const max = Math.max(...valid.map(row => Math.abs(row.value)), 1);
-  return <View style={styles.chart}>{valid.map((row, index) => <View key={`${row.date}-${index}`} style={styles.barColumn} accessible accessibilityLabel={`${day(row.date)}: ${financial ? money(row.value) : `${count(row.value)} presenças`}`}>
+  return <View><View style={styles.chart}>{valid.map((row, index) => <View key={`${row.date}-${index}`} style={styles.barColumn} accessible accessibilityLabel={`${day(row.date)}: ${financial ? money(row.value) : `${count(row.value)} presenças`}`}>
     <View style={styles.barTrack}><View style={[styles.bar, { height: `${Math.abs(row.value) / max * 100}%`, backgroundColor: row.value < 0 ? '#fca5a5' : iron.primary }]} /></View>
-    <Text style={styles.axis}>{(!financial || index === 0 || index === valid.length - 1) ? day(row.date) : ''}</Text>
-  </View>)}</View>;
+    {!financial && <Text style={styles.axis}>{day(row.date)}</Text>}
+  </View>)}</View>{financial && <View style={styles.range}><Text style={styles.muted}>{day(valid[0].date)}</Text><Text style={styles.muted}>{day(valid[valid.length - 1].date)}</Text></View>}</View>;
 }
 export function DashboardOverview({ data, navigate, canNavigate = () => true }: { data: DashboardData; canNavigate?: (module: 'students' | 'financial' | 'workouts' | 'equipment') => boolean; navigate: (module: 'students' | 'financial' | 'workouts' | 'equipment') => void }) {
   const summary = data.summary;
@@ -71,6 +72,7 @@ const styles = StyleSheet.create({
   heading: { color: iron.text, fontSize: 18, fontWeight: '700', marginBottom: 6 },
   panelBody: { marginTop: 24 },
   empty: { color: iron.muted, fontSize: 14, lineHeight: 22, paddingVertical: 28 },
+  range: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   chart: { flexDirection: 'row', height: 160, gap: 4 },
   barColumn: { flex: 1, minWidth: 0, height: 160 },
   barTrack: { flex: 1, justifyContent: 'flex-end', borderBottomWidth: 1, borderBottomColor: iron.line },
