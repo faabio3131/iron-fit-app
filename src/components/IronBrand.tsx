@@ -11,6 +11,6 @@ export function IronBrand({ compact = false }: { compact?: boolean }) {
 
 const styles = StyleSheet.create({
   frame: { width: '100%', maxWidth: 480, aspectRatio: 520 / 308, alignSelf: 'center', overflow: 'hidden', borderRadius: 20 },
-  compact: { width: 150, maxWidth: 150, borderRadius: 8 },
+  compact: { width: 160, maxWidth: 160, borderRadius: 8 },
   image: { width: '100%', height: '100%' },
 });
