@@ -15,6 +15,8 @@ Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' });
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const App = require('../App').default as React.ComponentType;
 // eslint-disable-next-line @typescript-eslint/no-require-imports
+const { TrialSignupScreen } = require('../src/web/TrialSignupScreen') as typeof import('../src/web/TrialSignupScreen');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { clearSession } = require('../src/storage/token-storage') as typeof import('../src/storage/token-storage');
 
 const API_ROOT = 'https://example.invalid/api/v1';
@@ -73,6 +75,19 @@ afterAll(() => {
 beforeEach(async () => {
   stored.clear();
   await clearSession();
+});
+
+test('trial explains password requirements instead of silently disabling submit', async () => {
+  const fetchMock = installCommercialFetch();
+  const view = render(<TrialSignupScreen onCancel={() => undefined} onCreated={() => undefined} />);
+  expect(view.getByText(/De 12 a 128 caracteres/)).toBeTruthy();
+  fireEvent.changeText(view.getByTestId('trial-name'), 'Owner QA');
+  fireEvent.changeText(view.getByTestId('trial-gym-name'), 'Academia QA');
+  fireEvent.changeText(view.getByTestId('trial-email'), 'owner@example.com');
+  fireEvent.changeText(view.getByTestId('trial-password'), 'short');
+  fireEvent.press(view.getByTestId('trial-submit'));
+  expect(view.getByText(/Use 12–128 caracteres/)).toBeTruthy();
+  expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/commercial/trial/start'))).toBe(false);
 });
 
 test('visitor creates trial, authenticates and reaches tenant-scoped commercial Web', async () => {

@@ -32,10 +32,18 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const disabled = loading || name.trim().length < 2 || gymName.trim().length < 2 || !email.trim() || !strongPassword(password) || !timezone.trim();
+  const missing = name.trim().length < 2 ? 'Informe seu nome (mínimo de 2 caracteres).'
+    : gymName.trim().length < 2 ? 'Informe o nome da academia (mínimo de 2 caracteres).'
+    : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? 'Informe um e-mail válido.'
+    : !strongPassword(password) ? PASSWORD_POLICY_TEXT
+    : !timezone.trim() ? 'Informe o fuso horário.' : '';
 
   async function submit() {
-    if (disabled) return;
+    if (loading) return;
+    if (missing) {
+      setError(missing);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -72,12 +80,13 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
         <TextInput testID="trial-gym-name" style={styles.input} value={gymName} onChangeText={setGymName} placeholder="Nome da academia" placeholderTextColor="#64748b" />
         <TextInput testID="trial-email" style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="E-mail" placeholderTextColor="#64748b" />
         <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Telefone (opcional)" placeholderTextColor="#64748b" />
-        <TextInput testID="trial-password" style={styles.input} value={password} onChangeText={setPassword} secureTextEntry placeholder="Senha" placeholderTextColor="#64748b" />
-        <Text style={styles.policy}>{PASSWORD_POLICY_TEXT}</Text>
+        <Text style={styles.passwordLabel}>Senha</Text>
+        <Text style={styles.policy}>De 12 a 128 caracteres, incluindo pelo menos uma letra maiúscula, uma minúscula, um número e um símbolo (por exemplo, ! ou @).</Text>
+        <TextInput testID="trial-password" style={styles.input} value={password} onChangeText={setPassword} secureTextEntry placeholder="Crie sua senha" placeholderTextColor="#64748b" />
         <TextInput style={styles.input} value={timezone} onChangeText={setTimezone} autoCapitalize="none" placeholder="Timezone IANA" placeholderTextColor="#64748b" />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <TouchableOpacity testID="trial-submit" style={[styles.primary, disabled && styles.disabled]} onPress={submit} disabled={disabled}>
+        <TouchableOpacity testID="trial-submit" style={[styles.primary, loading && styles.disabled]} onPress={submit} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Criar trial</Text>}
         </TouchableOpacity>
         <TouchableOpacity style={styles.secondary} onPress={onCancel} disabled={loading}>
@@ -96,7 +105,8 @@ const styles = StyleSheet.create({
   title: { color: '#f8fafc', fontSize: 30, fontWeight: '900', marginTop: 8 },
   subtitle: { color: '#94a3b8', fontSize: 14, lineHeight: 21, marginTop: 7, marginBottom: 20 },
   input: { color: '#f8fafc', backgroundColor: '#060b13', borderWidth: 1, borderColor: '#243247', borderRadius: 11, paddingHorizontal: 13, paddingVertical: 13, fontSize: 15, marginBottom: 10 },
-  policy: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginBottom: 10 },
+  passwordLabel: { color: '#f8fafc', fontSize: 14, fontWeight: '700', marginBottom: 5 },
+  policy: { color: '#b3c3d5', fontSize: 13, lineHeight: 19, marginBottom: 9 },
   error: { color: '#fca5a5', fontSize: 13, marginBottom: 10 },
   primary: { backgroundColor: '#1473e6', borderRadius: 11, minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   primaryText: { color: '#fff', fontWeight: '800', fontSize: 15 },
