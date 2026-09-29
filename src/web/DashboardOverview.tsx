@@ -61,13 +61,13 @@ export function DashboardOverview({ data, navigate, canNavigate = () => true }: 
 }
 const styles = StyleSheet.create({
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginBottom: 20 },
-  metric: { flexGrow: 1, flexBasis: 210, padding: 22, borderWidth: 1, borderColor: iron.line, backgroundColor: iron.elevated, borderRadius: 20 },
+  metric: { flexGrow: 1, flexShrink: 1, flexBasis: 210, padding: 22, borderWidth: 1, borderColor: iron.line, backgroundColor: iron.elevated, borderRadius: 20 },
   metricTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, alignItems: 'center' },
   metricLabel: { color: iron.muted, fontSize: 13, fontWeight: '600', flexShrink: 1 },
   metricValue: { color: iron.text, fontSize: 30, fontWeight: '800', letterSpacing: -.8, marginTop: 18, marginBottom: 8 },
   muted: { color: iron.muted, fontSize: 12, lineHeight: 18 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginBottom: 14 },
-  panel: { flexGrow: 1, flexBasis: 350, minWidth: 0, backgroundColor: iron.surface, borderWidth: 1, borderColor: iron.line, borderRadius: 20, padding: 24 },
+  panel: { flexGrow: 1, flexShrink: 1, flexBasis: 350, minWidth: 0, backgroundColor: iron.surface, borderWidth: 1, borderColor: iron.line, borderRadius: 20, padding: 24 },
   heading: { color: iron.text, fontSize: 18, fontWeight: '700', marginBottom: 6 },
   panelBody: { marginTop: 24 },
   empty: { color: iron.muted, fontSize: 14, lineHeight: 22, paddingVertical: 28 },

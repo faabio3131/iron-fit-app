@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   row: { backgroundColor: iron.base, borderWidth: 1, borderColor: iron.line, borderRadius: 14, padding: 18, marginBottom: 10 },
   title: { color: iron.text, fontSize: 15, fontWeight: '700', marginBottom: 12 },
   details: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  detail: { minWidth: 120, flexBasis: 180, flexGrow: 1 },
+  detail: { minWidth: 120, flexShrink: 1, flexBasis: 180, flexGrow: 1 },
   label: { color: iron.muted, fontSize: 11, marginBottom: 5 },
   value: { color: iron.text, fontSize: 13, lineHeight: 19 },
   muted: { color: iron.muted, fontSize: 13, lineHeight: 20 },
