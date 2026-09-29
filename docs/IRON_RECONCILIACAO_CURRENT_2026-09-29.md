@@ -1,5 +1,7 @@
 # IRON FIT — Reconciliação inicial de CURRENT
 
+Correção posterior da fonte visual: [Padrão do site oficial](IRON_PADRAO_VISUAL_SITE_OFICIAL.md). O site define aparência azul via CSS sobre o WebP original verde. A inspeção inicial do arquivo isolado foi incompleta; os padrões completos estão agora extraídos.
+
 Data: 29/09/2026. Macro atual: O; WP inicial: O0. Não é certificação de produção.
 
 Atualização vigente: [Evidências da retomada](IRON_EVIDENCIAS_RETOMADA_2026-09-29.md). As tabelas abaixo preservam a reconciliação inicial; o workspace Render já foi autorizado, o preview foi atualizado, as PRs backend #110/#111 foram mergeadas com CI verde e o readiness foi recuperado. Os estados temporários abaixo não devem ser usados como situação final.

@@ -1,5 +1,7 @@
 # IRON FIT — Evidências da retomada de 29/09/2026
 
+Atualização da identidade: consultar [Padrão do site oficial](IRON_PADRAO_VISUAL_SITE_OFICIAL.md). O usuário confirmou a página FM como referência, e a cascata CSS demonstra o padrão azul. A análise anterior do WebP isolado não descrevia a aparência definida pela página. Preparar o ativo final sem filtro permanece pendência de implementação; a fonte visual está identificada.
+
 Projeto: IRON FIT CORE. Macro O em execução; O23 não liberado. Este relatório complementa a reconciliação inicial e prevalece sobre seus estados temporários.
 
 ## Correções publicadas
