@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { api } from '../services/api';
@@ -28,6 +29,7 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [timezone, setTimezone] = useState(browserTimezone());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -82,7 +84,34 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
         <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Telefone (opcional)" placeholderTextColor="#64748b" />
         <Text style={styles.passwordLabel}>Senha</Text>
         <Text style={styles.policy}>De 12 a 128 caracteres, incluindo pelo menos uma letra maiúscula, uma minúscula, um número e um símbolo (por exemplo, ! ou @).</Text>
-        <TextInput testID="trial-password" style={styles.input} value={password} onChangeText={setPassword} secureTextEntry placeholder="Crie sua senha" placeholderTextColor="#64748b" />
+        <View style={styles.passwordInputGroup}>
+          <TextInput
+            testID="trial-password"
+            style={styles.passwordInput}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!passwordVisible}
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder="Crie sua senha"
+            placeholderTextColor="#64748b"
+          />
+          <TouchableOpacity
+            testID="trial-password-toggle"
+            style={styles.passwordToggle}
+            onPress={() => setPasswordVisible((visible) => !visible)}
+            accessibilityRole="button"
+            accessibilityLabel={passwordVisible ? 'Ocultar senha' : 'Mostrar senha'}
+            accessibilityState={{ expanded: passwordVisible }}
+            hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+          >
+            <Ionicons
+              name={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
+              size={22}
+              color="#94a3b8"
+            />
+          </TouchableOpacity>
+        </View>
         <TextInput style={styles.input} value={timezone} onChangeText={setTimezone} autoCapitalize="none" placeholder="Timezone IANA" placeholderTextColor="#64748b" />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -107,6 +136,9 @@ const styles = StyleSheet.create({
   input: { color: '#f8fafc', backgroundColor: '#060b13', borderWidth: 1, borderColor: '#243247', borderRadius: 11, paddingHorizontal: 13, paddingVertical: 13, fontSize: 15, marginBottom: 10 },
   passwordLabel: { color: '#f8fafc', fontSize: 14, fontWeight: '700', marginBottom: 5 },
   policy: { color: '#b3c3d5', fontSize: 13, lineHeight: 19, marginBottom: 9 },
+  passwordInputGroup: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#060b13', borderWidth: 1, borderColor: '#243247', borderRadius: 11, marginBottom: 10 },
+  passwordInput: { flex: 1, color: '#f8fafc', paddingLeft: 13, paddingRight: 8, paddingVertical: 13, fontSize: 15 },
+  passwordToggle: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   error: { color: '#fca5a5', fontSize: 13, marginBottom: 10 },
   primary: { backgroundColor: '#1473e6', borderRadius: 11, minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   primaryText: { color: '#fff', fontWeight: '800', fontSize: 15 },

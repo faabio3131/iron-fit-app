@@ -66,11 +66,8 @@ function Chips({ rows, selected, onSelect }: { rows: any[]; selected: string; on
   return <View style={styles.chips}>{rows.map((row) => <TouchableOpacity key={row.id} style={[styles.chip, selected === row.id && styles.chipActive]} onPress={() => onSelect(row.id)}><Text style={styles.chipText}>{row.name ?? row.user?.name ?? row.id}</Text></TouchableOpacity>)}</View>;
 }
 
-export function CommercialWebApp({ demoPreview = false }: { demoPreview?: boolean } = {}) {
-  const auth = useAuth();
-  const profile = demoPreview ? { name: 'Administrador Demo', email: 'demo@iron.local', roles: ['OWNER'], permissions: ['*'] } : auth.profile;
-  const activeTenantId = demoPreview ? 'iron-demo-academy' : auth.activeTenantId;
-  const logout = auth.logout;
+export function CommercialWebApp() {
+  const { profile, activeTenantId, logout } = useAuth();
   const compact = useWindowDimensions().width < 980;
   const roles = useMemo<string[]>(() => Array.isArray(profile?.roles) ? profile.roles : [], [profile]);
   const permissions = useMemo<string[]>(() => Array.isArray(profile?.permissions) ? profile.permissions : [], [profile]);
@@ -118,16 +115,6 @@ export function CommercialWebApp({ demoPreview = false }: { demoPreview?: boolea
   const visible = useMemo(() => modules.filter((item) => allowed(item) && (!blocked || item.key === 'saasBilling' || item.key === 'security')), [allowed, blocked]);
 
   const loadShell = useCallback(async () => {
-    if (demoPreview) {
-      const demoFeatures: Entitlement[] = Array.from(new Set(modules.flatMap((item) => item.entitlement ?? []))).map((featureKey) => ({ featureKey, kind: 'FEATURE', value: true, source: 'DEMO' }));
-      setEntitlements(demoFeatures);
-      setSubscription({ status: 'ACTIVE', plan: 'IRON PRO DEMO' });
-      setTrial({ status: 'ACTIVE' });
-      setOnboarding({ status: 'COMPLETED' });
-      setShellReady(true);
-      setLoading(false);
-      return;
-    }
     setShellReady(false);
     setError('');
     const [features, current, trialState, onboardingState] = await Promise.all([
@@ -141,19 +128,10 @@ export function CommercialWebApp({ demoPreview = false }: { demoPreview?: boolea
     setTrial(trialState);
     setOnboarding(onboardingState);
     setShellReady(true);
-  }, [can, demoPreview]);
+  }, [can]);
 
   const loadModule = useCallback(async (key: ModuleKey) => {
     setLoading(true); setError('');
-    if (demoPreview) {
-      const demoRows = [{ id: 'demo-1', name: 'Dados demonstrativos', status: 'DEMO' }];
-      const next: Record<string, any> = key === 'overview'
-        ? { gym: [{ id: 'iron-demo-academy', name: 'IRON Academia Demo' }], summary: { activeStudents: 248, checkinsToday: 87 }, revenue: { total: 42850 }, attendance: demoRows, overdue: [], birthdays: demoRows }
-        : { students: demoRows, users: demoRows, inventory: demoRows, catalog: demoRows, exercises: demoRows, assessments: demoRows, workouts: demoRows, slots: demoRows, events: demoRows, accounts: demoRows, charges: demoRows, features: demoRows, configurations: demoRows, items: demoRows, overview: demoRows, analytics: demoRows };
-      setData(next);
-      setLoading(false);
-      return;
-    }
     try {
       const next: Record<string, any> = {};
       if (key === 'overview') {
@@ -175,7 +153,7 @@ export function CommercialWebApp({ demoPreview = false }: { demoPreview?: boolea
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
       setData(next);
     } catch (reason) { setError(message(reason)); setData({}); } finally { setLoading(false); }
-  }, [activeTenantId, can, demoPreview, enabled, selectedStudent, subscription]);
+  }, [activeTenantId, can, enabled, selectedStudent, subscription]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -191,10 +169,6 @@ export function CommercialWebApp({ demoPreview = false }: { demoPreview?: boolea
     return () => clearTimeout(timer);
   }, [active, blocked, loadModule, shellReady]);
   async function mutate(operation: () => Promise<unknown>, reset?: () => void) {
-    if (demoPreview) {
-      setError('Modo demonstração: alterações não são gravadas.');
-      return;
-    }
     setSaving(true); setError('');
     try { await operation(); reset?.(); await loadShell(); await loadModule(active); } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
   }

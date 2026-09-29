@@ -27,6 +27,7 @@ export function LoginScreen({
   const { login } = useAuth();
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [requiresMfa, setRequiresMfa] = useState(false);
@@ -140,10 +141,28 @@ export function LoginScreen({
               value={password}
               onChangeText={setPassword}
               editable={!requiresMfa}
-              secureTextEntry
+              secureTextEntry={!passwordVisible}
+              autoCapitalize="none"
+              autoCorrect={false}
               placeholder="Senha"
               placeholderTextColor="#64748b"
             />
+            <TouchableOpacity
+              testID="login-password-toggle"
+              style={styles.passwordToggle}
+              onPress={() => setPasswordVisible((visible) => !visible)}
+              disabled={requiresMfa}
+              accessibilityRole="button"
+              accessibilityLabel={passwordVisible ? 'Ocultar senha' : 'Mostrar senha'}
+              accessibilityState={{ disabled: requiresMfa, expanded: passwordVisible }}
+              hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+            >
+              <Ionicons
+                name={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
+                size={22}
+                color="#94a3b8"
+              />
+            </TouchableOpacity>
           </View>
 
           {requiresMfa ? (
@@ -317,6 +336,7 @@ const styles = StyleSheet.create({
   },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: '#f1f5f9', paddingVertical: 14, fontSize: 15 },
+  passwordToggle: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   or: { color: '#64748b', textAlign: 'center', marginBottom: 10, fontSize: 12 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
   button: {

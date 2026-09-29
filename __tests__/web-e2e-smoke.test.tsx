@@ -90,6 +90,22 @@ test('trial explains password requirements instead of silently disabling submit'
   expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/commercial/trial/start'))).toBe(false);
 });
 
+test('trial password visibility control safely shows and hides the password', () => {
+  const view = render(<TrialSignupScreen onCancel={() => undefined} onCreated={() => undefined} />);
+  const passwordInput = view.getByTestId('trial-password');
+  const visibilityToggle = view.getByTestId('trial-password-toggle');
+
+  expect(passwordInput.props.secureTextEntry).toBe(true);
+  expect(visibilityToggle.props.accessibilityLabel).toBe('Mostrar senha');
+
+  fireEvent.press(visibilityToggle);
+  expect(view.getByTestId('trial-password').props.secureTextEntry).toBe(false);
+  expect(view.getByTestId('trial-password-toggle').props.accessibilityLabel).toBe('Ocultar senha');
+
+  fireEvent.press(view.getByTestId('trial-password-toggle'));
+  expect(view.getByTestId('trial-password').props.secureTextEntry).toBe(true);
+});
+
 test('visitor creates trial, authenticates and reaches tenant-scoped commercial Web', async () => {
   const fetchMock = installCommercialFetch();
   const view = render(<App />);
