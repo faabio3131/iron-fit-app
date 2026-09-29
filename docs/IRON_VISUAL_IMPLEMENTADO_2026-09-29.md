@@ -31,3 +31,9 @@ Referência de origem: `docs/IRON_PADRAO_VISUAL_SITE_OFICIAL.md` e site oficial 
 Este incremento não certifica todo o Macro O nem o GO comercial. Ainda exigem revisão específica as superfícies completas de domínio, tablet/Android/iOS em dispositivo e os fluxos dependentes de provedores/schema.
 Mantidos os bloqueadores externos já registrados: 15 migrations pendentes exigindo evidência de backup/restore; integrações sem schema no banco e homologação/credenciais externas pendentes.
 Próximo passo: CI do novo SHA → deploy do preview real → smoke visual de autenticação, cockpit e navegação → registrar evidências. PR permanece Draft enquanto não houver evidência suficiente para O23/O24 integral.
+
+## CI e ajuste responsivo
+
+- CI `36644675234` do commit `55b8a5319a81e33f8d880f7f1f13c916eee0ead7`: SUCCESS, incluindo auditoria high, testes, exports Android/iOS/Web e smoke HTTP do container.
+- Ajuste posterior `bb5c40161ecb1f1d853b5dd0d90b5350d5163a29`: permitir redução de cards e detalhes em larguras estreitas. Typecheck/lint PASS; Jest 70 PASS, 0 FAIL, 1 live ignorado.
+- A atualização de ref desse ajuste retornou erro transitório do conector após aplicar o ref; confirmação por API e git confirmou o SHA. A PR/CI ainda não refletiu o head na consulta seguinte. Este checkpoint mantém rastreabilidade; deploy só após confirmação do CI da árvore final.
