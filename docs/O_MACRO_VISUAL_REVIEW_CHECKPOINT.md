@@ -49,3 +49,11 @@ Adaptação obrigatória para identidade própria do IRON:
 ## Reconciliação de 29/09 — retomada final
 
 Ver `IRON_RECONCILIACAO_CURRENT_2026-09-29.md`. O componente real ainda possuía um ramo `demoPreview`; sua remoção é O0, não fechamento do Macro O. JSON bruto, logo oficial e superfícies funcionais continuam no backlog.
+
+## Atualização de execução — preview real
+
+Código app 1cebac79207c73198c51566f3eee418a8fb73b7f publicado no Render, deploy dep-dau3oflg1s2s73bb90kg LIVE. Controles Mostrar/Ocultar senha verificados no login e trial com os campos vazios. Backend corrigido pelas PRs #110 e #111; readiness HTTP 200 e cinco módulos antes afetados revalidados por leitura real. Integrações ainda falha por schema incompleto. Detalhes, limites e migrations pendentes em `IRON_EVIDENCIAS_RETOMADA_2026-09-29.md`.
+
+![Trial publicado com controle de senha; visual ainda em execução](iron-trial-preview-2026-09-29.jpg)
+
+O23 continua bloqueado. Esta captura registra a implementação publicada, não aprovação do visual final.

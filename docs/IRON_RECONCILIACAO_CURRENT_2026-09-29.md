@@ -2,6 +2,8 @@
 
 Data: 29/09/2026. Macro atual: O; WP inicial: O0. Não é certificação de produção.
 
+Atualização vigente: [Evidências da retomada](IRON_EVIDENCIAS_RETOMADA_2026-09-29.md). As tabelas abaixo preservam a reconciliação inicial; o workspace Render já foi autorizado, o preview foi atualizado, as PRs backend #110/#111 foram mergeadas com CI verde e o readiness foi recuperado. Os estados temporários abaixo não devem ser usados como situação final.
+
 ## Autoridade e fontes
 
 Auditoria de 29/09 lida antes do prompt anexado. Aplicados o Prompt Mestre O–T pós-auditoria, o Cronograma Mestre, as instruções permanentes e a norma de Arquitetura Única Evolutiva. O System Design GERENTE AI é referência institucional de outro produto, não substitui contratos IRON. CURRENT reproduzível prevalece sobre documentos históricos.
