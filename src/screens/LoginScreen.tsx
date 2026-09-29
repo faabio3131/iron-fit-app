@@ -1,11 +1,11 @@
+import { AuthFrame } from '../components/AuthFrame';
+import { IronInput as TextInput } from '../components/IronInput';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -75,27 +75,7 @@ export function LoginScreen({
     (requiresMfa && !mfaCode.trim() && !recoveryCode.trim());
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.content}>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoBadge}>
-            <Ionicons name="cloud" size={48} color="#f1f5f9" />
-            <Ionicons
-              name="barbell"
-              size={28}
-              color="#2583e8"
-              style={styles.logoBarbell}
-            />
-          </View>
-          <Text style={styles.logoTitle}>Iron Fit</Text>
-          <Text style={styles.logoTagline}>
-            A força da sua academia,{String.fromCharCode(10)}na nuvem.
-          </Text>
-        </View>
-
+    <AuthFrame>
         <View style={styles.card}>
           <Text style={styles.welcome}>Bem-vindo de volta</Text>
           <Text style={styles.sub}>
@@ -108,11 +88,12 @@ export function LoginScreen({
               {notice}
             </Text>
           ) : null}
+          <Text style={styles.fieldLabel}>E-mail</Text>
           <View style={styles.inputGroup}>
             <Ionicons
               name="mail-outline"
               size={20}
-              color="#64748b"
+              color="#9fb0c5"
               style={styles.inputIcon}
             />
             <TextInput
@@ -124,15 +105,16 @@ export function LoginScreen({
               autoCapitalize="none"
               autoCorrect={false}
               placeholder="Email"
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#9fb0c5"
               keyboardType="email-address"
             />
           </View>
+          <Text style={styles.fieldLabel}>Senha</Text>
           <View style={styles.inputGroup}>
             <Ionicons
               name="lock-closed-outline"
               size={20}
-              color="#64748b"
+              color="#9fb0c5"
               style={styles.inputIcon}
             />
             <TextInput
@@ -145,7 +127,7 @@ export function LoginScreen({
               autoCapitalize="none"
               autoCorrect={false}
               placeholder="Senha"
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#9fb0c5"
             />
             <TouchableOpacity
               testID="login-password-toggle"
@@ -160,7 +142,7 @@ export function LoginScreen({
               <Ionicons
                 name={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
                 size={22}
-                color="#94a3b8"
+                color="#9fb0c5"
               />
             </TouchableOpacity>
           </View>
@@ -171,7 +153,7 @@ export function LoginScreen({
                 <Ionicons
                   name="shield-checkmark-outline"
                   size={20}
-                  color="#64748b"
+                  color="#9fb0c5"
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -184,7 +166,7 @@ export function LoginScreen({
                   }}
                   keyboardType="number-pad"
                   placeholder="Código MFA de 6 dígitos"
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor="#9fb0c5"
                 />
               </View>
               <Text style={styles.or}>ou</Text>
@@ -192,7 +174,7 @@ export function LoginScreen({
                 <Ionicons
                   name="key-outline"
                   size={20}
-                  color="#64748b"
+                  color="#9fb0c5"
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -206,7 +188,7 @@ export function LoginScreen({
                   autoCapitalize="characters"
                   autoCorrect={false}
                   placeholder="Recovery code"
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor="#9fb0c5"
                 />
               </View>
             </>
@@ -214,13 +196,14 @@ export function LoginScreen({
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <TouchableOpacity
+              accessibilityRole="button"
             testID="login-submit"
             style={[styles.button, disabled && styles.disabled]}
             onPress={handleLogin}
             disabled={disabled}
           >
             {loading ? (
-              <ActivityIndicator color="#f1f5f9" />
+              <ActivityIndicator color="#eef7ff" />
             ) : (
               <Text style={styles.buttonText}>
                 {requiresMfa ? 'Confirmar e entrar' : 'Entrar'}
@@ -230,6 +213,7 @@ export function LoginScreen({
 
           {requiresMfa ? (
             <TouchableOpacity
+              accessibilityRole="button"
               style={styles.linkButton}
               onPress={() => {
                 setRequiresMfa(false);
@@ -244,6 +228,7 @@ export function LoginScreen({
             <>
               {onForgotPassword ? (
                 <TouchableOpacity
+              accessibilityRole="button"
                   testID="forgot-password"
                   style={styles.linkButton}
                   onPress={onForgotPassword}
@@ -254,6 +239,7 @@ export function LoginScreen({
               ) : null}
               {onStartTrial ? (
                 <TouchableOpacity
+              accessibilityRole="button"
                   testID="start-trial"
                   style={styles.trialButton}
                   onPress={onStartTrial}
@@ -265,55 +251,21 @@ export function LoginScreen({
             </>
           )}
         </View>
-        <Text style={styles.footer}>Iron Fit © 2026</Text>
-      </View>
-    </ScrollView>
+    </AuthFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#05080f' },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 40,
-  },
-  logoContainer: { alignItems: 'center', marginBottom: 40 },
-  logoBadge: {
-    width: 110,
-    height: 110,
-    borderRadius: 28,
-    backgroundColor: '#0b111d',
-    borderWidth: 1,
-    borderColor: '#1d2939',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  logoBarbell: { position: 'absolute', bottom: 22 },
-  logoTitle: {
-    color: '#f1f5f9',
-    fontSize: 36,
-    fontWeight: '800',
-    letterSpacing: -1,
-  },
-  logoTagline: {
-    color: '#94a3b8',
-    fontSize: 15,
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 22,
-  },
+  fieldLabel: { color: '#eef7ff', fontSize: 13, fontWeight: '600', marginBottom: 7 },
   card: {
-    backgroundColor: '#0b111d',
+    backgroundColor: '#071528',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#1d2939',
+    borderColor: '#203b55',
   },
-  welcome: { color: '#f1f5f9', fontSize: 22, fontWeight: '700', marginBottom: 4 },
-  sub: { color: '#94a3b8', fontSize: 14, marginBottom: 18 },
+  welcome: { color: '#eef7ff', fontSize: 22, fontWeight: '700', marginBottom: 4 },
+  sub: { color: '#9fb0c5', fontSize: 14, marginBottom: 18 },
   notice: {
     color: '#86efac',
     backgroundColor: '#12301f',
@@ -327,28 +279,28 @@ const styles = StyleSheet.create({
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#060b13',
+    backgroundColor: '#050b14',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1d2939',
+    borderColor: '#203b55',
     paddingHorizontal: 14,
     marginBottom: 12,
   },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, color: '#f1f5f9', paddingVertical: 14, fontSize: 15 },
+  input: { flex: 1, color: '#eef7ff', paddingVertical: 14, fontSize: 15 },
   passwordToggle: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  or: { color: '#64748b', textAlign: 'center', marginBottom: 10, fontSize: 12 },
+  or: { color: '#9fb0c5', textAlign: 'center', marginBottom: 10, fontSize: 12 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
   button: {
-    backgroundColor: '#2583e8',
+    backgroundColor: '#176bc1',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
   },
   disabled: { opacity: 0.6 },
-  buttonText: { color: '#f1f5f9', fontSize: 16, fontWeight: '700' },
+  buttonText: { color: '#eef7ff', fontSize: 16, fontWeight: '700' },
   linkButton: { paddingVertical: 12, alignItems: 'center' },
-  linkText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
+  linkText: { color: '#9fb0c5', fontSize: 13, fontWeight: '600' },
   trialButton: {
     borderWidth: 1,
     borderColor: '#1e4d7a',
@@ -357,10 +309,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   trialText: { color: '#93c5fd', fontSize: 14, fontWeight: '700' },
-  footer: {
-    color: '#64748b',
-    textAlign: 'center',
-    marginTop: 24,
-    fontSize: 12,
-  },
 });

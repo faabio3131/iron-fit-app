@@ -11,7 +11,7 @@ import { LoginScreen } from '../src/screens/LoginScreen';
 
 test('login renders the canonical Iron Fit brand', () => {
   const view = render(<LoginScreen />);
-  expect(view.getAllByText('Iron Fit').length).toBeGreaterThan(0);
+  expect(view.getByLabelText('IRON FIT CORE — by FM Tecnologia')).toBeTruthy();
 });
 
 test('login password visibility control safely shows and hides the password', () => {

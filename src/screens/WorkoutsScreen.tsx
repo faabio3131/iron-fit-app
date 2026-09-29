@@ -36,15 +36,15 @@ export function WorkoutsScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <View><Text style={styles.heading}>Olá, {profile?.name?.split(' ')[0] || 'Atleta'}</Text><Text style={styles.sub}>Bora treinar hoje? 💪</Text></View>
-          <View style={styles.avatar}><Ionicons name="person" size={24} color="#2583e8" /></View>
+          <View style={styles.avatar}><Ionicons name="person" size={24} color="#2f91ff" /></View>
         </View>
         <View style={styles.stats}>
-          <StatCard icon="barbell" value={String(workouts.length)} label="Treinos" color="#2583e8" />
+          <StatCard icon="barbell" value={String(workouts.length)} label="Treinos" color="#2f91ff" />
           <StatCard icon="calendar" value={String(weeklyFrequency)} label="Dias/semana" color="#f59e0b" />
         </View>
         <AIInsightCard workoutCount={workouts.length} weeklyFrequency={weeklyFrequency} onOpenAssistant={() => setAssistantVisible(true)} />
         <Text style={styles.sectionTitle}>Seus Treinos</Text>
-        {loading ? <ActivityIndicator size="large" color="#2583e8" style={styles.loading} /> : workouts.length === 0 ? (
+        {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : workouts.length === 0 ? (
           <EmptyState icon="barbell-outline" title="Nenhum treino ainda" subtitle="Seu instrutor ainda não liberou treinos para você." />
         ) : workouts.map((workout) => (
           <View key={workout.id} style={styles.card}>
@@ -61,7 +61,7 @@ export function WorkoutsScreen() {
                       <Text style={styles.exerciseMeta}>{item.sets && item.reps ? `${item.sets}x${item.reps}` : ''}{item.restSeconds ? ` · ${item.restSeconds}s` : ''}{item.suggestedLoad ? ` · ${item.suggestedLoad}` : ''}</Text>
                       {item.exercise?.videoUrl ? (
                         <TouchableOpacity style={styles.videoButton} onPress={() => Linking.openURL(item.exercise.videoUrl)}>
-                          <Ionicons name="play-circle" size={16} color="#2583e8" /><Text style={styles.videoText}>Ver vídeo</Text>
+                          <Ionicons name="play-circle" size={16} color="#2f91ff" /><Text style={styles.videoText}>Ver vídeo</Text>
                         </TouchableOpacity>
                       ) : null}
                     </View>
@@ -83,12 +83,12 @@ export function WorkoutsScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#05080f' }, content: { padding: 20, paddingBottom: 100 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }, heading: { color: '#f1f5f9', fontSize: 24, fontWeight: '800' }, sub: { color: '#94a3b8', fontSize: 14, marginTop: 2 },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#0b111d', borderWidth: 1, borderColor: '#1d2939', alignItems: 'center', justifyContent: 'center' },
-  stats: { flexDirection: 'row', gap: 12, marginBottom: 24 }, sectionTitle: { color: '#f1f5f9', fontSize: 18, fontWeight: '700', marginBottom: 12 }, loading: { marginTop: 40 },
-  card: { backgroundColor: '#0b111d', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#1d2939' }, cardTitle: { color: '#f1f5f9', fontSize: 16, fontWeight: '700' }, meta: { color: '#94a3b8', fontSize: 12, marginTop: 2, marginBottom: 16 },
-  session: { marginBottom: 12 }, sessionTitle: { color: '#2583e8', fontSize: 14, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' }, exercise: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1d2939' },
-  number: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#080d16', alignItems: 'center', justifyContent: 'center', marginRight: 12 }, numberText: { color: '#2583e8', fontWeight: '700', fontSize: 12 }, exerciseContent: { flex: 1 }, exerciseName: { color: '#f1f5f9', fontSize: 15, fontWeight: '600' }, exerciseMeta: { color: '#94a3b8', fontSize: 11, marginTop: 4 },
-  videoButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2583e815', borderWidth: 1, borderColor: '#2583e840', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, alignSelf: 'flex-start', marginTop: 8, gap: 6 }, videoText: { color: '#2583e8', fontWeight: '600', fontSize: 13 },
+  scroll: { flex: 1, backgroundColor: '#030811' }, content: { padding: 20, paddingBottom: 100 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }, heading: { color: '#eef7ff', fontSize: 24, fontWeight: '800' }, sub: { color: '#9fb0c5', fontSize: 14, marginTop: 2 },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', alignItems: 'center', justifyContent: 'center' },
+  stats: { flexDirection: 'row', gap: 12, marginBottom: 24 }, sectionTitle: { color: '#eef7ff', fontSize: 18, fontWeight: '700', marginBottom: 12 }, loading: { marginTop: 40 },
+  card: { backgroundColor: '#071528', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#203b55' }, cardTitle: { color: '#eef7ff', fontSize: 16, fontWeight: '700' }, meta: { color: '#9fb0c5', fontSize: 12, marginTop: 2, marginBottom: 16 },
+  session: { marginBottom: 12 }, sessionTitle: { color: '#2f91ff', fontSize: 14, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' }, exercise: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#203b55' },
+  number: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#050b14', alignItems: 'center', justifyContent: 'center', marginRight: 12 }, numberText: { color: '#2f91ff', fontWeight: '700', fontSize: 12 }, exerciseContent: { flex: 1 }, exerciseName: { color: '#eef7ff', fontSize: 15, fontWeight: '600' }, exerciseMeta: { color: '#9fb0c5', fontSize: 11, marginTop: 4 },
+  videoButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2f91ff15', borderWidth: 1, borderColor: '#2f91ff40', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, alignSelf: 'flex-start', marginTop: 8, gap: 6 }, videoText: { color: '#2f91ff', fontWeight: '600', fontSize: 13 },
 });

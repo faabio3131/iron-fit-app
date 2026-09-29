@@ -157,7 +157,7 @@ export function SaasBillingPanel({
           Preços, estado financeiro e entitlement são autoridade do backend. O painel não calcula
           cobrança, proration ou acesso localmente.
         </Text>
-        {loading ? <ActivityIndicator color="#2583e8" style={styles.loading} /> : null}
+        {loading ? <ActivityIndicator color="#2f91ff" style={styles.loading} /> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {notice ? <Text style={styles.notice}>{notice}</Text> : null}
 
@@ -279,13 +279,13 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#111827',
     borderWidth: 1,
-    borderColor: '#1d2939',
+    borderColor: '#203b55',
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
   },
-  title: { color: '#f8fafc', fontSize: 17, fontWeight: '800', marginBottom: 6 },
-  muted: { color: '#94a3b8', fontSize: 12, lineHeight: 18 },
+  title: { color: '#eef7ff', fontSize: 17, fontWeight: '800', marginBottom: 6 },
+  muted: { color: '#9fb0c5', fontSize: 12, lineHeight: 18 },
   loading: { marginVertical: 12 },
   error: {
     color: '#fca5a5',
@@ -309,8 +309,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#202a3e',
     paddingVertical: 9,
   },
-  statusLabel: { color: '#94a3b8', fontSize: 12 },
-  statusValue: { color: '#f1f5f9', fontSize: 12, fontWeight: '700', textAlign: 'right' },
+  statusLabel: { color: '#9fb0c5', fontSize: 12 },
+  statusValue: { color: '#eef7ff', fontSize: 12, fontWeight: '700', textAlign: 'right' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -320,21 +320,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   rowCopy: { flex: 1 },
-  rowTitle: { color: '#f1f5f9', fontSize: 13, fontWeight: '800' },
+  rowTitle: { color: '#eef7ff', fontSize: 13, fontWeight: '800' },
   invoice: {
     borderTopWidth: 1,
     borderTopColor: '#202a3e',
     paddingVertical: 10,
   },
   button: {
-    backgroundColor: '#1473e6',
+    backgroundColor: '#176bc1',
     borderRadius: 9,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   secondaryButton: {
     alignSelf: 'flex-start',
-    backgroundColor: '#172033',
+    backgroundColor: '#203b55',
     borderWidth: 1,
     borderColor: '#334155',
     borderRadius: 9,

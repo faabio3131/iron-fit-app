@@ -72,7 +72,7 @@ export function AIWorkoutAssistant({ visible, onClose, workoutCount, weeklyFrequ
               value={input}
               onChangeText={setInput}
               placeholder="Pergunte sobre seu treino..."
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#9fb0c5"
               style={styles.input}
               multiline
               maxLength={600}
@@ -93,17 +93,17 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { color: '#f5f3ff', fontSize: 18, fontWeight: '800' },
-  notice: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginTop: 8, marginBottom: 12 },
+  notice: { color: '#9fb0c5', fontSize: 11, lineHeight: 16, marginTop: 8, marginBottom: 12 },
   messages: { flex: 1 },
   messagesContent: { paddingVertical: 8, gap: 8 },
   bubble: { maxWidth: '88%', paddingHorizontal: 13, paddingVertical: 10, borderRadius: 14 },
   userBubble: { alignSelf: 'flex-end', backgroundColor: '#6d28d9' },
   assistantBubble: { alignSelf: 'flex-start', backgroundColor: '#1e293b' },
-  messageText: { color: '#f8fafc', fontSize: 13, lineHeight: 18 },
+  messageText: { color: '#eef7ff', fontSize: 13, lineHeight: 18 },
   safeLabel: { color: '#fbbf24', fontSize: 9, fontWeight: '800', marginTop: 5 },
   loading: { alignSelf: 'flex-start', margin: 8 },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 10 },
-  input: { flex: 1, minHeight: 44, maxHeight: 110, backgroundColor: '#080d16', color: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 12, paddingVertical: 10 },
-  send: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1473e6' },
+  input: { flex: 1, minHeight: 44, maxHeight: 110, backgroundColor: '#050b14', color: '#eef7ff', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 12, paddingVertical: 10 },
+  send: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#176bc1' },
   sendDisabled: { opacity: 0.55 },
 });

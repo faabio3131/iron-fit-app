@@ -35,8 +35,8 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#1b1728', borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: '#f59e0b33' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  title: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
+  title: { color: '#eef7ff', fontSize: 14, fontWeight: '700' },
   source: { color: '#fbbf24', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
   value: { color: '#fde68a', fontSize: 18, fontWeight: '800', marginBottom: 4 },
-  detail: { color: '#94a3b8', fontSize: 12, lineHeight: 17 },
+  detail: { color: '#9fb0c5', fontSize: 12, lineHeight: 17 },
 });

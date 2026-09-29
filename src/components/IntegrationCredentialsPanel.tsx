@@ -70,7 +70,7 @@ function SecretField({
         secureTextEntry
         autoCapitalize="none"
         autoCorrect={false}
-        placeholderTextColor="#64748b"
+        placeholderTextColor="#9fb0c5"
       />
     </View>
   );
@@ -97,7 +97,7 @@ function PlainField({
         multiline={multiline}
         autoCapitalize="none"
         autoCorrect={false}
-        placeholderTextColor="#64748b"
+        placeholderTextColor="#9fb0c5"
       />
     </View>
   );
@@ -314,7 +314,7 @@ export function IntegrationCredentialsPanel() {
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator color="#2583e8" />
+        <ActivityIndicator color="#2f91ff" />
         <Text style={styles.muted}>Carregando integrações configuráveis…</Text>
       </View>
     );
@@ -518,18 +518,18 @@ const styles = StyleSheet.create({
   section: {
     backgroundColor: '#111827',
     borderWidth: 1,
-    borderColor: '#1d2939',
+    borderColor: '#203b55',
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
   },
-  title: { color: '#f8fafc', fontSize: 17, fontWeight: '800', marginBottom: 6 },
-  muted: { color: '#94a3b8', fontSize: 13, lineHeight: 18, marginBottom: 8 },
-  label: { color: '#94a3b8', fontSize: 11, fontWeight: '700', marginTop: 8, marginBottom: 5 },
+  title: { color: '#eef7ff', fontSize: 17, fontWeight: '800', marginBottom: 6 },
+  muted: { color: '#9fb0c5', fontSize: 13, lineHeight: 18, marginBottom: 8 },
+  label: { color: '#9fb0c5', fontSize: 11, fontWeight: '700', marginTop: 8, marginBottom: 5 },
   field: { marginBottom: 8 },
   input: {
-    color: '#f8fafc',
-    backgroundColor: '#060b13',
+    color: '#eef7ff',
+    backgroundColor: '#050b14',
     borderWidth: 1,
     borderColor: '#243247',
     borderRadius: 9,
@@ -538,15 +538,15 @@ const styles = StyleSheet.create({
   multiline: { minHeight: 90, textAlignVertical: 'top' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 8 },
   chip: { borderWidth: 1, borderColor: '#334155', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
-  chipActive: { backgroundColor: '#2e1f52', borderColor: '#2583e8' },
+  chipActive: { backgroundColor: '#2e1f52', borderColor: '#2f91ff' },
   chipText: { color: '#cbd5e1', fontSize: 12 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  button: { backgroundColor: '#1473e6', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10 },
+  button: { backgroundColor: '#176bc1', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10 },
   danger: { backgroundColor: '#991b1b' },
   buttonText: { color: '#fff', fontWeight: '800', fontSize: 12 },
   disabled: { opacity: 0.45 },
   connection: { backgroundColor: '#0c1220', borderWidth: 1, borderColor: '#202a3e', borderRadius: 10, padding: 12, marginTop: 8 },
-  connectionTitle: { color: '#f1f5f9', fontWeight: '800', fontSize: 15, marginBottom: 4 },
+  connectionTitle: { color: '#eef7ff', fontWeight: '800', fontSize: 15, marginBottom: 4 },
   error: { color: '#fca5a5', backgroundColor: '#301215', padding: 10, borderRadius: 8, marginBottom: 10 },
   success: { color: '#4ade80', backgroundColor: '#0b2a1e', padding: 10, borderRadius: 8, marginBottom: 10 },
   loading: { minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 8 },

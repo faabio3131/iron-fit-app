@@ -56,7 +56,7 @@ export function ProfileScreen() {
         onPress={() => setSecurityMode(true)}
         activeOpacity={0.8}
       >
-        <Ionicons name="shield-checkmark-outline" size={20} color="#f1f5f9" />
+        <Ionicons name="shield-checkmark-outline" size={20} color="#eef7ff" />
         <Text style={styles.securityText}>Segurança da conta</Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -65,7 +65,7 @@ export function ProfileScreen() {
         onPress={() => void logout()}
         activeOpacity={0.8}
       >
-        <Ionicons name="log-out-outline" size={20} color="#f1f5f9" />
+        <Ionicons name="log-out-outline" size={20} color="#eef7ff" />
         <Text style={styles.logoutText}>Sair da conta</Text>
       </TouchableOpacity>
       <Text style={styles.version}>Iron Fit v0.2.0</Text>
@@ -74,27 +74,27 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#05080f' },
+  scroll: { flex: 1, backgroundColor: '#030811' },
   content: { padding: 20, paddingBottom: 100 },
   header: { alignItems: 'center', marginBottom: 24 },
   avatar: {
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: '#2583e8',
+    backgroundColor: '#2f91ff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
-  avatarText: { color: '#f1f5f9', fontSize: 36, fontWeight: '800' },
-  name: { color: '#f1f5f9', fontSize: 22, fontWeight: '800' },
-  email: { color: '#94a3b8', fontSize: 13, marginTop: 4 },
+  avatarText: { color: '#eef7ff', fontSize: 36, fontWeight: '800' },
+  name: { color: '#eef7ff', fontSize: 22, fontWeight: '800' },
+  email: { color: '#9fb0c5', fontSize: 13, marginTop: 4 },
   infoCard: {
-    backgroundColor: '#0b111d',
+    backgroundColor: '#071528',
     borderRadius: 16,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#1d2939',
+    borderColor: '#203b55',
     marginBottom: 16,
   },
   security: {
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
-  securityText: { color: '#f1f5f9', fontWeight: '700', fontSize: 15 },
+  securityText: { color: '#eef7ff', fontWeight: '700', fontSize: 15 },
   logout: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -117,6 +117,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 8,
   },
-  logoutText: { color: '#f1f5f9', fontWeight: '700', fontSize: 15 },
-  version: { color: '#64748b', textAlign: 'center', fontSize: 11, marginTop: 16 },
+  logoutText: { color: '#eef7ff', fontWeight: '700', fontSize: 15 },
+  version: { color: '#9fb0c5', textAlign: 'center', fontSize: 11, marginTop: 16 },
 });

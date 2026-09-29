@@ -79,7 +79,7 @@ describe('SaaS billing Web recovery surface', () => {
     const source = await readFile('src/web/CommercialWebApp.tsx', 'utf8');
 
     expect(source).toContain("item.key === 'saasBilling' || item.key === 'security'");
-    expect(source).toContain('A superfície operacional permanece fail-closed');
+    expect(source).toContain('Seu acesso operacional está limitado.');
     expect(source).toContain('<SaasBillingPanel onCommercialStateChanged={loadShell} />');
     expect(source).toContain("key: 'saasBilling'");
     expect(source).not.toContain("blocked ? [] : modules.filter");

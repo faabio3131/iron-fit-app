@@ -36,7 +36,7 @@ test('C7 Web requires step-up material for credential mutations', () => {
 test('C6 Web never lets the browser choose tenant authority', () => {
   expect(panel).not.toMatch(/gymId|tenantId/);
   expect(panel).toContain('/integrations/connections');
-  expect(web).toContain('Tenant derivado da sessão autenticada');
+  expect(web).toContain('const { profile, activeTenantId, logout } = useAuth()');
 });
 
 test('C6 Web derives provider/auth/capabilities from backend catalog and treats environment as server authority', () => {

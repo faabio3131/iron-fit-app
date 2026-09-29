@@ -38,7 +38,7 @@ export function SchedulesScreen() {
       </View>
       <CheckInScreen />
       <Text style={styles.sectionTitle}>Horários reservados</Text>
-      {loading ? <ActivityIndicator size="large" color="#2583e8" style={styles.loading} /> : schedules.length === 0 ? (
+      {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : schedules.length === 0 ? (
         <EmptyState icon="calendar-outline" title="Nenhum horário reservado" subtitle="Quando sua academia abrir a agenda, suas reservas aparecem aqui." />
       ) : schedules.map((schedule, index) => (
         <View key={schedule.id || index} style={styles.card}>
@@ -58,17 +58,17 @@ export function SchedulesScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#05080f' },
+  scroll: { flex: 1, backgroundColor: '#030811' },
   content: { padding: 20, paddingBottom: 100 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  heading: { color: '#f1f5f9', fontSize: 24, fontWeight: '800' },
-  sub: { color: '#94a3b8', fontSize: 14, marginTop: 2 },
-  sectionTitle: { color: '#f1f5f9', fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  heading: { color: '#eef7ff', fontSize: 24, fontWeight: '800' },
+  sub: { color: '#9fb0c5', fontSize: 14, marginTop: 2 },
+  sectionTitle: { color: '#eef7ff', fontSize: 18, fontWeight: '700', marginBottom: 12 },
   loading: { marginTop: 40 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0b111d', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#1d2939', gap: 12 },
-  dateBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#2583e820', alignItems: 'center', justifyContent: 'center' },
-  dateText: { color: '#2583e8', fontWeight: '800', fontSize: 13 },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#071528', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#203b55', gap: 12 },
+  dateBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#2f91ff20', alignItems: 'center', justifyContent: 'center' },
+  dateText: { color: '#2f91ff', fontWeight: '800', fontSize: 13 },
   cardContent: { flex: 1 },
-  cardTitle: { color: '#f1f5f9', fontSize: 15, fontWeight: '700' },
-  meta: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
+  cardTitle: { color: '#eef7ff', fontSize: 15, fontWeight: '700' },
+  meta: { color: '#9fb0c5', fontSize: 12, marginTop: 2 },
 });

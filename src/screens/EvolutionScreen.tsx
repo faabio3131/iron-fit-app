@@ -30,7 +30,7 @@ export function EvolutionScreen() {
       <View style={styles.header}><View><Text style={styles.heading}>Sua evolução</Text><Text style={styles.sub}>Acompanhe seu progresso 📈</Text></View><Ionicons name="trending-up" size={24} color="#f59e0b" /></View>
       <AIProjectionCard assessmentCount={assessments.length} latestAssessmentDate={assessments[0]?.createdAt} />
       <Text style={styles.sectionTitle}>Avaliações Físicas</Text>
-      {loading ? <ActivityIndicator size="large" color="#2583e8" style={styles.loading} /> : assessments.length === 0 ? (
+      {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : assessments.length === 0 ? (
         <EmptyState icon="analytics-outline" title="Nenhuma avaliação" subtitle="Peça ao seu instrutor para fazer sua avaliação física." />
       ) : assessments.map((assessment) => (
         <View key={assessment.id} style={styles.card}>
@@ -47,7 +47,7 @@ export function EvolutionScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#05080f' }, content: { padding: 20, paddingBottom: 100 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }, heading: { color: '#f1f5f9', fontSize: 24, fontWeight: '800' }, sub: { color: '#94a3b8', fontSize: 14, marginTop: 2 }, sectionTitle: { color: '#f1f5f9', fontSize: 18, fontWeight: '700', marginBottom: 12 }, loading: { marginTop: 40 },
-  card: { backgroundColor: '#0b111d', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#1d2939' }, date: { color: '#94a3b8', fontSize: 12, marginBottom: 12 }, grid: { flexDirection: 'row', gap: 8 },
+  scroll: { flex: 1, backgroundColor: '#030811' }, content: { padding: 20, paddingBottom: 100 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }, heading: { color: '#eef7ff', fontSize: 24, fontWeight: '800' }, sub: { color: '#9fb0c5', fontSize: 14, marginTop: 2 }, sectionTitle: { color: '#eef7ff', fontSize: 18, fontWeight: '700', marginBottom: 12 }, loading: { marginTop: 40 },
+  card: { backgroundColor: '#071528', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#203b55' }, date: { color: '#9fb0c5', fontSize: 12, marginBottom: 12 }, grid: { flexDirection: 'row', gap: 8 },
 });

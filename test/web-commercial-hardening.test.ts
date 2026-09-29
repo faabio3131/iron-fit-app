@@ -19,7 +19,7 @@ test('commercial shell does not hide authority failures and blocks invalid comme
   expect(web).not.toMatch(/commercial\/trial\/status'\)\.catch/);
   expect(web).toContain("!subscription || trial?.status === 'EXPIRED'");
   expect(web).toContain('subscription-blocked');
-  expect(web).toContain('A superfície operacional permanece fail-closed');
+  expect(web).toContain('Seu acesso operacional está limitado.');
 });
 
 test('CI keeps dependency high-severity audit and production exports', () => {
