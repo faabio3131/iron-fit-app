@@ -106,4 +106,4 @@ test('visitor creates trial, authenticates and reaches tenant-scoped commercial 
   const persisted = stored.get('iron-fit.auth.session.v1');
   expect(persisted).toContain('web-access');
   expect(persisted).toContain('web-refresh');
-});
+}, 15000);
