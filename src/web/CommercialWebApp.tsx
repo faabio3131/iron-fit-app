@@ -590,6 +590,7 @@ const styles = StyleSheet.create({
   adminGateForm: { width: '100%', maxWidth: 760, flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
   row: { backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 14, marginBottom: 9 },
   rowTitle: { color: '#eef7ff', fontWeight: '700', marginBottom: 5 },
+  rowText: { flex: 1, minWidth: 0 },
   teamRowHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 },
   teamStatus: { fontSize: 11, fontWeight: '800', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5, borderWidth: 1 },
   teamStatusActive: { color: '#86efac', borderColor: '#166534', backgroundColor: '#08271c' },
