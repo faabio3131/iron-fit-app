@@ -212,7 +212,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
       <Text style={styles.title}>Segurança da conta</Text>
       <Text style={styles.muted}>
         Operações sensíveis exigem sua senha atual e, quando MFA estiver ativo,
-        um TOTP ou recovery code.
+        o código do autenticador ou um código de recuperação.
       </Text>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -227,6 +227,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
           onChangeText={setCurrentPassword}
           secure
         />
+        <Text style={styles.policy}>Informe sua senha atual aqui para liberar as ações sensíveis abaixo.</Text>
         {profile?.mfaEnabled ? (
           <Field
             placeholder="MFA de 6 dígitos ou código de recuperação"
