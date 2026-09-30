@@ -52,7 +52,13 @@ function installApi() {
     if (path === '/workouts') return [{ id: 'workout-ai-1', status: 'PENDING_REVIEW', createdByAI: true, goal: 'Hipertrofia', student: { user: { name: 'Aluno IA' } } }];
     if (path === '/gyms/gym-1') return { id: 'gym-1', name: 'Academia QA' };
     if (path === '/users' && options?.method === 'POST') return { id: 'member-1', name: 'Professor QA', email: 'professor@example.com' };
-    if (path === '/users') return [];
+    if (path === '/users/invite' && options?.method === 'POST') return { id: 'member-invite-1', name: 'Recepção Convite', email: 'recepcao.convite@example.com', invitation: { accepted: true, delivery: 'PASSWORD_SETUP_EMAIL' } };
+    if (path === '/users/member-2/membership/status' && options?.method === 'PATCH') return { userId: 'member-2', active: false, roleName: 'TRAINER' };
+    if (path === '/users/member-2/membership/role' && options?.method === 'PATCH') return { userId: 'member-2', active: true, roleName: 'RECEPTION' };
+    if (path === '/users') return [
+      { id: 'owner-1', name: 'Proprietário QA', email: 'owner@example.com', roleName: 'OWNER', membershipActive: true, permissions: ['financial.read'], canManage: false },
+      { id: 'member-2', name: 'Professor Dois', email: 'professor2@example.com', roleName: 'TRAINER', membershipActive: true, permissions: ['workouts.read', 'assessments.write'], canManage: true },
+    ];
     if (path === '/creator-network/content/tenant/items') return [];
     if (path === '/creator-network/operations/tenant/overview') return { status: 'ACTIVE', total: 0 };
     if (path.startsWith('/creator-network/operations/tenant/analytics')) return { views: 0, total: 0 };
@@ -100,6 +106,48 @@ test('botão Adicionar à equipe explica validação e executa cadastro válido'
     });
   }, { timeout: 12000 });
 }, 15000);
+
+test('Equipe permite convite seguro e mostra situação e permissões efetivas do membro', async () => {
+  const view = render(<CommercialWebApp />);
+
+  await waitFor(() => expect(view.getByTestId('nav-team')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-team'));
+  await waitFor(() => expect(view.getByTestId('team-invite')).toBeTruthy());
+
+  expect(view.getByText('Professor Dois')).toBeTruthy();
+  expect(view.getAllByText('Acesso ativo').length).toBeGreaterThan(0);
+  expect(view.getByText(/Workouts Read/)).toBeTruthy();
+
+  fireEvent.changeText(view.getByLabelText('Nome'), 'Recepção Convite');
+  fireEvent.changeText(view.getByLabelText('E-mail'), 'recepcao.convite@example.com');
+  fireEvent.press(view.getByText('Recepção'));
+  fireEvent.press(view.getByTestId('team-invite'));
+
+  await waitFor(() => {
+    const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/users/invite' && options?.method === 'POST');
+    expect(call).toBeTruthy();
+    expect(JSON.parse(String(call?.[2]?.body ?? '{}'))).toMatchObject({
+      name: 'Recepção Convite',
+      email: 'recepcao.convite@example.com',
+      roleName: 'RECEPTION',
+    });
+  });
+});
+
+test('Equipe suspende acesso pelo vínculo do tenant sem desativar conta global na UI', async () => {
+  const view = render(<CommercialWebApp />);
+
+  await waitFor(() => expect(view.getByTestId('nav-team')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-team'));
+  await waitFor(() => expect(view.getByTestId('team-status-member-2')).toBeTruthy());
+  fireEvent.press(view.getByTestId('team-status-member-2'));
+
+  await waitFor(() => {
+    const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/users/member-2/membership/status' && options?.method === 'PATCH');
+    expect(call).toBeTruthy();
+    expect(JSON.parse(String(call?.[2]?.body ?? '{}'))).toEqual({ active: false });
+  });
+});
 
 test('Cockpit mostra agenda, alertas e candidatos da Intelligence com drill-down', async () => {
   const view = render(<CommercialWebApp />);
