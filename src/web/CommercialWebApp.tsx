@@ -46,6 +46,19 @@ const ownerTeamRoleOptions = [
   ...baseTeamRoleOptions,
   { id: 'MANAGER', name: 'Gerente' },
 ];
+const equipmentCategoryOptions = [
+  { id: '', name: 'Todas as categorias' },
+  { id: 'CARDIO', name: 'Cardio' },
+  { id: 'SELECTORIZED_STRENGTH', name: 'Musculação guiada' },
+  { id: 'PLATE_LOADED', name: 'Carga com anilhas' },
+  { id: 'CABLE_FUNCTIONAL', name: 'Cabos e funcional' },
+  { id: 'RACKS_BENCHES', name: 'Racks e bancos' },
+  { id: 'FREE_WEIGHTS', name: 'Pesos livres' },
+  { id: 'FUNCTIONAL_CONDITIONING', name: 'Condicionamento funcional' },
+  { id: 'PILATES_REHAB', name: 'Pilates e reabilitação' },
+  { id: 'SPECIALIZED_STRENGTH', name: 'Força especializada' },
+];
+const equipmentCategoryLabel = (value: string) => equipmentCategoryOptions.find((item) => item.id === value)?.name ?? value;
 const featureLabels: Record<string, string> = {
   'equipment.catalog': 'Catálogo de equipamentos',
   'equipment.inventory': 'Inventário de equipamentos',
@@ -124,6 +137,11 @@ export function CommercialWebApp() {
   const [lastStudentInvite, setLastStudentInvite] = useState<any>(null);
   const [member, setMember] = useState({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' });
   const [selectedCatalogEquipment, setSelectedCatalogEquipment] = useState('');
+  const [equipmentSearch, setEquipmentSearch] = useState('');
+  const [equipmentCategory, setEquipmentCategory] = useState('');
+  const [selectedEquipmentExercise, setSelectedEquipmentExercise] = useState('');
+  const [equipmentCandidate, setEquipmentCandidate] = useState({ proposedName: '', proposedCategory: '', manufacturerName: '', modelName: '', evidenceUrl: '', notes: '' });
+  const [equipmentReviewNotes, setEquipmentReviewNotes] = useState('');
   const [exercise, setExercise] = useState({ name: '', muscleGroup: '', level: '' });
   const [assessment, setAssessment] = useState({ weight: '', height: '', bodyFatPercent: '', notes: '' });
   const [schedule, setSchedule] = useState({ weekday: '1', startTime: '08:00', endTime: '09:00', capacity: '10' });
@@ -213,7 +231,20 @@ export function CommercialWebApp() {
         }
       }
       if (key === 'team') next.users = await api('/users');
-      if (key === 'equipment') { const calls: Promise<any>[] = [api('/equipments')]; if (enabled('equipment.catalog')) calls.push(api('/equipments/catalog')); const [inventory, catalog] = await Promise.all(calls); Object.assign(next, { inventory, catalog: catalog ?? [] }); }
+      if (key === 'equipment') {
+        const params = new URLSearchParams();
+        if (equipmentSearch.trim()) params.set('search', equipmentSearch.trim());
+        if (equipmentCategory) params.set('category', equipmentCategory);
+        const catalogPath = `/equipments/catalog${params.toString() ? `?${params.toString()}` : ''}`;
+        const [inventory, catalog, candidates, exercises, governanceCandidates] = await Promise.all([
+          api('/equipments'),
+          enabled('equipment.catalog') ? api(catalogPath) : Promise.resolve([]),
+          can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER') ? api('/equipments/catalog/candidates') : Promise.resolve([]),
+          api('/exercises'),
+          can('SUPER_ADMIN') ? api('/equipments/catalog/governance/candidates?status=PENDING') : Promise.resolve([]),
+        ]);
+        Object.assign(next, { inventory, catalog, candidates, equipmentExercises: exercises, governanceCandidates });
+      }
       if (key === 'exercises') next.exercises = await api('/exercises');
       if (key === 'assessments') { next.students = await api('/students'); if (selectedStudent) next.assessments = await api(`/students/${selectedStudent}/assessments`); }
       if (key === 'workouts') { [next.workouts, next.students] = await Promise.all([api('/workouts'), api('/students')]); }
@@ -224,7 +255,7 @@ export function CommercialWebApp() {
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
       setData(next);
     } catch (reason) { setError(message(reason)); setData({}); } finally { setLoading(false); }
-  }, [activeTenantId, adminStepUpActive, can, enabled, selectedStudent, subscription]);
+  }, [activeTenantId, adminStepUpActive, can, enabled, equipmentCategory, equipmentSearch, selectedStudent, subscription]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -480,33 +511,134 @@ export function CommercialWebApp() {
   }
   function equipmentView() {
     const catalog = list(data.catalog);
+    const inventory = list(data.inventory);
+    const candidates = list(data.candidates);
+    const exercises = list(data.equipmentExercises);
+    const compatibility = list(data.compatibility);
+    const governanceCandidates = list(data.governanceCandidates);
+    const canManageInventory = can('SUPER_ADMIN', 'OWNER', 'MANAGER');
+    const canSubmitCandidate = can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER');
+
     return <>
-      {enabled('equipment.inventory') && enabled('equipment.catalog') && can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? (
-        <Section
-          title="Selecionar equipamento do catálogo"
-          subtitle="Escolha os equipamentos disponíveis na sua academia."
-        >
-          <Chips
-            rows={catalog}
-            selected={selectedCatalogEquipment}
-            onSelect={setSelectedCatalogEquipment}
-          />
-          <Button
-            testID="equipment-catalog-select"
-            label="Adicionar ao inventário"
-            disabled={saving || !selectedCatalogEquipment}
-            onPress={() => void mutate(
-              () => api('/equipments/catalog/selection', undefined, {
+      <View style={styles.compactGrid}>
+        <View style={styles.compactPaneWide}>
+          <Section compact title="Catálogo mestre" subtitle="Pesquise no catálogo canônico antes de solicitar um novo equipamento.">
+            <View style={styles.form}>
+              <Field label="Buscar equipamento" value={equipmentSearch} onChangeText={setEquipmentSearch} />
+            </View>
+            <Text style={styles.label}>Categoria</Text>
+            <Chips rows={equipmentCategoryOptions} selected={equipmentCategory} onSelect={setEquipmentCategory} />
+            <Button secondary label="Aplicar filtros" disabled={loading} onPress={() => { void loadModule('equipment'); }} />
+            <View style={styles.equipmentCatalogGrid}>
+              {catalog.length ? catalog.map((item: any) => <View key={item.id} style={styles.equipmentCard}>
+                <View style={styles.teamRowHead}>
+                  <View style={styles.rowText}>
+                    <Text style={styles.rowTitle}>{item.name ?? item.slug ?? 'Equipamento'}</Text>
+                    <Text style={styles.muted}>{equipmentCategoryLabel(String(item.category ?? ''))}{item.primaryMuscle ? ` · ${item.primaryMuscle}` : ''}</Text>
+                  </View>
+                  <Text style={[styles.teamStatus, item.selected ? styles.teamStatusActive : styles.teamStatusInactive]}>{item.selected ? 'No inventário' : 'Disponível'}</Text>
+                </View>
+                {canManageInventory ? <Button
+                  secondary={item.selected}
+                  label={item.selected ? 'Remover do inventário' : 'Adicionar ao inventário'}
+                  disabled={saving}
+                  onPress={() => void mutate(() => item.selected
+                    ? api(`/equipments/catalog/${item.id}/selection`, undefined, { method: 'DELETE' })
+                    : api('/equipments/catalog/selection', undefined, { method: 'POST', body: JSON.stringify({ catalogItemIds: [item.id] }) }))}
+                /> : null}
+              </View>) : <Text style={styles.muted}>Nenhum item encontrado com os filtros atuais.</Text>}
+            </View>
+          </Section>
+        </View>
+        <View style={styles.compactPane}>
+          <Section compact title="Inventário inteligente" subtitle="Equipamentos ativos selecionados pela academia.">
+            {inventory.length ? inventory.map((item: any) => <View key={item.id} style={styles.row}>
+              <Text style={styles.rowTitle}>{item.catalogItem?.name ?? item.name ?? 'Equipamento'}</Text>
+              <Text style={styles.muted}>{equipmentCategoryLabel(String(item.catalogItem?.category ?? item.type ?? ''))}{item.primaryMuscle ? ` · ${item.primaryMuscle}` : ''}</Text>
+            </View>) : <Text style={styles.muted}>Nenhum equipamento ativo no inventário.</Text>}
+          </Section>
+        </View>
+      </View>
+
+      <View style={styles.compactGrid}>
+        <View style={styles.compactPane}>
+          <Section compact title="Compatibilidade por exercício" subtitle="Consulte apenas equipamentos ativos do inventário compatíveis com o exercício selecionado.">
+            <Chips rows={exercises} selected={selectedEquipmentExercise} onSelect={setSelectedEquipmentExercise} />
+            <Button
+              secondary
+              label="Consultar compatibilidade"
+              disabled={saving || !selectedEquipmentExercise}
+              onPress={() => { void (async () => {
+                setSaving(true); setError('');
+                try {
+                  const result = await api(`/equipments/exercises/${selectedEquipmentExercise}/compatible`);
+                  setData((current) => ({ ...current, compatibility: result }));
+                } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
+              })(); }}
+            />
+            {compatibility.length ? <Data value={compatibility} /> : <Text style={styles.muted}>Selecione um exercício para consultar a compatibilidade.</Text>}
+          </Section>
+        </View>
+
+        {canSubmitCandidate ? <View style={styles.compactPaneWide}>
+          <Section compact title="Não encontrou o equipamento?" subtitle="Envie um candidato para revisão do catálogo mestre. O envio não cria equipamento canônico automaticamente.">
+            <View style={styles.form}>
+              <Field label="Nome proposto" value={equipmentCandidate.proposedName} onChangeText={(proposedName) => setEquipmentCandidate((v) => ({ ...v, proposedName }))} />
+              <Field label="Fabricante (opcional)" value={equipmentCandidate.manufacturerName} onChangeText={(manufacturerName) => setEquipmentCandidate((v) => ({ ...v, manufacturerName }))} />
+              <Field label="Modelo (opcional)" value={equipmentCandidate.modelName} onChangeText={(modelName) => setEquipmentCandidate((v) => ({ ...v, modelName }))} />
+              <Field label="URL de evidência (opcional)" value={equipmentCandidate.evidenceUrl} onChangeText={(evidenceUrl) => setEquipmentCandidate((v) => ({ ...v, evidenceUrl }))} />
+              <Field label="Observações (opcional)" value={equipmentCandidate.notes} onChangeText={(notes) => setEquipmentCandidate((v) => ({ ...v, notes }))} />
+            </View>
+            <Text style={styles.label}>Categoria proposta</Text>
+            <Chips rows={equipmentCategoryOptions.filter((item) => item.id)} selected={equipmentCandidate.proposedCategory} onSelect={(proposedCategory) => setEquipmentCandidate((v) => ({ ...v, proposedCategory }))} />
+            <Button
+              testID="equipment-candidate-submit"
+              label="Enviar para revisão"
+              disabled={saving || equipmentCandidate.proposedName.trim().length < 2}
+              onPress={() => void mutate(() => api('/equipments/catalog/candidates', undefined, {
                 method: 'POST',
-                body: JSON.stringify({ catalogItemIds: [selectedCatalogEquipment] }),
-              }),
-              () => setSelectedCatalogEquipment(''),
-            )}
-          />
-        </Section>
-      ) : null}
-      <Section title="Inventário"><Data value={data.inventory} /></Section>
-      {enabled('equipment.catalog') ? <Section title="Catálogo canônico"><Data value={data.catalog} /></Section> : null}
+                body: JSON.stringify({
+                  proposedName: equipmentCandidate.proposedName.trim(),
+                  ...(equipmentCandidate.proposedCategory ? { proposedCategory: equipmentCandidate.proposedCategory } : {}),
+                  ...(equipmentCandidate.manufacturerName.trim() ? { manufacturerName: equipmentCandidate.manufacturerName.trim() } : {}),
+                  ...(equipmentCandidate.modelName.trim() ? { modelName: equipmentCandidate.modelName.trim() } : {}),
+                  ...(equipmentCandidate.evidenceUrl.trim() ? { evidenceUrl: equipmentCandidate.evidenceUrl.trim() } : {}),
+                  ...(equipmentCandidate.notes.trim() ? { notes: equipmentCandidate.notes.trim() } : {}),
+                }),
+              }), () => setEquipmentCandidate({ proposedName: '', proposedCategory: '', manufacturerName: '', modelName: '', evidenceUrl: '', notes: '' }))}
+            />
+            <Text style={styles.label}>Solicitações da academia</Text>
+            <Data value={candidates} empty="Nenhum candidato enviado." />
+          </Section>
+        </View> : null}
+      </View>
+
+      {can('SUPER_ADMIN') ? <Section compact title="Governança do catálogo" subtitle="Somente SUPER_ADMIN revisa candidatos e cria identidade canônica.">
+        <Field label="Observação da revisão" value={equipmentReviewNotes} onChangeText={setEquipmentReviewNotes} />
+        {governanceCandidates.length ? governanceCandidates.map((candidate: any) => <View key={candidate.id} style={styles.row}>
+          <Text style={styles.rowTitle}>{candidate.proposedName}</Text>
+          <Text style={styles.muted}>Academia: {candidate.gymId} · Categoria: {equipmentCategoryLabel(String(candidate.proposedCategory ?? 'Não definida'))}</Text>
+          <View style={styles.actions}>
+            <Button
+              label="Aprovar no catálogo"
+              disabled={saving || !candidate.proposedCategory}
+              onPress={() => void mutate(() => api(`/equipments/catalog/governance/candidates/${candidate.id}/review`, undefined, {
+                method: 'POST',
+                body: JSON.stringify({ decision: 'APPROVE', canonicalCategory: candidate.proposedCategory, ...(equipmentReviewNotes.trim() ? { reviewNotes: equipmentReviewNotes.trim() } : {}) }),
+              }))}
+            />
+            <Button
+              secondary
+              label="Rejeitar"
+              disabled={saving || !equipmentReviewNotes.trim()}
+              onPress={() => void mutate(() => api(`/equipments/catalog/governance/candidates/${candidate.id}/review`, undefined, {
+                method: 'POST',
+                body: JSON.stringify({ decision: 'REJECT', reviewNotes: equipmentReviewNotes.trim() }),
+              }))}
+            />
+          </View>
+        </View>) : <Text style={styles.muted}>Nenhum candidato pendente de governança.</Text>}
+      </Section> : null}
     </>;
   }
   function exercisesView() {
@@ -584,6 +716,8 @@ const styles = StyleSheet.create({
   moduleIntro: { color: '#9fb0c5', fontSize: 12, lineHeight: 17, marginBottom: 7 },
   creatorGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start' },
   creatorPane: { flexGrow: 1, flexBasis: 300, minWidth: 270 },
+  equipmentCatalogGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  equipmentCard: { flexGrow: 1, flexBasis: 260, minWidth: 240, maxWidth: 420, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 11 },
   navSection: { color: '#6fa8dc', fontSize: 10, fontWeight: '800', letterSpacing: 0.7, marginTop: 10, marginBottom: 4, marginHorizontal: 12 },
   restrictedNote: { color: '#bfdbfe', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, fontSize: 11, fontWeight: '700', marginBottom: 8 },
   adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
