@@ -23,7 +23,7 @@ const modules: ModuleDefinition[] = [
   { key: 'overview', label: 'Visão geral', icon: 'grid-outline', roles: operational },
   { key: 'onboarding', label: 'Configuração inicial', icon: 'rocket-outline', roles: ['OWNER', 'MANAGER'] },
   { key: 'students', label: 'Alunos', icon: 'people-outline', roles: staff },
-  { key: 'team', label: 'Equipe', icon: 'shield-checkmark-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
+  { key: 'team', label: 'Equipe', icon: 'shield-checkmark-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER'] },
   { key: 'equipment', label: 'Equipamentos', icon: 'barbell-outline', roles: staff, entitlement: ['equipment.catalog', 'equipment.inventory'] },
   { key: 'exercises', label: 'Exercícios', icon: 'fitness-outline', roles: staff },
   { key: 'assessments', label: 'Avaliações', icon: 'pulse-outline', roles: staff },
@@ -38,9 +38,12 @@ const modules: ModuleDefinition[] = [
   { key: 'integrations', label: 'Integrações', icon: 'git-network-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
 ];
 const onboardingLabels: Record<string, string> = { ACADEMY_PROFILE: 'Perfil da academia', EQUIPMENT_INVENTORY: 'Inventário de equipamentos', TEAM_REVIEW: 'Revisão da equipe', FINISH: 'Finalizar configuração' };
-const teamRoleOptions = [
+const baseTeamRoleOptions = [
   { id: 'TRAINER', name: 'Professor' },
   { id: 'RECEPTION', name: 'Recepção' },
+];
+const ownerTeamRoleOptions = [
+  ...baseTeamRoleOptions,
   { id: 'MANAGER', name: 'Gerente' },
 ];
 const featureLabels: Record<string, string> = {
@@ -285,6 +288,7 @@ export function CommercialWebApp() {
     return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Cadastrar aluno"><View style={styles.form}><Field label="Nome" value={student.name} onChangeText={(name) => setStudent((v) => ({ ...v, name }))} /><Field label="E-mail" value={student.email} onChangeText={(email) => setStudent((v) => ({ ...v, email }))} /><Field label="Telefone" value={student.phone} onChangeText={(phone) => setStudent((v) => ({ ...v, phone }))} /></View><Button testID="student-create" label="Cadastrar aluno" disabled={saving || !student.name.trim() || !student.email.trim()} onPress={() => void mutate(async () => { const created = await api('/students', undefined, { method: 'POST', body: JSON.stringify({ name: student.name.trim(), email: student.email.trim().toLowerCase(), ...(student.phone.trim() ? { phone: student.phone.trim() } : {}) }) }); setLastStudentInvite(created?.onboarding?.required ? created.onboarding : null); return created; }, () => setStudent({ name: '', email: '', phone: '' }))} />{lastStudentInvite ? <View style={styles.invite}><Text style={styles.rowTitle}>Convite de ativação — exibir uma vez</Text><Text selectable style={styles.json}>{lastStudentInvite.token}</Text><Text style={styles.muted}>Expira em: {String(lastStudentInvite.expiresAt ?? '—')}</Text></View> : null}</Section> : null}<Section title="Alunos"><Data value={data.students} /></Section></>;
   }
   function teamView() {
+    const teamRoleOptions = can('SUPER_ADMIN', 'OWNER') ? ownerTeamRoleOptions : baseTeamRoleOptions;
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email.trim());
     const roleOk = teamRoleOptions.some((option) => option.id === member.roleName);
     const issue = !member.name.trim()
