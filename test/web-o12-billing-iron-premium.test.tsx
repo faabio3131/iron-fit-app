@@ -67,7 +67,7 @@ describe('O12 Billing IRON premium workspace', () => {
   test('renders commercial plan labels, cycle, invoices and approved grace policy without showing internal price code', async () => {
     const view = render(<SaasBillingPanel />);
 
-    await waitFor(() => expect(view.getByText('IRON Pro')).toBeTruthy());
+    await waitFor(() => expect(view.getAllByText('IRON Pro').length).toBeGreaterThan(0));
     expect(view.getAllByText('Mensal').length).toBeGreaterThan(0);
     expect(view.getByText('27/09/2026')).toBeTruthy();
     expect(view.getByText('Período de tolerância: 7 dias')).toBeTruthy();
