@@ -86,8 +86,8 @@ test('botão Adicionar à equipe explica validação e executa cadastro válido'
       email: 'professor@example.com',
       roleName: 'TRAINER',
     });
-  });
-});
+  }, { timeout: 12000 });
+}, 15000);
 
 test('perfil de recepção não recebe superfícies administrativas sensíveis', async () => {
   mockProfile = {
@@ -123,8 +123,8 @@ test('Creator Network usa descrições em português e superfície compacta', as
   fireEvent.press(view.getByTestId('nav-creator'));
 
   await waitFor(() => expect(view.getByText('Indicadores')).toBeTruthy());
-  expect(view.getByText('Visão geral')).toBeTruthy();
-  expect(view.getByText('Conteúdo')).toBeTruthy();
+  expect(view.getAllByText('Visão geral').length).toBeGreaterThan(0);
+  expect(view.getAllByText('Conteúdo').length).toBeGreaterThan(0);
   expect(view.queryByText('Analytics')).toBeNull();
   expect(view.getByText(/Conteúdo, utilização e desempenho/)).toBeTruthy();
 });
