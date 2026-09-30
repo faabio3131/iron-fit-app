@@ -56,6 +56,7 @@ function installCommercialFetch() {
     if (path === '/product-entitlements/tenant/current') return response(200, { id: 'sub-1', status: 'ACTIVE' });
     if (path === '/commercial/trial/status') return response(200, { status: 'TRIALING', subscriptionId: 'sub-1' });
     if (path === '/commercial/onboarding') return response(200, { status: 'NOT_STARTED', completedSteps: [], nextStep: 'ACADEMY_PROFILE' });
+    if (path === '/auth/step-up/status') return response(200, { active: false, expiresAt: null });
     if (path === '/dashboard/summary') return response(200, { students: { total: 0 }, charges: { pending: 0 } });
     if (path.startsWith('/dashboard/revenue')) return response(200, []);
     if (path.startsWith('/dashboard/attendance')) return response(200, []);
