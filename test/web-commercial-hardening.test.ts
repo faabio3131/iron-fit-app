@@ -27,3 +27,15 @@ test('CI keeps dependency high-severity audit and production exports', () => {
   expect(workflow).toMatch(/expo export --platform android/);
   expect(workflow).toMatch(/expo export --platform web/);
 });
+
+
+test('restricted administration is owner-only and requires session step-up', () => {
+  expect(web).toContain("restrictedAdminModules: ModuleKey[] = ['financial', 'saasBilling', 'entitlements', 'integrations']");
+  expect(web).toContain("{ key: 'financial', label: 'Financeiro', icon: 'lock-closed-outline', roles: ['SUPER_ADMIN', 'OWNER'] }");
+  expect(web).toContain("{ key: 'saasBilling', label: 'Assinatura IRON', icon: 'card-outline', roles: ['SUPER_ADMIN', 'OWNER'] }");
+  expect(web).toContain("api('/auth/step-up/status')");
+  expect(web).toContain("api('/auth/step-up'");
+  expect(web).toContain('Acesso administrativo protegido');
+  expect(web).toContain('admin-step-up-submit');
+  expect(web).toContain("can('SUPER_ADMIN', 'OWNER') && adminStepUpActive");
+});
