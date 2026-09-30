@@ -49,6 +49,25 @@ function formatMoney(amountMinor: number, currency: string) {
   }
 }
 
+const billingStatusLabels: Record<string, string> = {
+  ACTIVE: 'Ativa',
+  TRIALING: 'Em teste',
+  PENDING_CHECKOUT: 'Aguardando pagamento',
+  PAST_DUE: 'Em atraso',
+  PAUSED: 'Pausada',
+  CANCELED: 'Cancelada',
+  PENDING: 'Pendente',
+  PROCESSING: 'Processando',
+  PAID: 'Paga',
+  FAILED: 'Falhou',
+  EXPIRED: 'Expirada',
+  REFUNDED: 'Reembolsada',
+};
+function billingStatus(value: unknown) {
+  const key = typeof value === 'string' ? value : '';
+  return billingStatusLabels[key] ?? (key || 'Não disponível');
+}
+
 export function SaasBillingPanel({
   onCommercialStateChanged,
 }: {
@@ -135,7 +154,7 @@ export function SaasBillingPanel({
         : 'DOWNGRADE';
 
     return {
-      label: transitionKind === 'UPGRADE' ? 'Solicitar upgrade' : 'Agendar downgrade',
+      label: transitionKind === 'UPGRADE' ? 'Solicitar plano superior' : 'Agendar plano inferior',
       run: () =>
         api('/saas-billing/change-plan', undefined, {
           method: 'POST',
@@ -154,16 +173,16 @@ export function SaasBillingPanel({
       <View style={styles.card}>
         <Text style={styles.title}>Assinatura IRON</Text>
         <Text style={styles.muted}>
-          Preços, estado financeiro e entitlement são autoridade do backend. O painel não calcula
-          cobrança, proration ou acesso localmente.
+          Preços, estado financeiro e recursos do plano são definidos pelo servidor. O painel não calcula
+          cobranças, rateios ou permissões localmente.
         </Text>
         {loading ? <ActivityIndicator color="#2f91ff" style={styles.loading} /> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {notice ? <Text style={styles.notice}>{notice}</Text> : null}
 
         <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Status</Text>
-          <Text style={styles.statusValue}>{agreement?.status ?? 'SEM BILLING ATIVO'}</Text>
+          <Text style={styles.statusLabel}>Situação</Text>
+          <Text style={styles.statusValue}>{agreement ? billingStatus(agreement.status) : 'Sem assinatura ativa'}</Text>
         </View>
         <View style={styles.statusRow}>
           <Text style={styles.statusLabel}>Plano/preço atual</Text>
@@ -244,7 +263,7 @@ export function SaasBillingPanel({
           invoices.map((invoice: any) => (
             <View key={invoice.id} style={styles.invoice}>
               <Text style={styles.rowTitle}>
-                {invoice.status} · {formatMoney(Number(invoice.amountDueMinor ?? 0), invoice.currency ?? 'BRL')}
+                {billingStatus(invoice.status)} · {formatMoney(Number(invoice.amountDueMinor ?? 0), invoice.currency ?? 'BRL')}
               </Text>
               <Text style={styles.muted}>
                 Vencimento: {String(invoice.dueAt ?? '—')} · Pago: {String(invoice.amountPaidMinor ?? 0)}
