@@ -39,7 +39,10 @@ function installApi() {
     if (path === '/financial/charges') return [];
     if (path === '/students') return [{ id: 'student-1', name: 'Aluno 360', email: 'student360@example.com', phone: '11999990000', status: 'ACTIVE' }];
     if (path === '/students/student-1') return { id: 'student-1', name: 'Aluno 360', email: 'student360@example.com', status: 'ACTIVE', consentHealth: true, consentComm: false, consentBiometry: false };
-    if (path === '/students/student-1/assessments') return [{ id: 'assessment-1', weight: 80, height: 1.8, bmi: 24.7 }];
+    if (path === '/students/student-1/assessments') return [
+      { id: 'assessment-2', weight: 78, height: 180, bmi: 24.1, bodyFatPercent: 18, measurements: { chest: 101, waist: 84, hip: 98 }, restrictions: { notes: 'Cuidado com joelho direito' }, notes: 'Evolução positiva', createdAt: '2026-09-30T10:00:00.000Z' },
+      { id: 'assessment-1', weight: 80, height: 180, bmi: 24.7, bodyFatPercent: 20, measurements: { chest: 100, waist: 87, hip: 99 }, restrictions: { notes: 'Cuidado com joelho direito' }, notes: 'Baseline', createdAt: '2026-08-30T10:00:00.000Z' },
+    ];
     if (path === '/students/student-1/schedules') return [{ id: 'schedule-1', status: 'SCHEDULED', date: '2026-09-30T00:00:00.000Z', slot: { weekday: 3, startTime: '18:00', endTime: '19:00' } }];
     if (path === '/students/student-1/workouts') return [{ id: 'student-workout-1', goal: 'Hipertrofia', status: 'ACTIVE' }];
     if (path === '/access/events?studentId=student-1') return [{ id: 'access-1', studentId: 'student-1', allowed: true, occurredAt: '2026-09-30T08:00:00.000Z' }];
@@ -54,7 +57,10 @@ function installApi() {
     if (path.startsWith('/equipments/catalog?') || path === '/equipments/catalog') return [{ id: 'catalog-1', name: 'Leg Press', category: 'PLATE_LOADED', selected: true, inventoryId: 'inv-1' }, { id: 'catalog-2', name: 'Esteira', category: 'CARDIO', selected: false, inventoryId: null }];
     if (path === '/equipments/catalog/candidates' && !options?.method) return [{ id: 'candidate-1', proposedName: 'Máquina Especial', status: 'PENDING', proposedCategory: 'SPECIALIZED_STRENGTH' }];
     if (path === '/equipments/catalog/candidates' && options?.method === 'POST') return { id: 'candidate-new', proposedName: 'Equipamento Novo', status: 'PENDING' };
-    if (path === '/exercises') return [{ id: 'exercise-1', name: 'Agachamento' }];
+    if (path === '/exercises') return [
+      { id: 'exercise-1', name: 'Agachamento', muscleGroup: 'Pernas', movement: 'Agachar', level: 'Intermediário', videoUrl: 'video-agachamento', contraindications: { notes: 'Avaliar joelho' } },
+      { id: 'exercise-2', name: 'Supino reto', muscleGroup: 'Peito', movement: 'Empurrar', level: 'Iniciante', videoUrl: null, contraindications: null },
+    ];
     if (path === '/equipments/exercises/exercise-1/compatible') return [{ id: 'inv-1', name: 'Leg Press', compatibility: 'SUPPORTED', mappingPriority: 1 }];
     if (path === '/gyms/gym-1') return { id: 'gym-1', name: 'Academia QA' };
     if (path === '/users' && options?.method === 'POST') return { id: 'member-1', name: 'Professor QA', email: 'professor@example.com' };
