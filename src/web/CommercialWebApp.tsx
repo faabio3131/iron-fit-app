@@ -15,6 +15,7 @@ import { api } from '../services/api';
 type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'schedule' | 'access' | 'financial' | 'saasBilling' | 'security' | 'entitlements' | 'integrations' | 'creator';
 type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; value: boolean | number | string[] | null; source?: string; reason?: string | null };
 type ModuleDefinition = { key: ModuleKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name']; roles?: string[]; entitlement?: string[] };
+const restrictedAdminModules: ModuleKey[] = ['financial', 'saasBilling', 'entitlements', 'integrations'];
 
 const operational = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION'];
 const staff = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION', 'TRAINER'];
@@ -137,27 +138,37 @@ export function CommercialWebApp() {
   const [credentialType, setCredentialType] = useState('QR_CODE');
   const [credentialExpiresAt, setCredentialExpiresAt] = useState('');
   const [lastCredential, setLastCredential] = useState<any>(null);
+  const [adminStepUpActive, setAdminStepUpActive] = useState(false);
+  const [adminStepUpExpiresAt, setAdminStepUpExpiresAt] = useState<string | null>(null);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminSecondFactor, setAdminSecondFactor] = useState('');
+  const [adminGateLoading, setAdminGateLoading] = useState(false);
+  const [adminGateError, setAdminGateError] = useState('');
 
   const entitlementMap = useMemo(() => new Map(entitlements.map((item) => [item.featureKey, item])), [entitlements]);
   const enabled = useCallback((key: string) => entitlementMap.get(key)?.value === true, [entitlementMap]);
   const allowed = useCallback((item: ModuleDefinition) => (!item.roles || item.roles.some((role) => roles.includes(role))) && (!item.entitlement || item.entitlement.some(enabled)), [enabled, roles]);
   const can = useCallback((...targets: string[]) => targets.some((role) => roles.includes(role)), [roles]);
+  const isRestrictedAdminModule = useCallback((key: ModuleKey) => restrictedAdminModules.includes(key), []);
   const blocked = shellReady && (!subscription || trial?.status === 'EXPIRED' || trial?.status === 'INACTIVE' || subscription?.status === 'SUSPENDED');
   const visible = useMemo(() => modules.filter((item) => allowed(item) && (!blocked || item.key === 'saasBilling' || item.key === 'security')), [allowed, blocked]);
 
   const loadShell = useCallback(async () => {
     setShellReady(false);
     setError('');
-    const [features, current, trialState, onboardingState] = await Promise.all([
+    const [features, current, trialState, onboardingState, stepUpState] = await Promise.all([
       api('/product-entitlements/tenant/features'),
       api('/product-entitlements/tenant/current'),
       api('/commercial/trial/status'),
       can('OWNER', 'MANAGER') ? api('/commercial/onboarding') : Promise.resolve(null),
+      can('SUPER_ADMIN', 'OWNER') ? api('/auth/step-up/status') : Promise.resolve({ active: false, expiresAt: null }),
     ]);
     setEntitlements(Array.isArray(features) ? features : []);
     setSubscription(current);
     setTrial(trialState);
     setOnboarding(onboardingState);
+    setAdminStepUpActive(stepUpState?.active === true);
+    setAdminStepUpExpiresAt(stepUpState?.expiresAt ? String(stepUpState.expiresAt) : null);
     setShellReady(true);
   }, [can]);
 
@@ -166,7 +177,7 @@ export function CommercialWebApp() {
     try {
       const next: Record<string, any> = {};
       if (key === 'overview') {
-        const canSeeFinancialDashboard = can('SUPER_ADMIN', 'OWNER');
+        const canSeeFinancialDashboard = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
         const [summary, revenue, attendance, overdue, birthdays, gym] = await Promise.all([
           api('/dashboard/summary'),
           canSeeFinancialDashboard ? api('/dashboard/revenue?days=30') : Promise.resolve(null),
@@ -189,7 +200,7 @@ export function CommercialWebApp() {
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
       setData(next);
     } catch (reason) { setError(message(reason)); setData({}); } finally { setLoading(false); }
-  }, [activeTenantId, can, enabled, selectedStudent, subscription]);
+  }, [activeTenantId, adminStepUpActive, can, enabled, selectedStudent, subscription]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -199,17 +210,70 @@ export function CommercialWebApp() {
   }, [loadShell]);
   useEffect(() => {
     if (!shellReady || blocked) return undefined;
+    if (isRestrictedAdminModule(active) && !adminStepUpActive) {
+      setLoading(false);
+      setData({});
+      return undefined;
+    }
     const timer = setTimeout(() => {
       void loadModule(active);
     }, 0);
     return () => clearTimeout(timer);
-  }, [active, blocked, loadModule, shellReady]);
+  }, [active, adminStepUpActive, blocked, isRestrictedAdminModule, loadModule, shellReady]);
+
+  useEffect(() => {
+    if (!adminStepUpActive || !adminStepUpExpiresAt) return undefined;
+    const remaining = new Date(adminStepUpExpiresAt).getTime() - Date.now();
+    if (remaining <= 0) {
+      setAdminStepUpActive(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setAdminStepUpActive(false), remaining);
+    return () => clearTimeout(timer);
+  }, [adminStepUpActive, adminStepUpExpiresAt]);
+  async function unlockAdministrativeArea() {
+    if (!adminPassword.trim()) {
+      setAdminGateError('Informe sua senha atual.');
+      return;
+    }
+    setAdminGateLoading(true);
+    setAdminGateError('');
+    try {
+      const factor = adminSecondFactor.trim();
+      const state = await api('/auth/step-up', undefined, {
+        method: 'POST',
+        body: JSON.stringify({
+          currentPassword: adminPassword,
+          ...(factor
+            ? /^\d{6}$/.test(factor)
+              ? { mfaCode: factor }
+              : { recoveryCode: factor.toUpperCase() }
+            : {}),
+        }),
+      });
+      setAdminStepUpActive(state?.active === true);
+      setAdminStepUpExpiresAt(state?.expiresAt ? String(state.expiresAt) : null);
+      setAdminPassword('');
+      setAdminSecondFactor('');
+      if (state?.active === true) await loadModule(active);
+    } catch (reason) {
+      setAdminStepUpActive(false);
+      setAdminGateError(message(reason));
+    } finally {
+      setAdminGateLoading(false);
+    }
+  }
+
+  function adminGateView() {
+    return <Section compact title="Acesso administrativo protegido" subtitle="Confirme sua identidade para entrar nesta área restrita. A autorização é temporária e vinculada à sua sessão atual."><View style={styles.adminGateIdentity}><Ionicons name="lock-closed-outline" size={24} color="#60a5fa" /><View><Text style={styles.rowTitle}>{profile?.name ?? 'Proprietário'}</Text><Text style={styles.muted}>{profile?.email ?? 'Conta administrativa'}</Text></View></View><View style={styles.adminGateForm}><Field label="Senha atual" value={adminPassword} secureTextEntry onChangeText={setAdminPassword} />{profile?.mfaEnabled ? <Field label="Código MFA ou código de recuperação" value={adminSecondFactor} onChangeText={setAdminSecondFactor} /> : null}</View>{adminGateError ? <Text style={styles.error}>{adminGateError}</Text> : null}<Button testID="admin-step-up-submit" label={adminGateLoading ? 'Validando…' : 'Entrar na área administrativa'} disabled={adminGateLoading || !adminPassword.trim()} onPress={() => { void unlockAdministrativeArea(); }} /><Text style={styles.helper}>Por segurança, o acesso administrativo expira automaticamente após 15 minutos.</Text></Section>;
+  }
+
   async function mutate(operation: () => Promise<unknown>, reset?: () => void) {
     setSaving(true); setError('');
     try { await operation(); reset?.(); await loadShell(); await loadModule(active); } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
   }
   function overview() {
-    return <DashboardOverview data={data} showFinancial={can('SUPER_ADMIN', 'OWNER')} canNavigate={(key) => visible.some(item => item.key === key)} navigate={(key) => { if (visible.some(item => item.key === key)) setActive(key); }} />;
+    return <DashboardOverview data={data} showFinancial={can('SUPER_ADMIN', 'OWNER') && adminStepUpActive} canNavigate={(key) => visible.some(item => item.key === key)} navigate={(key) => { if (visible.some(item => item.key === key)) setActive(key); }} />;
   }
   function onboardingView() {
     const step = onboarding?.nextStep as string | undefined;
@@ -302,6 +366,7 @@ export function CommercialWebApp() {
     return <View style={styles.creatorWrap}><Text style={styles.moduleIntro}>Conteúdo, utilização e desempenho da rede de criadores vinculada à sua academia.</Text><View style={styles.creatorGrid}><View style={styles.creatorPane}><Section compact title="Visão geral" subtitle="Resumo operacional da rede de criadores."><Data value={data.overview ? [data.overview] : []} /></Section></View><View style={styles.creatorPane}><Section compact title="Conteúdo" subtitle="Materiais disponíveis para utilização na academia."><Data value={data.items} /></Section></View><View style={styles.creatorPane}><Section compact title="Indicadores" subtitle="Desempenho dos últimos 30 dias."><Data value={data.analytics ? [data.analytics] : []} /></Section></View></View></View>;
   }
   function content() {
+    if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
     if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'financial') return financialView(); if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel />; return creatorView();
   }
 
@@ -339,6 +404,8 @@ const styles = StyleSheet.create({
   creatorPane: { flexGrow: 1, flexBasis: 300, minWidth: 270 },
   navSection: { color: '#6fa8dc', fontSize: 10, fontWeight: '800', letterSpacing: 0.7, marginTop: 10, marginBottom: 4, marginHorizontal: 12 },
   restrictedNote: { color: '#bfdbfe', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, fontSize: 11, fontWeight: '700', marginBottom: 8 },
+  adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
+  adminGateForm: { width: '100%', maxWidth: 760, flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
   row: { backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 14, marginBottom: 9 },
   rowTitle: { color: '#eef7ff', fontWeight: '700', marginBottom: 5 },
   json: { color: '#9fb0c5', fontSize: 11, lineHeight: 17 },
