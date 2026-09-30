@@ -62,6 +62,8 @@ function installCommercialFetch() {
     if (path.startsWith('/dashboard/attendance')) return response(200, []);
     if (path === '/dashboard/overdue') return response(200, []);
     if (path.startsWith('/dashboard/birthdays')) return response(200, []);
+    if (path === '/schedule-slots') return response(200, []);
+    if (path === '/workouts') return response(200, []);
     if (path === '/gyms/gym-1') return response(200, { id: 'gym-1', name: 'Academia Web', timezone: 'America/Sao_Paulo', active: true });
     return response(404, { message: `Unhandled commercial Web route: ${path}` });
   });
