@@ -14,7 +14,8 @@ const labels: Record<string, string> = {
   expiresAt: 'Expiração', nextBillingAt: 'Próxima cobrança', currentPeriodEnd: 'Fim do ciclo', trialEndsAt: 'Fim do teste',
   nextStep: 'Próxima etapa', completedSteps: 'Etapas concluídas', trialStatus: 'Teste grátis', subscriptionStatus: 'Assinatura',
   featureKey: 'Recurso', featureEnabled: 'Habilitado', limitValue: 'Limite', policyValues: 'Opções',
-  provider: 'Provedor', title: 'Título', durationSeconds: 'Duração (s)', views: 'Visualizações', total: 'Total',
+  provider: 'Provedor', providerCode: 'Provedor', environment: 'Ambiente', authModel: 'Autenticação', capabilities: 'Recursos',
+  title: 'Título', durationSeconds: 'Duração (s)', views: 'Visualizações', total: 'Total',
 };
 const words: Record<string, string> = {
   ACTIVE: 'Ativo', INACTIVE: 'Inativo', PENDING: 'Pendente', PAID: 'Pago', OVERDUE: 'Vencido', CANCELED: 'Cancelado',
@@ -23,6 +24,10 @@ const words: Record<string, string> = {
   ACADEMY_PROFILE: 'Perfil da academia', EQUIPMENT_INVENTORY: 'Inventário', TEAM_REVIEW: 'Equipe', FINISH: 'Finalização',
   OWNER: 'Proprietário', MANAGER: 'Gerente', TRAINER: 'Professor', RECEPTION: 'Recepção', STUDENT: 'Aluno',
   CASH: 'Caixa', BANK: 'Banco', ALLOWED: 'Permitido', DENIED: 'Negado', CHECKED_IN: 'Presença confirmada',
+  FEATURE: 'Recurso', LIMIT: 'Limite', POLICY: 'Regra', FAIL_CLOSED_DEFAULT: 'Bloqueado por segurança',
+  PLAN: 'Plano', TENANT_CONFIGURATION: 'Configuração da academia', ENABLED: 'Habilitado', DISABLED: 'Desabilitado',
+  PROCESSING: 'Processando', FAILED: 'Falhou', REFUNDED: 'Reembolsado', PAUSED: 'Pausado', PAST_DUE: 'Em atraso',
+  MANUAL: 'Manual', QR_CODE: 'Código QR', BIOMETRIC: 'Biometria', FACIAL: 'Reconhecimento facial', TAG: 'Tag',
 };
 function valueText(key: string, value: unknown): string | null {
   if (value == null) return null;
