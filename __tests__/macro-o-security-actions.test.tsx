@@ -208,7 +208,7 @@ test('Biblioteca de exercícios oferece busca, filtros, conteúdo e compatibilid
   fireEvent.press(view.getByTestId('nav-exercises'));
 
   await waitFor(() => expect(view.getByText('Biblioteca de exercícios')).toBeTruthy());
-  expect(view.getByText('Agachamento')).toBeTruthy();
+  await waitFor(() => expect(view.getByText('Agachamento')).toBeTruthy());
   expect(view.getByText('Supino reto')).toBeTruthy();
 
   fireEvent.changeText(view.getByLabelText('Buscar exercício'), 'supino');
