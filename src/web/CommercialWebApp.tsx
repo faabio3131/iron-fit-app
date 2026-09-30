@@ -359,18 +359,124 @@ export function CommercialWebApp() {
   }
   function teamView() {
     const teamRoleOptions = can('SUPER_ADMIN', 'OWNER') ? ownerTeamRoleOptions : baseTeamRoleOptions;
+    const members = list(data.users);
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email.trim());
     const roleOk = teamRoleOptions.some((option) => option.id === member.roleName);
-    const issue = !member.name.trim()
+    const inviteIssue = !member.name.trim()
       ? 'Informe o nome do membro da equipe.'
       : !emailOk
         ? 'Informe um e-mail válido.'
-        : !strongPassword(member.password)
-          ? PASSWORD_POLICY_TEXT
-          : !roleOk
-            ? 'Selecione uma função permitida.'
-            : '';
-    return <><Section title="Adicionar membro à equipe" subtitle="Cadastre somente perfis operacionais autorizados. Funções administrativas superiores não são oferecidas neste formulário."><View style={styles.form}><Field label="Nome" value={member.name} onChangeText={(name) => setMember((v) => ({ ...v, name }))} /><Field label="E-mail" value={member.email} onChangeText={(email) => setMember((v) => ({ ...v, email }))} /><Field label="Senha inicial" value={member.password} secureTextEntry onChangeText={(password) => setMember((v) => ({ ...v, password }))} /></View><Text style={styles.label}>Função</Text><Chips rows={teamRoleOptions} selected={member.roleName} onSelect={(roleName) => setMember((v) => ({ ...v, roleName }))} /><Text style={styles.helper}>{PASSWORD_POLICY_TEXT}</Text>{issue ? <Text style={styles.helper}>Antes de adicionar: {issue}</Text> : null}<Button testID="team-add" label={saving ? 'Adicionando…' : 'Adicionar à equipe'} disabled={saving} onPress={() => { if (issue) { setError(issue); return; } void mutate(() => api('/users', undefined, { method: 'POST', body: JSON.stringify({ name: member.name.trim(), email: member.email.trim().toLowerCase(), password: member.password, roleName: member.roleName }) }), () => setMember({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' })); }} /></Section><Section title="Equipe"><Data value={data.users} /></Section><Section title="Permissões da sessão" subtitle="Estas permissões são informativas. A autorização final é validada pelo servidor."><Data value={permissions.map((name) => ({ name }))} /></Section></>;
+        : !roleOk
+          ? 'Selecione uma função permitida.'
+          : '';
+    const passwordIssue = member.password && !strongPassword(member.password) ? PASSWORD_POLICY_TEXT : '';
+    const roleLabel = (value: string) => ownerTeamRoleOptions.find((option) => option.id === value)?.name ?? value;
+    const permissionLabel = (value: string) => value
+      .replace(/[._-]+/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+    const resetMember = () => setMember({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' });
+
+    return <>
+      <Section compact title="Adicionar membro à equipe" subtitle="Envie um convite para o membro definir a própria senha ou, se necessário, cadastre uma senha inicial forte.">
+        <View style={styles.form}>
+          <Field label="Nome" value={member.name} onChangeText={(name) => setMember((v) => ({ ...v, name }))} />
+          <Field label="E-mail" value={member.email} onChangeText={(email) => setMember((v) => ({ ...v, email }))} />
+          <Field label="Telefone (opcional)" value={member.phone} onChangeText={(phone) => setMember((v) => ({ ...v, phone }))} />
+          <Field label="Senha inicial (opcional)" value={member.password} secureTextEntry onChangeText={(password) => setMember((v) => ({ ...v, password }))} />
+        </View>
+        <Text style={styles.label}>Função</Text>
+        <Chips rows={teamRoleOptions} selected={member.roleName} onSelect={(roleName) => setMember((v) => ({ ...v, roleName }))} />
+        <Text style={styles.helper}>O convite usa o fluxo seguro de definição de senha do IRON. Para cadastro direto, a senha inicial deve respeitar: {PASSWORD_POLICY_TEXT}</Text>
+        {inviteIssue ? <Text style={styles.helper}>Antes de continuar: {inviteIssue}</Text> : null}
+        {passwordIssue ? <Text style={styles.helper}>Senha inicial: {passwordIssue}</Text> : null}
+        <View style={styles.actions}>
+          <Button
+            testID="team-invite"
+            label={saving ? 'Enviando…' : 'Enviar convite'}
+            disabled={saving}
+            onPress={() => {
+              if (inviteIssue) { setError(inviteIssue); return; }
+              void mutate(
+                () => api('/users/invite', undefined, {
+                  method: 'POST',
+                  body: JSON.stringify({
+                    name: member.name.trim(),
+                    email: member.email.trim().toLowerCase(),
+                    ...(member.phone.trim() ? { phone: member.phone.trim() } : {}),
+                    roleName: member.roleName,
+                  }),
+                }),
+                resetMember,
+              );
+            }}
+          />
+          <Button
+            testID="team-add"
+            secondary
+            label={saving ? 'Adicionando…' : 'Cadastrar com senha inicial'}
+            disabled={saving}
+            onPress={() => {
+              const directIssue = inviteIssue || (!member.password ? 'Informe a senha inicial ou use Enviar convite.' : passwordIssue);
+              if (directIssue) { setError(directIssue); return; }
+              void mutate(
+                () => api('/users', undefined, {
+                  method: 'POST',
+                  body: JSON.stringify({
+                    name: member.name.trim(),
+                    email: member.email.trim().toLowerCase(),
+                    password: member.password,
+                    ...(member.phone.trim() ? { phone: member.phone.trim() } : {}),
+                    roleName: member.roleName,
+                  }),
+                }),
+                resetMember,
+              );
+            }}
+          />
+        </View>
+      </Section>
+      <Section compact title="Equipe" subtitle="Funções, situação de acesso e permissões efetivas vêm do servidor.">
+        {members.length ? members.map((row: any) => {
+          const permissions = Array.isArray(row.permissions) ? row.permissions : [];
+          const activeMembership = row.membershipActive !== false;
+          return <View key={row.id} style={styles.row}>
+            <View style={styles.teamRowHead}>
+              <View style={styles.rowText}>
+                <Text style={styles.rowTitle}>{row.name ?? row.email ?? 'Membro da equipe'}</Text>
+                <Text style={styles.muted}>{row.email ?? '—'}{row.phone ? ` · ${row.phone}` : ''}</Text>
+              </View>
+              <Text style={[styles.teamStatus, activeMembership ? styles.teamStatusActive : styles.teamStatusInactive]}>{activeMembership ? 'Acesso ativo' : 'Acesso suspenso'}</Text>
+            </View>
+            <Text style={styles.muted}>Função: {roleLabel(String(row.roleName ?? '—'))}</Text>
+            <Text style={styles.muted}>Permissões efetivas: {permissions.length ? permissions.map(permissionLabel).join(' · ') : 'Nenhuma permissão adicional'}</Text>
+            {row.canManage ? <View style={styles.actions}>
+              <Button
+                testID={`team-status-${row.id}`}
+                secondary
+                label={activeMembership ? 'Suspender acesso' : 'Reativar acesso'}
+                disabled={saving}
+                onPress={() => void mutate(() => api(`/users/${row.id}/membership/status`, undefined, {
+                  method: 'PATCH',
+                  body: JSON.stringify({ active: !activeMembership }),
+                }))}
+              />
+              {teamRoleOptions.filter((option) => option.id !== row.roleName).map((option) => <Button
+                key={option.id}
+                secondary
+                label={`Alterar para ${option.name}`}
+                disabled={saving}
+                onPress={() => void mutate(() => api(`/users/${row.id}/membership/role`, undefined, {
+                  method: 'PATCH',
+                  body: JSON.stringify({ roleName: option.id }),
+                }))}
+              />)}
+            </View> : <Text style={styles.helper}>Este vínculo está fora da sua autoridade de alteração.</Text>}
+          </View>;
+        }) : <Text style={styles.muted}>Nenhum membro de equipe encontrado para este perfil.</Text>}
+      </Section>
+      <Section compact title="Permissões da sua sessão" subtitle="Informativas. A autorização final de cada ação continua sendo validada pelo servidor."><Data value={permissions.map((name) => ({ name: permissionLabel(name) }))} /></Section>
+    </>;
   }
   function equipmentView() {
     const catalog = list(data.catalog);
@@ -484,6 +590,10 @@ const styles = StyleSheet.create({
   adminGateForm: { width: '100%', maxWidth: 760, flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
   row: { backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 14, marginBottom: 9 },
   rowTitle: { color: '#eef7ff', fontWeight: '700', marginBottom: 5 },
+  teamRowHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 },
+  teamStatus: { fontSize: 11, fontWeight: '800', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5, borderWidth: 1 },
+  teamStatusActive: { color: '#86efac', borderColor: '#166534', backgroundColor: '#08271c' },
+  teamStatusInactive: { color: '#fca5a5', borderColor: '#7f1d1d', backgroundColor: '#2b1015' },
   json: { color: '#9fb0c5', fontSize: 11, lineHeight: 17 },
   muted: { color: '#9fb0c5', fontSize: 13, lineHeight: 19 },
   form: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
