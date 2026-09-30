@@ -3,6 +3,7 @@ import { IronBrand } from '../components/IronBrand';
 import { IronInput as TextInput } from '../components/IronInput';
 import { DashboardOverview } from './DashboardOverview';
 import { ScheduleWorkspace } from './ScheduleWorkspace';
+import { AccessCenterWorkspace } from './AccessCenterWorkspace';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
@@ -162,10 +163,6 @@ export function CommercialWebApp() {
   const [selectedWorkoutExercise, setSelectedWorkoutExercise] = useState('');
   const [selectedWorkoutEquipment, setSelectedWorkoutEquipment] = useState('');
   const [workoutExerciseDraft, setWorkoutExerciseDraft] = useState({ sets: '3', reps: '10', restSeconds: '60', suggestedLoad: '', notes: '' });
-  const [selectedAccessStudent, setSelectedAccessStudent] = useState('');
-  const [credentialType, setCredentialType] = useState('QR_CODE');
-  const [credentialExpiresAt, setCredentialExpiresAt] = useState('');
-  const [lastCredential, setLastCredential] = useState<any>(null);
   const [adminStepUpActive, setAdminStepUpActive] = useState(false);
   const [adminStepUpExpiresAt, setAdminStepUpExpiresAt] = useState<string | null>(null);
   const [adminPassword, setAdminPassword] = useState('');
@@ -274,7 +271,15 @@ export function CommercialWebApp() {
         Object.assign(next, { workouts, students, workoutExercises: exercises, workoutInventory: inventory, workoutAssessments: assessments });
       }
       if (key === 'schedule') { [next.slots, next.students, next.bookings] = await Promise.all([api('/schedule-slots'), api('/students'), api('/schedules')]); }
-      if (key === 'access') { [next.events, next.students] = await Promise.all([api('/access/events'), api('/students')]); }
+      if (key === 'access') {
+        const [events, students, credentials, devices] = await Promise.all([
+          api('/access/events'),
+          api('/students'),
+          api('/access/credentials'),
+          can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? api('/access/devices') : Promise.resolve([]),
+        ]);
+        Object.assign(next, { events, students, credentials, devices });
+      }
       if (key === 'financial') { [next.accounts, next.charges, next.students] = await Promise.all([api('/financial/accounts'), api('/financial/charges'), api('/students')]); }
       if (key === 'entitlements') { [next.features, next.configurations] = await Promise.all([api('/product-entitlements/tenant/features'), api('/product-entitlements/tenant/configurations')]); next.subscription = subscription; }
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
@@ -1116,8 +1121,40 @@ export function CommercialWebApp() {
     />;
   }
   function accessView() {
-    const students = list(data.students);
-    return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Emitir credencial de acesso" subtitle="Guarde a credencial ao emiti-la. O código só é exibido uma vez."><Chips rows={students} selected={selectedAccessStudent} onSelect={setSelectedAccessStudent} /><View style={styles.form}><Field label="Tipo" value={credentialType} onChangeText={setCredentialType} /><Field label="Validade (AAAA-MM-DD, opcional)" value={credentialExpiresAt} onChangeText={setCredentialExpiresAt} /></View><Button testID="access-credential-create" label="Gerar credencial" disabled={saving || !selectedAccessStudent} onPress={() => void mutate(async () => { const created = await api('/access/credentials', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedAccessStudent, ...(credentialType.trim() ? { type: credentialType.trim() } : {}), ...(credentialExpiresAt.trim() ? { expiresAt: credentialExpiresAt.trim() } : {}) }) }); setLastCredential(created); return created; })} />{lastCredential?.qrToken ? <View style={styles.invite}><Text style={styles.rowTitle}>Código QR — exibir uma única vez</Text><Text selectable style={styles.json}>{lastCredential.qrToken}</Text><Text style={styles.muted}>Credencial: {lastCredential.credentialId ?? '—'} · Tipo: {lastCredential.type ?? '—'}</Text><Button secondary label="Ocultar token" onPress={() => setLastCredential(null)} /></View> : null}</Section> : null}<Section title="Histórico de acessos"><Data value={data.events} /></Section></>;
+    return <AccessCenterWorkspace
+      students={list(data.students)}
+      credentials={list(data.credentials)}
+      events={list(data.events)}
+      devices={list(data.devices)}
+      saving={saving}
+      canManageDevices={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
+      onCreateCredential={async (payload) => {
+        let created: any = null;
+        await mutate(async () => {
+          created = await api('/access/credentials', undefined, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          return created;
+        });
+        return created;
+      }}
+      onRevokeCredential={async (credentialId) => {
+        await mutate(() => api(`/access/credentials/${credentialId}/revoke`, undefined, {
+          method: 'PATCH',
+        }));
+      }}
+      onRotateDeviceToken={async (deviceId) => {
+        let created: any = null;
+        await mutate(async () => {
+          created = await api(`/access/devices/${deviceId}/token`, undefined, {
+            method: 'POST',
+          });
+          return created;
+        });
+        return created;
+      }}
+    />;
   }
   function financialView() {
     const students = list(data.students); const accounts = list(data.accounts); const charges = list(data.charges);
