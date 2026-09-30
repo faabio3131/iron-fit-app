@@ -44,7 +44,7 @@ const statusLabels: Record<string, string> = {
   CANCELED: 'Cancelado',
 };
 
-const statusOptions: Array<{ id: StatusFilter; label: string }> = [
+const statusOptions: { id: StatusFilter; label: string }[] = [
   { id: 'ALL', label: 'Todos' },
   { id: 'SCHEDULED', label: 'Agendados' },
   { id: 'CHECKED_IN', label: 'Check-in' },
@@ -293,7 +293,7 @@ export function ScheduleWorkspace({
                       disabled={saving}
                       style={[styles.checkInButton, saving && styles.disabled]}
                       onPress={(event) => {
-                        event.stopPropagation?.();
+                        event?.stopPropagation?.();
                         void onCheckIn(booking.id);
                       }}
                     >
