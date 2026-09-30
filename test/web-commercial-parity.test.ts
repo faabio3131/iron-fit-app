@@ -4,6 +4,7 @@ const navigator = fs.readFileSync('src/navigation/RootNavigator.tsx', 'utf8');
 const auth = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
 const login = fs.readFileSync('src/screens/LoginScreen.tsx', 'utf8');
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
+const entitlements = fs.readFileSync('src/web/EntitlementsWorkspace.tsx', 'utf8');
 const trial = fs.readFileSync('src/web/TrialSignupScreen.tsx', 'utf8');
 const workflow = fs.readFileSync('.github/workflows/mobile-ci.yml', 'utf8');
 
@@ -59,7 +60,7 @@ test('commercial modules consume backend sources of truth and entitlement keys',
 test('web surface exposes fail-closed and human-review states', () => {
   expect(web).toMatch(/EXPIRED/);
   expect(web).toMatch(/SUSPENDED/);
-  expect(web).toMatch(/FAIL_CLOSED_DEFAULT/);
+  expect(entitlements).toMatch(/FAIL_CLOSED_DEFAULT/);
   expect(web).toMatch(/PENDING_REVIEW/);
   expect(web).toMatch(/APPROVED/);
   expect(web).toMatch(/Seu perfil não possui permissão/);
