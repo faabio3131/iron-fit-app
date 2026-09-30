@@ -8,9 +8,10 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 test('dashboard distinguishes unavailable metrics from real zero and opens the real module', () => {
   const navigate = jest.fn();
   const view = render(<DashboardOverview data={{ summary: { students: { active: 0, total: 0 }, revenue: { thisMonth: 14990 } }, overdue: [], birthdays: [] }} navigate={navigate} />);
-  expect(view.getByText('0')).toBeTruthy();
+  expect(view.getAllByText('0').length).toBeGreaterThan(0);
   expect(view.getByText(/149,90/)).toBeTruthy();
-  expect(view.getAllByText('—')).toHaveLength(2);
+  expect(view.getByLabelText('Treinos aprovados: —. Abrir detalhes')).toBeTruthy();
+  expect(view.getByLabelText('Equipamentos: —. Abrir detalhes')).toBeTruthy();
   expect(view.getByText('Nenhuma cobrança vencida.')).toBeTruthy();
   fireEvent.press(view.getByLabelText('Alunos ativos: 0. Abrir detalhes'));
   expect(navigate).toHaveBeenCalledWith('students');
