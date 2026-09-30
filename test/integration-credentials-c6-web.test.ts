@@ -30,7 +30,7 @@ test('C7 Web requires step-up material for credential mutations', () => {
   expect(panel).toContain('mfaCode');
   expect(panel).toContain('recoveryCode');
   expect(panel).toContain('integration-action-confirm');
-  expect(panel).toContain('Senha atual — step-up');
+  expect(panel).toContain('Senha atual — reautenticação');
 });
 
 test('C6 Web never lets the browser choose tenant authority', () => {
@@ -57,6 +57,6 @@ test('C6 Web exposes separate replace, rotate, provider-test and revoke actions'
   expect(panel).toContain("beginAction(connection.id, 'rotate')");
   expect(panel).toContain("beginAction(connection.id, 'verify')");
   expect(panel).toContain("beginAction(connection.id, 'revoke')");
-  expect(panel).toContain('Testar provider');
+  expect(panel).toContain('Testar provedor');
   expect(panel).not.toContain('Testar cofre');
 });
