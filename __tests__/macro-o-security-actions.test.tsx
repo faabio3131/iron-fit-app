@@ -199,6 +199,43 @@ test('perfil de recepção não recebe superfícies administrativas sensíveis',
   });
 });
 
+test('professor recebe somente superfícies operacionais compatíveis com o backend', async () => {
+  mockProfile = {
+    id: 'trainer-1',
+    name: 'Professor QA',
+    email: 'trainer@example.com',
+    roles: ['TRAINER'],
+    permissions: [],
+  };
+
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-students')).toBeTruthy());
+
+  for (const allowed of ['nav-students', 'nav-equipment', 'nav-exercises', 'nav-assessments', 'nav-workouts', 'nav-schedule', 'nav-security']) {
+    expect(view.getByTestId(allowed)).toBeTruthy();
+  }
+  for (const denied of ['nav-overview', 'nav-team', 'nav-access', 'nav-financial', 'nav-saasBilling', 'nav-entitlements', 'nav-integrations']) {
+    expect(view.queryByTestId(denied)).toBeNull();
+  }
+});
+
+test('aluno não recebe módulos administrativos no shell comercial', async () => {
+  mockProfile = {
+    id: 'student-1',
+    name: 'Aluno QA',
+    email: 'student@example.com',
+    roles: ['STUDENT'],
+    permissions: [],
+  };
+
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-security')).toBeTruthy());
+
+  for (const denied of ['nav-overview', 'nav-students', 'nav-team', 'nav-equipment', 'nav-exercises', 'nav-assessments', 'nav-workouts', 'nav-schedule', 'nav-access', 'nav-financial', 'nav-saasBilling', 'nav-entitlements', 'nav-integrations']) {
+    expect(view.queryByTestId(denied)).toBeNull();
+  }
+});
+
 test('Creator Network usa descrições em português e superfície compacta', async () => {
   mockFeatureSet = [
     { featureKey: 'content.tenant_private', kind: 'FEATURE', value: true, source: 'PLAN' },
