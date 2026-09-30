@@ -43,6 +43,8 @@ function installApi() {
     if (path.startsWith('/dashboard/attendance')) return [];
     if (path === '/dashboard/overdue') return [];
     if (path.startsWith('/dashboard/birthdays')) return [];
+    if (path === '/schedule-slots') return [{ id: 'slot-1', weekday: 1, startTime: '08:00', endTime: '09:00', capacity: 12, active: true }];
+    if (path === '/workouts') return [{ id: 'workout-ai-1', status: 'PENDING_REVIEW', createdByAI: true, goal: 'Hipertrofia', student: { user: { name: 'Aluno IA' } } }];
     if (path === '/gyms/gym-1') return { id: 'gym-1', name: 'Academia QA' };
     if (path === '/users' && options?.method === 'POST') return { id: 'member-1', name: 'Professor QA', email: 'professor@example.com' };
     if (path === '/users') return [];
@@ -93,6 +95,17 @@ test('botão Adicionar à equipe explica validação e executa cadastro válido'
     });
   }, { timeout: 12000 });
 }, 15000);
+
+test('Cockpit mostra agenda, alertas e candidatos da Intelligence com drill-down', async () => {
+  const view = render(<CommercialWebApp />);
+
+  await waitFor(() => expect(view.getByTestId('dashboard-overview')).toBeTruthy());
+  expect(view.getByText('Agenda operacional')).toBeTruthy();
+  expect(view.getByText('Alertas operacionais')).toBeTruthy();
+  expect(view.getByText('IRON Intelligence')).toBeTruthy();
+  expect(view.getByText('Aluno IA')).toBeTruthy();
+  expect(view.getByText(/Seg · 08:00–09:00/)).toBeTruthy();
+});
 
 test('área administrativa exige reautenticação antes de carregar Financeiro', async () => {
   const view = render(<CommercialWebApp />);
