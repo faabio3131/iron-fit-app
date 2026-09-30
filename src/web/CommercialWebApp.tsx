@@ -539,6 +539,7 @@ export function CommercialWebApp() {
                   <Text style={[styles.teamStatus, item.selected ? styles.teamStatusActive : styles.teamStatusInactive]}>{item.selected ? 'No inventário' : 'Disponível'}</Text>
                 </View>
                 {canManageInventory ? <Button
+                  testID={`equipment-catalog-select-${item.id}`}
                   secondary={item.selected}
                   label={item.selected ? 'Remover do inventário' : 'Adicionar ao inventário'}
                   disabled={saving}
