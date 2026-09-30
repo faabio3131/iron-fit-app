@@ -136,7 +136,6 @@ export function CommercialWebApp() {
   const [student, setStudent] = useState({ name: '', email: '', phone: '' });
   const [lastStudentInvite, setLastStudentInvite] = useState<any>(null);
   const [member, setMember] = useState({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' });
-  const [selectedCatalogEquipment, setSelectedCatalogEquipment] = useState('');
   const [equipmentSearch, setEquipmentSearch] = useState('');
   const [equipmentCategory, setEquipmentCategory] = useState('');
   const [selectedEquipmentExercise, setSelectedEquipmentExercise] = useState('');
