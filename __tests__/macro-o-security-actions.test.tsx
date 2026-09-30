@@ -191,7 +191,8 @@ test('Equipment Intelligence oferece catálogo, inventário, compatibilidade e c
   await waitFor(() => {
     const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/equipments/catalog/candidates' && options?.method === 'POST');
     expect(call).toBeTruthy();
-    expect(JSON.parse(String(call?.[2]?.body ?? '{}'))).toMatchObject({ proposedName: 'Equipamento Novo' });
+    const parsedBody = JSON.parse(String(call?.[2]?.body ?? '{}'));
+    expect(parsedBody).toMatchObject({ proposedName: 'Equipamento Novo' });
   });
 });
 
