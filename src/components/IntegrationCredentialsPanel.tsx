@@ -213,7 +213,7 @@ export function IntegrationCredentialsPanel() {
 
   async function createConnection() {
     if (!selectedProvider || !authModel || !secret || !stepUp.currentPassword) {
-      setError('Preencha provider, autenticação, segredo e reautenticação.');
+      setError('Preencha provedor, autenticação, credencial e reautenticação.');
       return;
     }
 
@@ -296,7 +296,7 @@ export function IntegrationCredentialsPanel() {
           : action === 'rotate'
             ? 'Credencial rotacionada. O novo valor não será exibido.'
             : action === 'verify'
-              ? 'Credencial validada pelo provider.'
+              ? 'Credencial validada pelo provedor.'
               : 'Credencial revogada e bloqueada para uso.',
       );
       setAction('');
@@ -328,15 +328,15 @@ export function IntegrationCredentialsPanel() {
       <View style={styles.section}>
         <Text style={styles.title}>Integrações da academia</Text>
         <Text style={styles.muted}>
-          Ambiente: {environment || 'indisponível'} · Definido pelo servidor. Tenant derivado da sessão. Segredos são write-only.
+          Ambiente: {environment || 'indisponível'} · Definido pelo servidor. Academia derivada da sessão. Credenciais são somente para gravação.
         </Text>
         {providers.length === 0 ? (
           <Text style={styles.muted}>
-            Nenhum provider está registrado para este ambiente. Nenhuma integração será habilitada por código específico do cliente.
+            Nenhum provedor está registrado para este ambiente. Nenhuma integração será habilitada por código específico do cliente.
           </Text>
         ) : (
           <>
-            <Text style={styles.label}>Provider</Text>
+            <Text style={styles.label}>Provedor</Text>
             <View style={styles.chips}>
               {providers.map((provider) => (
                 <TouchableOpacity
@@ -356,7 +356,7 @@ export function IntegrationCredentialsPanel() {
               <>
                 {selectedProvider.tenantEntitlementFeatureKey ? (
                   <Text style={styles.muted}>
-                    Capability comercial exigida: {selectedProvider.tenantEntitlementFeatureKey}. A autorização efetiva vem do plano/configuração do tenant.
+                    Recurso comercial exigido: {selectedProvider.tenantEntitlementFeatureKey}. A autorização efetiva vem do plano/configuração do tenant.
                   </Text>
                 ) : null}
                 <Text style={styles.label}>Modelo de autenticação</Text>
@@ -372,7 +372,7 @@ export function IntegrationCredentialsPanel() {
                   ))}
                 </View>
 
-                <Text style={styles.label}>Capabilities</Text>
+                <Text style={styles.label}>Recursos</Text>
                 <View style={styles.chips}>
                   {selectedProvider.capabilities.map((capability) => (
                     <TouchableOpacity
@@ -389,7 +389,7 @@ export function IntegrationCredentialsPanel() {
                 </View>
 
                 <PlainField
-                  label="Configuração pública JSON — nunca coloque segredo aqui"
+                  label="Configuração pública (JSON) — nunca coloque credenciais aqui"
                   value={publicConfiguration}
                   onChangeText={setPublicConfiguration}
                   multiline
@@ -402,7 +402,7 @@ export function IntegrationCredentialsPanel() {
                 />
                 <SecretField
                   testID="integration-create-current-password"
-                  label="Senha atual — step-up"
+                  label="Senha atual — reautenticação"
                   value={stepUp.currentPassword}
                   onChangeText={(currentPassword) => setStepUp((v) => ({ ...v, currentPassword }))}
                 />
@@ -412,7 +412,7 @@ export function IntegrationCredentialsPanel() {
                   onChangeText={(mfaCode) => setStepUp((v) => ({ ...v, mfaCode }))}
                 />
                 <SecretField
-                  label="Recovery code (alternativa ao MFA)"
+                  label="Código de recuperação (alternativa ao MFA)"
                   value={stepUp.recoveryCode}
                   onChangeText={(recoveryCode) => setStepUp((v) => ({ ...v, recoveryCode }))}
                 />
@@ -431,7 +431,7 @@ export function IntegrationCredentialsPanel() {
       <View style={styles.section}>
         <Text style={styles.title}>Conexões configuradas</Text>
         {connections.length === 0 ? (
-          <Text style={styles.muted}>Nenhuma conexão configurada neste tenant/ambiente.</Text>
+          <Text style={styles.muted}>Nenhuma conexão configurada para esta academia neste ambiente.</Text>
         ) : connections.map((connection) => (
           <View key={connection.id} style={styles.connection}>
             <Text style={styles.connectionTitle}>{connection.providerCode}</Text>
@@ -448,7 +448,7 @@ export function IntegrationCredentialsPanel() {
             <View style={styles.actions}>
               <ActionButton label="Substituir" onPress={() => beginAction(connection.id, 'replace')} />
               <ActionButton label="Rotacionar" onPress={() => beginAction(connection.id, 'rotate')} />
-              <ActionButton label="Testar provider" onPress={() => beginAction(connection.id, 'verify')} />
+              <ActionButton label="Testar provedor" onPress={() => beginAction(connection.id, 'verify')} />
               <ActionButton danger label="Revogar" onPress={() => beginAction(connection.id, 'revoke')} />
             </View>
           </View>
@@ -463,7 +463,7 @@ export function IntegrationCredentialsPanel() {
               : action === 'rotate'
                 ? 'Rotacionar credencial'
                 : action === 'verify'
-                  ? 'Testar credencial no provider'
+                  ? 'Testar credencial no provedor'
                   : 'Revogar credencial'}
           </Text>
           {action === 'replace' || action === 'rotate' ? (
@@ -475,7 +475,7 @@ export function IntegrationCredentialsPanel() {
             />
           ) : null}
           <SecretField
-            label="Senha atual — step-up"
+            label="Senha atual — reautenticação"
             value={actionStepUp.currentPassword}
             onChangeText={(currentPassword) => setActionStepUp((v) => ({ ...v, currentPassword }))}
           />
@@ -485,7 +485,7 @@ export function IntegrationCredentialsPanel() {
             onChangeText={(mfaCode) => setActionStepUp((v) => ({ ...v, mfaCode }))}
           />
           <SecretField
-            label="Recovery code"
+            label="Código de recuperação"
             value={actionStepUp.recoveryCode}
             onChangeText={(recoveryCode) => setActionStepUp((v) => ({ ...v, recoveryCode }))}
           />
