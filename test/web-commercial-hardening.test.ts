@@ -46,7 +46,7 @@ test('sensitive commercial surfaces remain narrowed by role in the Web shell', (
   expect(web).toContain("{ key: 'team', label: 'Equipe', icon: 'shield-checkmark-outline', roles: ['SUPER_ADMIN', 'OWNER'] }");
   expect(web).toContain("{ key: 'financial', label: 'Financeiro', icon: 'lock-closed-outline', roles: ['SUPER_ADMIN', 'OWNER'] }");
   expect(web).toContain("{ key: 'integrations', label: 'Integrações', icon: 'git-network-outline', roles: ['SUPER_ADMIN', 'OWNER'] }");
-  expect(web).toContain("showFinancial={can('SUPER_ADMIN', 'OWNER')}");
+  expect(web).toContain("showFinancial={can('SUPER_ADMIN', 'OWNER') && adminStepUpActive}");
   expect(web).toContain("canSeeFinancialDashboard ? api('/dashboard/revenue?days=30') : Promise.resolve(null)");
   expect(web).toContain('ADMINISTRAÇÃO RESTRITA');
   expect(web).toContain('Área restrita · Proprietário / Administrador');
