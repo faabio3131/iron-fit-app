@@ -207,6 +207,10 @@ test('professor recebe somente superfícies operacionais compatíveis com o back
     roles: ['TRAINER'],
     permissions: [],
   };
+  mockFeatureSet = [
+    { featureKey: 'equipment.catalog', kind: 'FEATURE', value: true, source: 'PLAN' },
+    { featureKey: 'equipment.inventory', kind: 'FEATURE', value: true, source: 'PLAN' },
+  ];
 
   const view = render(<CommercialWebApp />);
   await waitFor(() => expect(view.getByTestId('nav-students')).toBeTruthy());
