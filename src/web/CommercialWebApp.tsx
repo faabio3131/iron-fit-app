@@ -11,6 +11,7 @@ import { api } from '../services/api';
 type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'schedule' | 'access' | 'financial' | 'saasBilling' | 'security' | 'entitlements' | 'integrations' | 'creator';
 type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; value: boolean | number | string[] | null; source?: string; reason?: string | null };
 type ModuleDefinition = { key: ModuleKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name']; roles?: string[]; entitlement?: string[] };
+const restrictedAdminModules: ModuleKey[] = ['financial', 'saasBilling', 'entitlements', 'integrations'];
 
 const operational = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION'];
 const staff = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION', 'TRAINER'];
@@ -25,11 +26,11 @@ const modules: ModuleDefinition[] = [
   { key: 'workouts', label: 'Treinos', icon: 'clipboard-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER'] },
   { key: 'schedule', label: 'Agenda', icon: 'calendar-outline', roles: staff },
   { key: 'access', label: 'Acessos', icon: 'key-outline', roles: operational },
-  { key: 'financial', label: 'Financeiro', icon: 'wallet-outline', roles: operational },
-  { key: 'saasBilling', label: 'Assinatura IRON', icon: 'card-outline', roles: ['OWNER', 'MANAGER'] },
+  { key: 'financial', label: 'Financeiro', icon: 'lock-closed-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
+  { key: 'saasBilling', label: 'Assinatura IRON', icon: 'card-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
   { key: 'security', label: 'Segurança', icon: 'shield-checkmark-outline' },
-  { key: 'entitlements', label: 'Plano e configurações', icon: 'layers-outline', roles: ['OWNER', 'MANAGER'] },
-  { key: 'integrations', label: 'Integrações', icon: 'git-network-outline', roles: ['OWNER'] },
+  { key: 'entitlements', label: 'Plano e configurações', icon: 'layers-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
+  { key: 'integrations', label: 'Integrações', icon: 'git-network-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
   { key: 'creator', label: 'Creator Network', icon: 'images-outline', roles: ['OWNER', 'MANAGER'], entitlement: ['content.external_youtube', 'content.iron_managed', 'content.tenant_private'] },
 ];
 const onboardingLabels: Record<string, string> = { ACADEMY_PROFILE: 'Perfil da academia', EQUIPMENT_INVENTORY: 'Inventário de equipamentos', TEAM_REVIEW: 'Revisão da equipe', FINISH: 'Finalizar onboarding' };
@@ -106,27 +107,39 @@ export function CommercialWebApp() {
   const [credentialType, setCredentialType] = useState('QR_CODE');
   const [credentialExpiresAt, setCredentialExpiresAt] = useState('');
   const [lastCredential, setLastCredential] = useState<any>(null);
+  const [adminStepUpActive, setAdminStepUpActive] = useState(false);
+  const [adminStepUpExpiresAt, setAdminStepUpExpiresAt] = useState<string | null>(null);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminSecondFactor, setAdminSecondFactor] = useState('');
+  const [adminGateLoading, setAdminGateLoading] = useState(false);
+  const [adminGateError, setAdminGateError] = useState('');
 
   const entitlementMap = useMemo(() => new Map(entitlements.map((item) => [item.featureKey, item])), [entitlements]);
   const enabled = useCallback((key: string) => entitlementMap.get(key)?.value === true, [entitlementMap]);
   const allowed = useCallback((item: ModuleDefinition) => (!item.roles || item.roles.some((role) => roles.includes(role))) && (!item.entitlement || item.entitlement.some(enabled)), [enabled, roles]);
   const can = useCallback((...targets: string[]) => targets.some((role) => roles.includes(role)), [roles]);
+  const isRestrictedAdminModule = useCallback((key: ModuleKey) => restrictedAdminModules.includes(key), []);
   const blocked = shellReady && (!subscription || trial?.status === 'EXPIRED' || trial?.status === 'INACTIVE' || subscription?.status === 'SUSPENDED');
   const visible = useMemo(() => modules.filter((item) => allowed(item) && (!blocked || item.key === 'saasBilling' || item.key === 'security')), [allowed, blocked]);
 
   const loadShell = useCallback(async () => {
     setShellReady(false);
     setError('');
-    const [features, current, trialState, onboardingState] = await Promise.all([
+    const [features, current, trialState, onboardingState, stepUpState] = await Promise.all([
       api('/product-entitlements/tenant/features'),
       api('/product-entitlements/tenant/current'),
       api('/commercial/trial/status'),
       can('OWNER', 'MANAGER') ? api('/commercial/onboarding') : Promise.resolve(null),
+      can('SUPER_ADMIN', 'OWNER')
+        ? api('/auth/step-up/status').catch(() => ({ active: false, expiresAt: null }))
+        : Promise.resolve({ active: false, expiresAt: null }),
     ]);
     setEntitlements(Array.isArray(features) ? features : []);
     setSubscription(current);
     setTrial(trialState);
     setOnboarding(onboardingState);
+    setAdminStepUpActive(stepUpState?.active === true);
+    setAdminStepUpExpiresAt(stepUpState?.expiresAt ? String(stepUpState.expiresAt) : null);
     setShellReady(true);
   }, [can]);
 
@@ -135,8 +148,13 @@ export function CommercialWebApp() {
     try {
       const next: Record<string, any> = {};
       if (key === 'overview') {
+        const canSeeFinancialDashboard = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
         const [summary, revenue, attendance, overdue, birthdays, gym] = await Promise.all([
-          api('/dashboard/summary'), api('/dashboard/revenue?days=30'), api('/dashboard/attendance?days=7'), api('/dashboard/overdue'), api('/dashboard/birthdays?days=30'),
+          api('/dashboard/summary'),
+          canSeeFinancialDashboard ? api('/dashboard/revenue?days=30') : Promise.resolve(null),
+          api('/dashboard/attendance?days=7'),
+          canSeeFinancialDashboard ? api('/dashboard/overdue') : Promise.resolve(null),
+          api('/dashboard/birthdays?days=30'),
           activeTenantId && can('OWNER', 'MANAGER') ? api(`/gyms/${activeTenantId}`).catch(() => null) : Promise.resolve(null),
         ]); Object.assign(next, { summary, revenue, attendance, overdue, birthdays, gym });
       }
@@ -153,7 +171,7 @@ export function CommercialWebApp() {
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
       setData(next);
     } catch (reason) { setError(message(reason)); setData({}); } finally { setLoading(false); }
-  }, [activeTenantId, can, enabled, selectedStudent, subscription]);
+  }, [activeTenantId, adminStepUpActive, can, enabled, selectedStudent, subscription]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -163,18 +181,75 @@ export function CommercialWebApp() {
   }, [loadShell]);
   useEffect(() => {
     if (!shellReady || blocked) return undefined;
+    if (isRestrictedAdminModule(active) && !adminStepUpActive) {
+      const timer = setTimeout(() => {
+        setLoading(false);
+        setData({});
+      }, 0);
+      return () => clearTimeout(timer);
+    }
     const timer = setTimeout(() => {
       void loadModule(active);
     }, 0);
     return () => clearTimeout(timer);
-  }, [active, blocked, loadModule, shellReady]);
+  }, [active, adminStepUpActive, blocked, isRestrictedAdminModule, loadModule, shellReady]);
+
+  useEffect(() => {
+    if (!adminStepUpActive || !adminStepUpExpiresAt) return undefined;
+    const remaining = new Date(adminStepUpExpiresAt).getTime() - Date.now();
+    if (remaining <= 0) {
+      const timer = setTimeout(() => setAdminStepUpActive(false), 0);
+      return () => clearTimeout(timer);
+    }
+    const timer = setTimeout(() => setAdminStepUpActive(false), remaining);
+    return () => clearTimeout(timer);
+  }, [adminStepUpActive, adminStepUpExpiresAt]);
+
+  async function unlockAdministrativeArea() {
+    if (!adminPassword.trim()) {
+      setAdminGateError('Informe sua senha atual.');
+      return;
+    }
+    setAdminGateLoading(true);
+    setAdminGateError('');
+    try {
+      const factor = adminSecondFactor.trim();
+      const state = await api('/auth/step-up', undefined, {
+        method: 'POST',
+        body: JSON.stringify({
+          currentPassword: adminPassword,
+          ...(factor
+            ? /^\d{6}$/.test(factor)
+              ? { mfaCode: factor }
+              : { recoveryCode: factor.toUpperCase() }
+            : {}),
+        }),
+      });
+      setAdminStepUpActive(state?.active === true);
+      setAdminStepUpExpiresAt(state?.expiresAt ? String(state.expiresAt) : null);
+      setAdminPassword('');
+      setAdminSecondFactor('');
+      if (state?.active === true) await loadModule(active);
+    } catch (reason) {
+      setAdminStepUpActive(false);
+      setAdminGateError(message(reason));
+    } finally {
+      setAdminGateLoading(false);
+    }
+  }
+
+  function adminGateView() {
+    return <Section title="Acesso administrativo protegido" subtitle="Confirme sua identidade para entrar nesta área restrita. A autorização é temporária e vinculada à sessão atual."><View style={styles.adminGateIdentity}><Ionicons name="lock-closed-outline" size={24} color="#60a5fa" /><View><Text style={styles.rowTitle}>{profile?.name ?? 'Proprietário'}</Text><Text style={styles.muted}>{profile?.email ?? 'Conta administrativa'}</Text></View></View><View style={styles.form}><Field label="Senha atual" value={adminPassword} secureTextEntry onChangeText={setAdminPassword} />{profile?.mfaEnabled ? <Field label="Código MFA ou código de recuperação" value={adminSecondFactor} onChangeText={setAdminSecondFactor} /> : null}</View>{adminGateError ? <Text style={styles.error}>{adminGateError}</Text> : null}<Button testID="admin-step-up-submit" label={adminGateLoading ? 'Validando…' : 'Entrar na área administrativa'} disabled={adminGateLoading || !adminPassword.trim()} onPress={() => { void unlockAdministrativeArea(); }} /><Text style={styles.muted}>Por segurança, o acesso administrativo expira automaticamente após 15 minutos.</Text></Section>;
+  }
+
   async function mutate(operation: () => Promise<unknown>, reset?: () => void) {
     setSaving(true); setError('');
     try { await operation(); reset?.(); await loadShell(); await loadModule(active); } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
   }
 
   function overview() {
-    return <><Section title="Academia e sessão"><Data value={data.gym ? [data.gym] : []} /><Text style={styles.muted}>Usuário: {profile?.name ?? profile?.email ?? '—'} · Papéis: {roles.join(', ') || '—'} · Tenant derivado da sessão: {activeTenantId ?? '—'}</Text></Section><Section title="Dashboard"><Data value={data.summary ? [data.summary] : []} /></Section><Section title="Receita — 30 dias"><Data value={data.revenue} /></Section><Section title="Presença — 7 dias"><Data value={data.attendance} /></Section><Section title="Cobranças vencidas"><Data value={data.overdue} /></Section><Section title="Aniversários"><Data value={data.birthdays} /></Section></>;
+    const showFinancial = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
+    return <><Section title="Academia e sessão"><Data value={data.gym ? [data.gym] : []} /><Text style={styles.muted}>Usuário: {profile?.name ?? profile?.email ?? '—'} · Papéis: {roles.join(', ') || '—'} · Tenant derivado da sessão: {activeTenantId ?? '—'}</Text></Section><Section title="Dashboard"><Data value={data.summary ? [data.summary] : []} /></Section>{showFinancial ? <Section title="Receita — 30 dias"><Data value={data.revenue} /></Section> : null}<Section title="Presença — 7 dias"><Data value={data.attendance} /></Section>{showFinancial ? <Section title="Cobranças vencidas"><Data value={data.overdue} /></Section> : null}<Section title="Aniversários"><Data value={data.birthdays} /></Section></>;
   }
   function onboardingView() {
     const step = onboarding?.nextStep as string | undefined;
@@ -253,6 +328,7 @@ export function CommercialWebApp() {
     return <><Section title="Assinatura SaaS atual"><Data value={data.subscription ? [data.subscription] : []} /></Section><Section title="Capabilities e configurações" subtitle="Configurações só podem estreitar o plano efetivo; o backend permanece autoridade.">{features.map((feature: any) => <View key={feature.featureKey} style={styles.row}><Text style={styles.rowTitle}>{feature.featureKey}</Text><Text style={styles.muted}>Tipo: {feature.kind} · Efetivo: {JSON.stringify(feature.value)} · Fonte: {feature.source ?? '—'} {feature.reason ? `· ${feature.reason}` : ''}</Text>{feature.kind !== 'FEATURE' ? <Field label={feature.kind === 'LIMIT' ? 'Novo limite' : 'Policies separadas por vírgula'} value={configDraft[feature.featureKey] ?? ''} onChangeText={(value) => setConfigDraft((current) => ({ ...current, [feature.featureKey]: value }))} /> : null}<View style={styles.actions}><Button label={feature.kind === 'FEATURE' ? 'Desativar no tenant' : 'Aplicar configuração'} disabled={saving || feature.source === 'FAIL_CLOSED_DEFAULT'} onPress={() => { void configure(feature); }} /><Button secondary label="Herdar do plano" disabled={saving} onPress={() => void mutate(() => api(`/product-entitlements/tenant/configurations/${feature.featureKey}`, undefined, { method: 'DELETE' }))} /></View></View>)}</Section><Section title="Configurações persistidas"><Data value={data.configurations} /></Section></>;
   }
   function content() {
+    if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
     if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'financial') return financialView(); if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel />; return <><Section title="Creator Network"><Data value={data.overview ? [data.overview] : []} /></Section><Section title="Conteúdo"><Data value={data.items} /></Section><Section title="Analytics"><Data value={data.analytics ? [data.analytics] : []} /></Section></>;
   }
 
@@ -263,5 +339,6 @@ export function CommercialWebApp() {
 }
 
 const styles = StyleSheet.create({
+  adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
   app: { flex: 1, backgroundColor: '#080c17' }, top: { minHeight: 72, padding: 18, backgroundColor: '#101625', borderBottomWidth: 1, borderBottomColor: '#273248', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, brand: { color: '#f8fafc', fontSize: 22, fontWeight: '900', letterSpacing: 3 }, body: { flex: 1, flexDirection: 'row' }, bodyCompact: { flexDirection: 'column' }, nav: { width: 240, backgroundColor: '#0d1321', paddingVertical: 10 }, navCompact: { width: '100%', maxHeight: 72 }, navHorizontal: { alignItems: 'center' }, navItem: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, margin: 4, borderRadius: 9 }, navActive: { backgroundColor: '#251b46' }, navText: { color: '#cbd5e1', fontWeight: '600' }, content: { flex: 1 }, contentInner: { padding: 22, width: '100%', maxWidth: 1400, alignSelf: 'center' }, pageHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16 }, title: { color: '#f8fafc', fontSize: 26, fontWeight: '800' }, section: { backgroundColor: '#111827', borderWidth: 1, borderColor: '#273248', borderRadius: 14, padding: 16, marginBottom: 12 }, sectionTitle: { color: '#f8fafc', fontSize: 17, fontWeight: '800', marginBottom: 6 }, sectionBody: { marginTop: 8 }, row: { backgroundColor: '#0c1220', borderWidth: 1, borderColor: '#202a3e', borderRadius: 10, padding: 12, marginBottom: 8 }, rowTitle: { color: '#f1f5f9', fontWeight: '700', marginBottom: 4 }, json: { color: '#94a3b8', fontSize: 11, lineHeight: 16 }, muted: { color: '#94a3b8', fontSize: 13, lineHeight: 18 }, form: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginVertical: 10 }, fieldWrap: { minWidth: 180, flexGrow: 1, flexBasis: 210 }, label: { color: '#94a3b8', fontSize: 11, fontWeight: '700', marginBottom: 5 }, input: { color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 9, padding: 10 }, button: { alignSelf: 'flex-start', backgroundColor: '#7c3aed', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10, marginTop: 4 }, secondary: { backgroundColor: '#172033', borderWidth: 1, borderColor: '#334155' }, buttonText: { color: '#fff', fontWeight: '800', fontSize: 12 }, disabled: { opacity: 0.45 }, actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }, chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 10 }, chip: { borderWidth: 1, borderColor: '#334155', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 }, chipActive: { backgroundColor: '#2e1f52', borderColor: '#8b5cf6' }, chipText: { color: '#cbd5e1', fontSize: 12 }, invite: { backgroundColor: '#0b2a1e', borderWidth: 1, borderColor: '#14532d', borderRadius: 10, padding: 12, marginTop: 12 }, warning: { margin: 12, padding: 12, borderRadius: 10, backgroundColor: '#261c08', borderWidth: 1, borderColor: '#7c5b16' }, warningTitle: { color: '#fbbf24', fontWeight: '800' }, error: { color: '#fca5a5', backgroundColor: '#301215', padding: 10, borderRadius: 8, marginBottom: 10 }, success: { color: '#4ade80', fontWeight: '700' }, loading: { minHeight: 260, alignItems: 'center', justifyContent: 'center', gap: 8 },
 });

@@ -8,7 +8,7 @@ const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
 
 test('C6 Web exposes OWNER-only integration administration surface', () => {
   expect(web).toContain("key: 'integrations'");
-  expect(web).toContain("roles: ['OWNER']");
+  expect(web).toContain("roles: ['SUPER_ADMIN', 'OWNER']");
   expect(web).toContain('<IntegrationCredentialsPanel />');
   expect(panel).toContain("api('/integrations/providers')");
   expect(panel).toContain("api('/integrations/connections')");

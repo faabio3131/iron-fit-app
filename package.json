@@ -5,7 +5,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",
     "@expo/vector-icons": "^15.1.1",
-    "expo": "~57.0.25",
+    "expo": "~57.0.26",
     "expo-font": "~57.0.4",
     "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
