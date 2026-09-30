@@ -148,6 +148,19 @@ liveTest(
         ),
       ).toBe(true);
 
+      const lockedPrices = await api('/saas-billing/prices').then(
+        () => null,
+        (error: Error & { status?: number }) => error,
+      );
+      expect(lockedPrices).toBeInstanceOf(Error);
+      expect((lockedPrices as Error & { status?: number }).status).toBe(403);
+
+      const stepUp = await api('/auth/step-up', undefined, {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword: password }),
+      });
+      expect(stepUp.active).toBe(true);
+
       const prices = await api('/saas-billing/prices');
       expect(Array.isArray(prices)).toBe(true);
       expect(prices.some((price: any) => price.priceCode === 'IRON_B6_BASIC_MONTHLY')).toBe(true);
