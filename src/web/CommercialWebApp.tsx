@@ -117,6 +117,7 @@ export function CommercialWebApp() {
   const [error, setError] = useState('');
   const [shellReady, setShellReady] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
   const [selectedFinancialStudent, setSelectedFinancialStudent] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
   const [student, setStudent] = useState({ name: '', email: '', phone: '' });
@@ -193,7 +194,24 @@ export function CommercialWebApp() {
           activeTenantId && can('OWNER', 'MANAGER') ? api(`/gyms/${activeTenantId}`).catch(() => null) : Promise.resolve(null),
         ]); Object.assign(next, { summary, revenue, attendance, overdue, birthdays, agendaSlots, cockpitWorkouts, gym });
       }
-      if (key === 'students') next.students = await api('/students');
+      if (key === 'students') {
+        next.students = await api('/students');
+        if (selectedStudent) {
+          const canSeeWorkoutHistory = can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER');
+          const canSeeAccessHistory = can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION');
+          const canSeeStudentFinance = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
+          const [studentDetail, assessments, schedules, workouts, accessEvents, subscriptions, charges] = await Promise.all([
+            api(`/students/${selectedStudent}`),
+            api(`/students/${selectedStudent}/assessments`),
+            api(`/students/${selectedStudent}/schedules`),
+            canSeeWorkoutHistory ? api(`/students/${selectedStudent}/workouts`) : Promise.resolve([]),
+            canSeeAccessHistory ? api(`/access/events?studentId=${encodeURIComponent(selectedStudent)}`) : Promise.resolve([]),
+            canSeeStudentFinance ? api(`/financial/subscriptions?studentId=${encodeURIComponent(selectedStudent)}`) : Promise.resolve([]),
+            canSeeStudentFinance ? api(`/financial/charges?studentId=${encodeURIComponent(selectedStudent)}`) : Promise.resolve([]),
+          ]);
+          Object.assign(next, { studentDetail, assessments, schedules, workouts, accessEvents, subscriptions, charges });
+        }
+      }
       if (key === 'team') next.users = await api('/users');
       if (key === 'equipment') { const calls: Promise<any>[] = [api('/equipments')]; if (enabled('equipment.catalog')) calls.push(api('/equipments/catalog')); const [inventory, catalog] = await Promise.all(calls); Object.assign(next, { inventory, catalog: catalog ?? [] }); }
       if (key === 'exercises') next.exercises = await api('/exercises');
@@ -288,7 +306,56 @@ export function CommercialWebApp() {
     return <Section title="Primeiros passos" subtitle="Complete as etapas para preparar a operação da sua academia."><Data value={onboarding ? [onboarding] : []} />{step === 'ACADEMY_PROFILE' ? <View style={styles.form}><Field label="Nome da academia" value={academy.name} onChangeText={(name) => setAcademy((v) => ({ ...v, name }))} /><Field label="Fuso horário" value={academy.timezone} onChangeText={(timezone) => setAcademy((v) => ({ ...v, timezone }))} /></View> : null}{step ? <Button testID="onboarding-complete-step" label={saving ? 'Salvando…' : `Concluir: ${onboardingLabels[step] ?? step}`} disabled={saving || (step === 'ACADEMY_PROFILE' && !academy.name.trim())} onPress={() => void mutate(() => api('/commercial/onboarding', undefined, { method: 'PATCH', body: JSON.stringify({ step, ...(step === 'ACADEMY_PROFILE' ? { data: { name: academy.name.trim(), timezone: academy.timezone.trim() } } : {}) }) }))} /> : <Text style={styles.success}>Configuração inicial concluída.</Text>}</Section>;
   }
   function studentsView() {
-    return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Cadastrar aluno"><View style={styles.form}><Field label="Nome" value={student.name} onChangeText={(name) => setStudent((v) => ({ ...v, name }))} /><Field label="E-mail" value={student.email} onChangeText={(email) => setStudent((v) => ({ ...v, email }))} /><Field label="Telefone" value={student.phone} onChangeText={(phone) => setStudent((v) => ({ ...v, phone }))} /></View><Button testID="student-create" label="Cadastrar aluno" disabled={saving || !student.name.trim() || !student.email.trim()} onPress={() => void mutate(async () => { const created = await api('/students', undefined, { method: 'POST', body: JSON.stringify({ name: student.name.trim(), email: student.email.trim().toLowerCase(), ...(student.phone.trim() ? { phone: student.phone.trim() } : {}) }) }); setLastStudentInvite(created?.onboarding?.required ? created.onboarding : null); return created; }, () => setStudent({ name: '', email: '', phone: '' }))} />{lastStudentInvite ? <View style={styles.invite}><Text style={styles.rowTitle}>Convite de ativação — exibir uma vez</Text><Text selectable style={styles.json}>{lastStudentInvite.token}</Text><Text style={styles.muted}>Expira em: {String(lastStudentInvite.expiresAt ?? '—')}</Text></View> : null}</Section> : null}<Section title="Alunos"><Data value={data.students} /></Section></>;
+    const students = list(data.students);
+    const normalizedSearch = studentSearch.trim().toLocaleLowerCase('pt-BR');
+    const filteredStudents = normalizedSearch
+      ? students.filter((row: any) => [row.name, row.email, row.phone, row.status].some((value) => String(value ?? '').toLocaleLowerCase('pt-BR').includes(normalizedSearch)))
+      : students;
+    const detail = data.studentDetail;
+    const schedules = list(data.schedules).map((row: any) => ({
+      id: row.id,
+      status: row.status,
+      date: row.date,
+      weekday: row.slot?.weekday,
+      startTime: row.slot?.startTime,
+      endTime: row.slot?.endTime,
+      checkedInAt: row.checkedInAt,
+    }));
+    const canSeeStudentFinance = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
+    const canManageConsents = can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION');
+
+    return <>
+      {can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section compact title="Cadastrar aluno"><View style={styles.form}><Field label="Nome" value={student.name} onChangeText={(name) => setStudent((v) => ({ ...v, name }))} /><Field label="E-mail" value={student.email} onChangeText={(email) => setStudent((v) => ({ ...v, email }))} /><Field label="Telefone" value={student.phone} onChangeText={(phone) => setStudent((v) => ({ ...v, phone }))} /></View><Button testID="student-create" label="Cadastrar aluno" disabled={saving || !student.name.trim() || !student.email.trim()} onPress={() => void mutate(async () => { const created = await api('/students', undefined, { method: 'POST', body: JSON.stringify({ name: student.name.trim(), email: student.email.trim().toLowerCase(), ...(student.phone.trim() ? { phone: student.phone.trim() } : {}) }) }); setLastStudentInvite(created?.onboarding?.required ? created.onboarding : null); return created; }, () => setStudent({ name: '', email: '', phone: '' }))} />{lastStudentInvite ? <View style={styles.invite}><Text style={styles.rowTitle}>Convite de ativação — exibir uma vez</Text><Text selectable style={styles.json}>{lastStudentInvite.token}</Text><Text style={styles.muted}>Expira em: {String(lastStudentInvite.expiresAt ?? '—')}</Text></View> : null}</Section> : null}
+      <Section compact title="Alunos" subtitle="Pesquise e selecione um aluno para abrir o workspace 360°.">
+        <Field label="Buscar por nome, e-mail, telefone ou situação" value={studentSearch} onChangeText={setStudentSearch} />
+        <Chips rows={filteredStudents} selected={selectedStudent} onSelect={setSelectedStudent} />
+        {!filteredStudents.length ? <Text style={styles.muted}>Nenhum aluno encontrado.</Text> : null}
+      </Section>
+      {selectedStudent && detail ? <View testID="student-360-workspace">
+        <View style={styles.compactGrid}>
+          <View style={styles.compactPane}><Section compact title="Perfil"><Data value={[detail]} /></Section></View>
+          <View style={styles.compactPane}><Section compact title="Consentimentos" subtitle="Autoridade final validada pelo servidor.">
+            <Text style={styles.muted}>Saúde: {detail.consentHealth ? 'Autorizado' : 'Não autorizado'}</Text>
+            <Text style={styles.muted}>Comunicação: {detail.consentComm ? 'Autorizado' : 'Não autorizado'}</Text>
+            <Text style={styles.muted}>Biometria: {detail.consentBiometry ? 'Autorizado' : 'Não autorizado'}</Text>
+            {canManageConsents ? <View style={styles.actions}>
+              <Button secondary label={detail.consentHealth ? 'Revogar saúde' : 'Autorizar saúde'} disabled={saving} onPress={() => void mutate(() => api(`/students/${selectedStudent}/consents`, undefined, { method: 'PATCH', body: JSON.stringify({ consentHealth: !detail.consentHealth }) }))} />
+              <Button secondary label={detail.consentComm ? 'Revogar comunicação' : 'Autorizar comunicação'} disabled={saving} onPress={() => void mutate(() => api(`/students/${selectedStudent}/consents`, undefined, { method: 'PATCH', body: JSON.stringify({ consentComm: !detail.consentComm }) }))} />
+              <Button secondary label={detail.consentBiometry ? 'Revogar biometria' : 'Autorizar biometria'} disabled={saving} onPress={() => void mutate(() => api(`/students/${selectedStudent}/consents`, undefined, { method: 'PATCH', body: JSON.stringify({ consentBiometry: !detail.consentBiometry }) }))} />
+            </View> : null}
+          </Section></View>
+        </View>
+        <View style={styles.compactGrid}>
+          <View style={styles.compactPane}><Section compact title="Avaliações"><Data value={data.assessments} empty="Nenhuma avaliação registrada." /></Section></View>
+          {can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER') ? <View style={styles.compactPane}><Section compact title="Treinos"><Data value={data.workouts} empty="Nenhum treino registrado." /></Section></View> : null}
+          <View style={styles.compactPane}><Section compact title="Agenda"><Data value={schedules} empty="Nenhum agendamento registrado." /></Section></View>
+        </View>
+        <View style={styles.compactGrid}>
+          {can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <View style={styles.compactPane}><Section compact title="Acessos"><Data value={data.accessEvents} empty="Nenhum evento de acesso registrado." /></Section></View> : null}
+          {can('SUPER_ADMIN', 'OWNER') ? <View style={styles.compactPaneWide}><Section compact title="Plano e financeiro" subtitle={canSeeStudentFinance ? 'Dados financeiros liberados pela reautenticação administrativa.' : 'Dados protegidos. Reautentique na área Financeiro para consultar.'}>{canSeeStudentFinance ? <><Data value={data.subscriptions} empty="Nenhum plano financeiro." /><Data value={data.charges} empty="Nenhuma cobrança." /></> : <Button secondary label="Abrir Financeiro protegido" onPress={() => setActive('financial')} />}</Section></View> : null}
+        </View>
+      </View> : null}
+    </>;
   }
   function teamView() {
     const teamRoleOptions = can('SUPER_ADMIN', 'OWNER') ? ownerTeamRoleOptions : baseTeamRoleOptions;
