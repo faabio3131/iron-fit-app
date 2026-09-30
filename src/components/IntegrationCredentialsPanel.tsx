@@ -356,7 +356,7 @@ export function IntegrationCredentialsPanel() {
               <>
                 {selectedProvider.tenantEntitlementFeatureKey ? (
                   <Text style={styles.muted}>
-                    Recurso comercial exigido: {selectedProvider.tenantEntitlementFeatureKey}. A autorização efetiva vem do plano/configuração do tenant.
+                    Recurso comercial exigido: {selectedProvider.tenantEntitlementFeatureKey}. A autorização efetiva vem do plano e da configuração da academia.
                   </Text>
                 ) : null}
                 <Text style={styles.label}>Modelo de autenticação</Text>
@@ -396,7 +396,7 @@ export function IntegrationCredentialsPanel() {
                 />
                 <SecretField
                   testID="integration-create-secret"
-                  label="Credencial / token / segredo"
+                  label="Credencial, token ou chave"
                   value={secret}
                   onChangeText={setSecret}
                 />
@@ -407,7 +407,7 @@ export function IntegrationCredentialsPanel() {
                   onChangeText={(currentPassword) => setStepUp((v) => ({ ...v, currentPassword }))}
                 />
                 <PlainField
-                  label="Código MFA (se habilitado)"
+                  label="Código de autenticação multifator (se habilitado)"
                   value={stepUp.mfaCode}
                   onChangeText={(mfaCode) => setStepUp((v) => ({ ...v, mfaCode }))}
                 />
@@ -480,7 +480,7 @@ export function IntegrationCredentialsPanel() {
             onChangeText={(currentPassword) => setActionStepUp((v) => ({ ...v, currentPassword }))}
           />
           <PlainField
-            label="Código MFA (se habilitado)"
+            label="Código de autenticação multifator (se habilitado)"
             value={actionStepUp.mfaCode}
             onChangeText={(mfaCode) => setActionStepUp((v) => ({ ...v, mfaCode }))}
           />
