@@ -150,6 +150,31 @@ test('step-up administrativo exige MFA quando habilitado e protege todos os mód
   });
 });
 
+test('gerente acessa equipe operacional sem poder criar outro gerente ou abrir administração restrita', async () => {
+  mockProfile = {
+    id: 'manager-1',
+    name: 'Gerente QA',
+    email: 'manager@example.com',
+    roles: ['MANAGER'],
+    permissions: [],
+  };
+
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-team')).toBeTruthy());
+
+  expect(view.queryByTestId('nav-financial')).toBeNull();
+  expect(view.queryByTestId('nav-saasBilling')).toBeNull();
+  expect(view.queryByTestId('nav-entitlements')).toBeNull();
+  expect(view.queryByTestId('nav-integrations')).toBeNull();
+
+  fireEvent.press(view.getByTestId('nav-team'));
+  await waitFor(() => expect(view.getByTestId('team-add')).toBeTruthy());
+
+  expect(view.getByText('Professor')).toBeTruthy();
+  expect(view.getByText('Recepção')).toBeTruthy();
+  expect(view.queryByText('Gerente')).toBeNull();
+});
+
 test('perfil de recepção não recebe superfícies administrativas sensíveis', async () => {
   mockProfile = {
     id: 'reception-1',
