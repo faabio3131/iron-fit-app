@@ -4,6 +4,7 @@ import { IronInput as TextInput } from '../components/IronInput';
 import { DashboardOverview } from './DashboardOverview';
 import { ScheduleWorkspace } from './ScheduleWorkspace';
 import { AccessCenterWorkspace } from './AccessCenterWorkspace';
+import { FinancialWorkspace } from './FinancialWorkspace';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
@@ -133,8 +134,6 @@ export function CommercialWebApp() {
   const [shellReady, setShellReady] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
-  const [selectedFinancialStudent, setSelectedFinancialStudent] = useState('');
-  const [selectedAccount, setSelectedAccount] = useState('');
   const [student, setStudent] = useState({ name: '', email: '', phone: '' });
   const [lastStudentInvite, setLastStudentInvite] = useState<any>(null);
   const [member, setMember] = useState({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' });
@@ -149,9 +148,6 @@ export function CommercialWebApp() {
   const [exerciseLevel, setExerciseLevel] = useState('');
   const [selectedExerciseLibrary, setSelectedExerciseLibrary] = useState('');
   const [assessment, setAssessment] = useState({ weight: '', height: '', bodyFatPercent: '', chest: '', waist: '', hip: '', restrictions: '', notes: '' });
-  const [account, setAccount] = useState({ name: '', type: 'CASH', initialBalance: '0' });
-  const [studentPlan, setStudentPlan] = useState({ planName: '', amount: '', nextBillingAt: '' });
-  const [charge, setCharge] = useState({ amount: '', dueDate: '', paymentMethod: '' });
   const [academy, setAcademy] = useState({ name: '', timezone: 'America/Sao_Paulo' });
   const [aiInstructions, setAiInstructions] = useState('');
   const [configDraft, setConfigDraft] = useState<Record<string, string>>({});
@@ -280,7 +276,17 @@ export function CommercialWebApp() {
         ]);
         Object.assign(next, { events, students, credentials, devices });
       }
-      if (key === 'financial') { [next.accounts, next.charges, next.students] = await Promise.all([api('/financial/accounts'), api('/financial/charges'), api('/students')]); }
+      if (key === 'financial') {
+        const [accounts, charges, students, subscriptions, transactions, overdueCharges] = await Promise.all([
+          api('/financial/accounts'),
+          api('/financial/charges'),
+          api('/students'),
+          api('/financial/subscriptions'),
+          api('/financial/transactions'),
+          api('/financial/charges?overdue=true'),
+        ]);
+        Object.assign(next, { accounts, charges, students, subscriptions, transactions, overdueCharges });
+      }
       if (key === 'entitlements') { [next.features, next.configurations] = await Promise.all([api('/product-entitlements/tenant/features'), api('/product-entitlements/tenant/configurations')]); next.subscription = subscription; }
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
       setData(next);
@@ -1157,8 +1163,39 @@ export function CommercialWebApp() {
     />;
   }
   function financialView() {
-    const students = list(data.students); const accounts = list(data.accounts); const charges = list(data.charges);
-    return <><Text style={styles.restrictedNote}>Área restrita ao proprietário e à administração autorizada.</Text><View style={styles.compactGrid}><View style={styles.compactPane}><Section compact title="Nova conta financeira"><View style={styles.form}><Field label="Nome" value={account.name} onChangeText={(name) => setAccount((v) => ({ ...v, name }))} /><Field label="Tipo" value={account.type} onChangeText={(type) => setAccount((v) => ({ ...v, type }))} /><Field label="Saldo inicial" value={account.initialBalance} numeric onChangeText={(initialBalance) => setAccount((v) => ({ ...v, initialBalance }))} /></View><Button label="Criar conta" disabled={saving || !account.name.trim()} onPress={() => void mutate(() => api('/financial/accounts', undefined, { method: 'POST', body: JSON.stringify({ name: account.name.trim(), type: account.type.trim(), initialBalance: Number(account.initialBalance) || 0 }) }), () => setAccount({ name: '', type: 'CASH', initialBalance: '0' }))} /></Section></View><View style={styles.compactPane}><Section compact title="Plano do aluno"><Chips rows={students} selected={selectedFinancialStudent} onSelect={setSelectedFinancialStudent} /><View style={styles.form}><Field label="Plano" value={studentPlan.planName} onChangeText={(planName) => setStudentPlan((v) => ({ ...v, planName }))} /><Field label="Valor" value={studentPlan.amount} numeric onChangeText={(amount) => setStudentPlan((v) => ({ ...v, amount }))} /><Field label="Próxima cobrança" value={studentPlan.nextBillingAt} onChangeText={(nextBillingAt) => setStudentPlan((v) => ({ ...v, nextBillingAt }))} /></View><Button label="Criar assinatura do aluno" disabled={saving || !selectedFinancialStudent || !studentPlan.planName.trim() || !studentPlan.amount.trim() || !Number.isInteger(Number(studentPlan.amount))} onPress={() => void mutate(() => api('/financial/subscriptions', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedFinancialStudent, planName: studentPlan.planName.trim(), amount: Number(studentPlan.amount), ...(studentPlan.nextBillingAt.trim() ? { nextBillingAt: studentPlan.nextBillingAt.trim() } : {}) }) }))} /></Section></View><View style={styles.compactPane}><Section compact title="Cobrança do aluno"><Chips rows={students} selected={selectedFinancialStudent} onSelect={setSelectedFinancialStudent} /><View style={styles.form}><Field label="Valor" value={charge.amount} numeric onChangeText={(amount) => setCharge((v) => ({ ...v, amount }))} /><Field label="Vencimento" value={charge.dueDate} onChangeText={(dueDate) => setCharge((v) => ({ ...v, dueDate }))} /><Field label="Meio de pagamento" value={charge.paymentMethod} onChangeText={(paymentMethod) => setCharge((v) => ({ ...v, paymentMethod }))} /></View><Button label="Criar cobrança" disabled={saving || !selectedFinancialStudent || !charge.amount.trim() || !Number.isInteger(Number(charge.amount)) || !charge.dueDate.trim()} onPress={() => void mutate(() => api('/financial/charges', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedFinancialStudent, amount: Number(charge.amount), dueDate: charge.dueDate.trim(), ...(charge.paymentMethod.trim() ? { paymentMethod: charge.paymentMethod.trim() } : {}) }) }))} /></Section></View></View><View style={styles.compactGrid}><View style={styles.compactPaneWide}><Section compact title="Contas"><Chips rows={accounts} selected={selectedAccount} onSelect={setSelectedAccount} /><Data value={accounts} /></Section></View><View style={styles.compactPaneWide}><Section compact title="Cobranças">{charges.length ? charges.map((item: any) => <View key={item.id} style={styles.row}><Text style={styles.rowTitle}>{item.student?.user?.name ?? item.studentId ?? item.id}</Text><Text style={styles.muted}>Situação: {item.status} · Valor: {item.amount} · Vencimento: {String(item.dueDate ?? '—')}</Text>{item.status !== 'PAID' ? <Button label="Marcar como paga" disabled={saving || !selectedAccount} onPress={() => void mutate(() => api(`/financial/charges/${item.id}/pay`, undefined, { method: 'PATCH', body: JSON.stringify({ accountId: selectedAccount, ...(charge.paymentMethod.trim() ? { paymentMethod: charge.paymentMethod.trim() } : {}) }) }))} /> : null}</View>) : <Text style={styles.muted}>Nenhuma cobrança.</Text>}</Section></View></View></>;
+    return <FinancialWorkspace
+      students={list(data.students)}
+      accounts={list(data.accounts)}
+      subscriptions={list(data.subscriptions)}
+      charges={list(data.charges)}
+      overdueCharges={list(data.overdueCharges)}
+      transactions={list(data.transactions)}
+      saving={saving}
+      onCreateAccount={async (payload) => {
+        await mutate(() => api('/financial/accounts', undefined, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        }));
+      }}
+      onCreateSubscription={async (payload) => {
+        await mutate(() => api('/financial/subscriptions', undefined, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        }));
+      }}
+      onCreateCharge={async (payload) => {
+        await mutate(() => api('/financial/charges', undefined, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        }));
+      }}
+      onPayCharge={async (chargeId, payload) => {
+        await mutate(() => api(`/financial/charges/${chargeId}/pay`, undefined, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        }));
+      }}
+    />;
   }
   function entitlementsView() {
     const features = list(data.features);
