@@ -33,6 +33,11 @@ function installApi() {
     if (path === '/product-entitlements/tenant/current') return { id: 'sub-1', status: 'ACTIVE' };
     if (path === '/commercial/trial/status') return { status: 'TRIALING', subscriptionId: 'sub-1' };
     if (path === '/commercial/onboarding') return { status: 'COMPLETED', completedSteps: ['FINISH'], nextStep: null };
+    if (path === '/auth/step-up/status') return { active: false, expiresAt: null };
+    if (path === '/auth/step-up' && options?.method === 'POST') return { active: true, expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString() };
+    if (path === '/financial/accounts') return [];
+    if (path === '/financial/charges') return [];
+    if (path === '/students') return [];
     if (path === '/dashboard/summary') return { students: { total: 2, active: 2 }, workouts: { approved: 1 }, charges: { pending: 0, overdue: 0 }, revenue: { thisMonth: 10000 } };
     if (path.startsWith('/dashboard/revenue')) return [];
     if (path.startsWith('/dashboard/attendance')) return [];
@@ -88,6 +93,24 @@ test('botão Adicionar à equipe explica validação e executa cadastro válido'
     });
   }, { timeout: 12000 });
 }, 15000);
+
+test('área administrativa exige reautenticação antes de carregar Financeiro', async () => {
+  const view = render(<CommercialWebApp />);
+
+  await waitFor(() => expect(view.getByTestId('nav-financial')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-financial'));
+
+  await waitFor(() => expect(view.getByText('Acesso administrativo protegido')).toBeTruthy());
+  expect(mockApi.mock.calls.some(([path]) => path === '/financial/accounts')).toBe(false);
+
+  fireEvent.changeText(view.getByLabelText('Senha atual'), 'Senha-Forte-2026!');
+  fireEvent.press(view.getByTestId('admin-step-up-submit'));
+
+  await waitFor(() => {
+    expect(mockApi.mock.calls.some(([path, _query, options]) => path === '/auth/step-up' && options?.method === 'POST')).toBe(true);
+    expect(mockApi.mock.calls.some(([path]) => path === '/financial/accounts')).toBe(true);
+  });
+});
 
 test('perfil de recepção não recebe superfícies administrativas sensíveis', async () => {
   mockProfile = {
