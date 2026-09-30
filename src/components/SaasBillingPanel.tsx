@@ -73,7 +73,7 @@ export function SaasBillingPanel({
       setBilling(current ?? { agreement: null, invoices: [] });
       setPrices(Array.isArray(available) ? available : []);
     } catch (reason: unknown) {
-      setError(reason instanceof Error ? reason.message : 'Falha ao carregar billing SaaS.');
+      setError(reason instanceof Error ? reason.message : 'Falha ao carregar a assinatura IRON.');
     } finally {
       setLoading(false);
     }
@@ -115,7 +115,7 @@ export function SaasBillingPanel({
   function actionFor(price: Price) {
     if (!agreement || !currentPrice || agreement.status === 'PENDING_CHECKOUT') {
       return {
-        label: 'Iniciar checkout',
+        label: 'Iniciar pagamento',
         run: () =>
           api('/saas-billing/checkout', undefined, {
             method: 'POST',
@@ -237,9 +237,9 @@ export function SaasBillingPanel({
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.title}>Invoices recentes</Text>
+        <Text style={styles.title}>Faturas recentes</Text>
         {invoices.length === 0 ? (
-          <Text style={styles.muted}>Nenhum invoice emitido.</Text>
+          <Text style={styles.muted}>Nenhuma fatura emitida.</Text>
         ) : (
           invoices.map((invoice: any) => (
             <View key={invoice.id} style={styles.invoice}>
@@ -257,8 +257,8 @@ export function SaasBillingPanel({
       {lastAction ? (
         <View style={styles.card}>
           <Text style={styles.title}>Última operação</Text>
-          <Text selectable style={styles.json}>
-            {JSON.stringify(lastAction, null, 2)}
+          <Text style={styles.muted}>
+            A operação foi concluída e registrada no histórico da assinatura.
           </Text>
           {typeof lastAction?.checkoutUrl === 'string' && lastAction.checkoutUrl ? (
             <TouchableOpacity
@@ -266,7 +266,7 @@ export function SaasBillingPanel({
               style={styles.button}
               onPress={() => void Linking.openURL(lastAction.checkoutUrl)}
             >
-              <Text style={styles.buttonText}>Abrir checkout seguro</Text>
+              <Text style={styles.buttonText}>Abrir pagamento seguro</Text>
             </TouchableOpacity>
           ) : null}
         </View>
