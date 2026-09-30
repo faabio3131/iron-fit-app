@@ -38,6 +38,11 @@ function installApi() {
     if (path === '/financial/accounts') return [];
     if (path === '/financial/charges') return [];
     if (path === '/students') return [{ id: 'student-1', name: 'Aluno 360', email: 'student360@example.com', phone: '11999990000', status: 'ACTIVE' }];
+    if (path === '/students/student-1') return { id: 'student-1', name: 'Aluno 360', email: 'student360@example.com', status: 'ACTIVE', consentHealth: true, consentComm: false, consentBiometry: false };
+    if (path === '/students/student-1/assessments') return [{ id: 'assessment-1', weight: 80, height: 1.8, bmi: 24.7 }];
+    if (path === '/students/student-1/schedules') return [{ id: 'schedule-1', status: 'SCHEDULED', date: '2026-09-30T00:00:00.000Z', slot: { weekday: 3, startTime: '18:00', endTime: '19:00' } }];
+    if (path === '/students/student-1/workouts') return [{ id: 'student-workout-1', goal: 'Hipertrofia', status: 'ACTIVE' }];
+    if (path === '/access/events?studentId=student-1') return [{ id: 'access-1', studentId: 'student-1', allowed: true, occurredAt: '2026-09-30T08:00:00.000Z' }];
     if (path === '/dashboard/summary') return { students: { total: 2, active: 2 }, workouts: { approved: 1 }, charges: { pending: 0, overdue: 0 }, revenue: { thisMonth: 10000 } };
     if (path.startsWith('/dashboard/revenue')) return [];
     if (path.startsWith('/dashboard/attendance')) return [];
