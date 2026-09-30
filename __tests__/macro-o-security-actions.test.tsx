@@ -37,7 +37,7 @@ function installApi() {
     if (path === '/auth/step-up' && options?.method === 'POST') return { active: true, expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString() };
     if (path === '/financial/accounts') return [];
     if (path === '/financial/charges') return [];
-    if (path === '/students') return [];
+    if (path === '/students') return [{ id: 'student-1', name: 'Aluno 360', email: 'student360@example.com', phone: '11999990000', status: 'ACTIVE' }];
     if (path === '/dashboard/summary') return { students: { total: 2, active: 2 }, workouts: { approved: 1 }, charges: { pending: 0, overdue: 0 }, revenue: { thisMonth: 10000 } };
     if (path.startsWith('/dashboard/revenue')) return [];
     if (path.startsWith('/dashboard/attendance')) return [];
