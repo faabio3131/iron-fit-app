@@ -80,8 +80,9 @@ describe('O14 AccountSecurityPanel', () => {
     const view = render(<AccountSecurityPanel />);
 
     await waitFor(() => expect(view.getByTestId('security-tab-sessions')).toBeTruthy());
-    fireEvent.changeText(view.getByLabelText('Senha atual'), 'current-value');
+    fireEvent.changeText(view.getByLabelText('Senha atual'), 'fixture-step');
     fireEvent.press(view.getByTestId('security-tab-sessions'));
+    await waitFor(() => expect(view.getByText('Outra sessão')).toBeTruthy());
     fireEvent.press(view.getByTestId('security-revoke-others'));
 
     await waitFor(() =>
@@ -93,7 +94,7 @@ describe('O14 AccountSecurityPanel', () => {
     );
     const call = mockApi.mock.calls.find(([path]) => path === '/auth/sessions/revoke-others');
     expect(JSON.parse(String(call?.[2]?.body ?? '{}'))).toEqual({
-      currentPassword: 'current-value',
+      currentPassword: 'fixture-step',
     });
   });
 
@@ -102,12 +103,12 @@ describe('O14 AccountSecurityPanel', () => {
       if (path === '/auth/sessions') return [];
       if (path === '/auth/mfa/setup' && options?.method === 'POST') {
         return {
-          secret: 'TEMP-SETUP-VALUE',
+          secret: 'FIXTURE-SETUP',
           otpauthUri: 'otpauth://totp/IRON:test',
         };
       }
       if (path === '/auth/mfa/confirm' && options?.method === 'POST') {
-        return { recoveryCodes: ['RECOVERY-A', 'RECOVERY-B'] };
+        return { recoveryCodes: ['FIXTURE-A', 'FIXTURE-B'] };
       }
       throw new Error('Unexpected route: ' + path);
     });
@@ -115,7 +116,7 @@ describe('O14 AccountSecurityPanel', () => {
     const view = render(<AccountSecurityPanel />);
     await waitFor(() => expect(view.getByTestId('security-tab-mfa')).toBeTruthy());
 
-    fireEvent.changeText(view.getByLabelText('Senha atual'), 'current-value');
+    fireEvent.changeText(view.getByLabelText('Senha atual'), 'fixture-step');
     fireEvent.press(view.getByTestId('security-tab-mfa'));
     fireEvent.press(view.getByTestId('security-mfa-setup'));
 
@@ -123,8 +124,8 @@ describe('O14 AccountSecurityPanel', () => {
     fireEvent.changeText(view.getByLabelText('Código do autenticador'), '123456');
     fireEvent.press(view.getByText('Confirmar MFA'));
 
-    await waitFor(() => expect(view.getByText('RECOVERY-A')).toBeTruthy());
-    expect(view.getByText('RECOVERY-B')).toBeTruthy();
+    await waitFor(() => expect(view.getByText('FIXTURE-A')).toBeTruthy());
+    expect(view.getByText('FIXTURE-B')).toBeTruthy();
     expect(mockRefreshProfile).toHaveBeenCalled();
   });
 });
