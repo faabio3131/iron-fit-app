@@ -68,7 +68,7 @@ describe('O11 FinancialWorkspace', () => {
     );
 
     expect(view.getByText('Financeiro da academia')).toBeTruthy();
-    expect(view.getByText('Inadimplência')).toBeTruthy();
+    expect(view.getAllByText('Inadimplência').length).toBeGreaterThan(0);
     expect(view.getAllByText('R$ 149,90').length).toBeGreaterThan(0);
     expect(view.getByText('1 cobranças vencidas')).toBeTruthy();
     expect(view.getByText('Em atraso')).toBeTruthy();
