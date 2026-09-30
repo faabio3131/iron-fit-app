@@ -92,7 +92,7 @@ test('botão Adicionar à equipe explica validação e executa cadastro válido'
 
   fireEvent.changeText(view.getByLabelText('Nome'), 'Professor QA');
   fireEvent.changeText(view.getByLabelText('E-mail'), 'professor@example.com');
-  fireEvent.changeText(view.getByLabelText('Senha inicial'), 'Senha-Forte-2026!');
+  fireEvent.changeText(view.getByLabelText('Senha inicial (opcional)'), 'Senha-Forte-2026!');
   fireEvent.press(view.getByTestId('team-add'));
 
   await waitFor(() => {
