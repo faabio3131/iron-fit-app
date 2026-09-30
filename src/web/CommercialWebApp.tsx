@@ -211,9 +211,11 @@ export function CommercialWebApp() {
   useEffect(() => {
     if (!shellReady || blocked) return undefined;
     if (isRestrictedAdminModule(active) && !adminStepUpActive) {
-      setLoading(false);
-      setData({});
-      return undefined;
+      const timer = setTimeout(() => {
+        setLoading(false);
+        setData({});
+      }, 0);
+      return () => clearTimeout(timer);
     }
     const timer = setTimeout(() => {
       void loadModule(active);
@@ -225,8 +227,8 @@ export function CommercialWebApp() {
     if (!adminStepUpActive || !adminStepUpExpiresAt) return undefined;
     const remaining = new Date(adminStepUpExpiresAt).getTime() - Date.now();
     if (remaining <= 0) {
-      setAdminStepUpActive(false);
-      return undefined;
+      const timer = setTimeout(() => setAdminStepUpActive(false), 0);
+      return () => clearTimeout(timer);
     }
     const timer = setTimeout(() => setAdminStepUpActive(false), remaining);
     return () => clearTimeout(timer);
