@@ -233,7 +233,7 @@ test('Avaliações mostram evolução corporal, composição, restrições e con
   await waitFor(() => expect(view.getByText('Evolução corporal')).toBeTruthy());
   expect(view.getByText('Contexto de treino')).toBeTruthy();
   expect(view.getByText('Histórico de avaliações')).toBeTruthy();
-  expect(view.getByText(/Δ -2 kg/)).toBeTruthy();
+  await waitFor(() => expect(view.getByText(/Δ -2 kg/)).toBeTruthy());
   expect(view.getByText(/Cintura: 84 cm/)).toBeTruthy();
   expect(view.getAllByText(/Cuidado com joelho direito/).length).toBeGreaterThan(0);
   expect(view.getByText('Hipertrofia')).toBeTruthy();
