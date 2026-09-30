@@ -166,8 +166,13 @@ export function CommercialWebApp() {
     try {
       const next: Record<string, any> = {};
       if (key === 'overview') {
+        const canSeeFinancialDashboard = can('SUPER_ADMIN', 'OWNER', 'MANAGER');
         const [summary, revenue, attendance, overdue, birthdays, gym] = await Promise.all([
-          api('/dashboard/summary'), api('/dashboard/revenue?days=30'), api('/dashboard/attendance?days=7'), api('/dashboard/overdue'), api('/dashboard/birthdays?days=30'),
+          api('/dashboard/summary'),
+          canSeeFinancialDashboard ? api('/dashboard/revenue?days=30') : Promise.resolve(null),
+          api('/dashboard/attendance?days=7'),
+          canSeeFinancialDashboard ? api('/dashboard/overdue') : Promise.resolve(null),
+          api('/dashboard/birthdays?days=30'),
           activeTenantId && can('OWNER', 'MANAGER') ? api(`/gyms/${activeTenantId}`).catch(() => null) : Promise.resolve(null),
         ]); Object.assign(next, { summary, revenue, attendance, overdue, birthdays, gym });
       }
