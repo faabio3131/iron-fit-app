@@ -202,6 +202,43 @@ test('Equipment Intelligence oferece catálogo, inventário, compatibilidade e c
   });
 });
 
+test('Biblioteca de exercícios oferece busca, filtros, conteúdo e compatibilidade', async () => {
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-exercises')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-exercises'));
+
+  await waitFor(() => expect(view.getByText('Biblioteca de exercícios')).toBeTruthy());
+  expect(view.getByText('Agachamento')).toBeTruthy();
+  expect(view.getByText('Supino reto')).toBeTruthy();
+
+  fireEvent.changeText(view.getByLabelText('Buscar exercício'), 'supino');
+  expect(view.queryByText('Agachamento')).toBeNull();
+  expect(view.getByText('Supino reto')).toBeTruthy();
+
+  fireEvent.changeText(view.getByLabelText('Buscar exercício'), '');
+  fireEvent.press(view.getByText('Agachamento'));
+  await waitFor(() => expect(view.getByText('Conteúdo: video-agachamento')).toBeTruthy());
+  fireEvent.press(view.getByText('Consultar equipamentos compatíveis'));
+  await waitFor(() => expect(mockApi.mock.calls.some(([path]) => path === '/equipments/exercises/exercise-1/compatible')).toBe(true));
+});
+
+test('Avaliações mostram evolução corporal, composição, restrições e contexto de treino', async () => {
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-assessments')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-assessments'));
+
+  await waitFor(() => expect(view.getByText('Aluno 360')).toBeTruthy());
+  fireEvent.press(view.getByText('Aluno 360'));
+
+  await waitFor(() => expect(view.getByText('Evolução corporal')).toBeTruthy());
+  expect(view.getByText('Contexto de treino')).toBeTruthy();
+  expect(view.getByText('Histórico de avaliações')).toBeTruthy();
+  expect(view.getByText(/Δ -2 kg/)).toBeTruthy();
+  expect(view.getByText(/Cintura: 84 cm/)).toBeTruthy();
+  expect(view.getAllByText(/Cuidado com joelho direito/).length).toBeGreaterThan(0);
+  expect(view.getByText('Hipertrofia')).toBeTruthy();
+});
+
 test('área administrativa exige reautenticação antes de carregar Financeiro', async () => {
   const view = render(<CommercialWebApp />);
 
