@@ -143,7 +143,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
       });
       setMfaSecret(String(result?.secret ?? ''));
       setMfaUri(String(result?.otpauthUri ?? ''));
-      setNotice('Escaneie a URI/secret no autenticador e confirme o código.');
+      setNotice('Escaneie a URI ou a chave no aplicativo autenticador e confirme o código.');
     });
   }
 
@@ -160,7 +160,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
       setMfaUri('');
       await refreshProfile();
       setNotice(
-        'MFA habilitado. Salve os recovery codes agora; eles não serão exibidos novamente.',
+        'MFA habilitado. Salve os códigos de recuperação agora; eles não serão exibidos novamente.',
       );
     });
   }
@@ -220,7 +220,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
       {loading ? <ActivityIndicator color="#2f91ff" style={styles.loading} /> : null}
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Step-up</Text>
+        <Text style={styles.cardTitle}>Reautenticação</Text>
         <Field
           placeholder="Senha atual"
           value={currentPassword}
@@ -229,7 +229,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
         />
         {profile?.mfaEnabled ? (
           <Field
-            placeholder="MFA de 6 dígitos ou recovery code"
+            placeholder="MFA de 6 dígitos ou código de recuperação"
             value={secondFactor}
             onChangeText={setSecondFactor}
           />
@@ -306,7 +306,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
         {mfaSecret ? (
           <>
             <Text selectable style={styles.secret}>
-              Secret: {mfaSecret}
+              Chave: {mfaSecret}
             </Text>
             <Text selectable style={styles.secret}>
               {mfaUri}
@@ -336,7 +336,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
         ) : null}
         {recoveryCodes.length > 0 ? (
           <View style={styles.recoveryBox}>
-            <Text style={styles.cardTitle}>Recovery codes — exibição única</Text>
+            <Text style={styles.cardTitle}>Códigos de recuperação — exibição única</Text>
             {recoveryCodes.map((code) => (
               <Text selectable key={code} style={styles.secret}>
                 {code}
