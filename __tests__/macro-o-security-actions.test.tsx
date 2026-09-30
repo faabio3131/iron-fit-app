@@ -112,6 +112,44 @@ test('área administrativa exige reautenticação antes de carregar Financeiro',
   });
 });
 
+test('step-up administrativo exige MFA quando habilitado e protege todos os módulos restritos', async () => {
+  mockProfile = {
+    id: 'owner-mfa-1',
+    name: 'Proprietário MFA',
+    email: 'owner.mfa@example.com',
+    roles: ['OWNER'],
+    permissions: [],
+    mfaEnabled: true,
+  };
+
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-financial')).toBeTruthy());
+
+  for (const testID of ['nav-financial', 'nav-saasBilling', 'nav-entitlements', 'nav-integrations']) {
+    fireEvent.press(view.getByTestId(testID));
+    await waitFor(() => expect(view.getByText('Acesso administrativo protegido')).toBeTruthy());
+  }
+
+  expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/financial/'))).toBe(false);
+  expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/saas-billing/'))).toBe(false);
+  expect(mockApi.mock.calls.some(([path]) => path === '/product-entitlements/tenant/configurations')).toBe(false);
+  expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/integrations/'))).toBe(false);
+
+  fireEvent.press(view.getByTestId('nav-financial'));
+  fireEvent.changeText(view.getByLabelText('Senha atual'), 'Senha-Forte-2026!');
+  fireEvent.changeText(view.getByLabelText('Código MFA ou código de recuperação'), '123456');
+  fireEvent.press(view.getByTestId('admin-step-up-submit'));
+
+  await waitFor(() => {
+    const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/auth/step-up' && options?.method === 'POST');
+    expect(call).toBeTruthy();
+    expect(JSON.parse(String(call?.[2]?.body ?? '{}'))).toEqual({
+      currentPassword: 'Senha-Forte-2026!',
+      mfaCode: '123456',
+    });
+  });
+});
+
 test('perfil de recepção não recebe superfícies administrativas sensíveis', async () => {
   mockProfile = {
     id: 'reception-1',
