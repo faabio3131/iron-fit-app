@@ -5,6 +5,7 @@ import { DashboardOverview } from './DashboardOverview';
 import { ScheduleWorkspace } from './ScheduleWorkspace';
 import { AccessCenterWorkspace } from './AccessCenterWorkspace';
 import { FinancialWorkspace } from './FinancialWorkspace';
+import { EntitlementsWorkspace } from './EntitlementsWorkspace';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
@@ -62,30 +63,6 @@ const equipmentCategoryOptions = [
   { id: 'SPECIALIZED_STRENGTH', name: 'Força especializada' },
 ];
 const equipmentCategoryLabel = (value: string) => equipmentCategoryOptions.find((item) => item.id === value)?.name ?? value;
-const featureLabels: Record<string, string> = {
-  'equipment.catalog': 'Catálogo de equipamentos',
-  'equipment.inventory': 'Inventário de equipamentos',
-  'ai.workout_generation': 'Geração assistida de treinos',
-  'content.external_youtube': 'Conteúdo externo do YouTube',
-  'content.iron_managed': 'Conteúdo gerenciado pelo IRON',
-  'content.tenant_private': 'Conteúdo privado da academia',
-};
-const entitlementKindLabels: Record<string, string> = { FEATURE: 'Recurso', LIMIT: 'Limite', POLICY: 'Regra' };
-const entitlementSourceLabels: Record<string, string> = {
-  PLAN: 'Plano',
-  TENANT_CONFIGURATION: 'Configuração da academia',
-  FAIL_CLOSED_DEFAULT: 'Bloqueado por segurança',
-};
-function featureLabel(key: string) {
-  return featureLabels[key] ?? key.replace(/[._-]+/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-}
-function entitlementValueText(value: unknown) {
-  if (typeof value === 'boolean') return value ? 'Ativo' : 'Inativo';
-  if (Array.isArray(value)) return value.join(', ') || 'Nenhuma opção';
-  if (value == null) return 'Não definido';
-  return String(value);
-}
-
 function list(value: any): any[] {
   if (Array.isArray(value)) return value;
   for (const key of ['items', 'data', 'results', 'students', 'users', 'charges', 'events']) if (Array.isArray(value?.[key])) return value[key];
@@ -150,7 +127,6 @@ export function CommercialWebApp() {
   const [assessment, setAssessment] = useState({ weight: '', height: '', bodyFatPercent: '', chest: '', waist: '', hip: '', restrictions: '', notes: '' });
   const [academy, setAcademy] = useState({ name: '', timezone: 'America/Sao_Paulo' });
   const [aiInstructions, setAiInstructions] = useState('');
-  const [configDraft, setConfigDraft] = useState<Record<string, string>>({});
   const [workoutDraft, setWorkoutDraft] = useState({ goal: '', level: '', weeklyFrequency: '', notes: '' });
   const [workoutAssessmentId, setWorkoutAssessmentId] = useState('');
   const [workoutSessions, setWorkoutSessions] = useState<any[]>([]);
@@ -1201,14 +1177,22 @@ export function CommercialWebApp() {
     />;
   }
   function entitlementsView() {
-    const features = list(data.features);
-    const configure = (feature: any) => {
-      const raw = (configDraft[feature.featureKey] ?? '').trim();
-      if (feature.kind === 'FEATURE') return mutate(() => api(`/product-entitlements/tenant/configurations/${feature.featureKey}`, undefined, { method: 'PUT', body: JSON.stringify({ featureEnabled: false }) }));
-      if (feature.kind === 'LIMIT') { const limitValue = Number(raw); if (!raw || !Number.isInteger(limitValue) || limitValue < 0) { setError('Informe limite inteiro não negativo.'); return Promise.resolve(); } return mutate(() => api(`/product-entitlements/tenant/configurations/${feature.featureKey}`, undefined, { method: 'PUT', body: JSON.stringify({ limitValue }) })); }
-      const policyValues = raw.split(',').map((value) => value.trim()).filter(Boolean); if (!policyValues.length) { setError('Informe as regras separadas por vírgula.'); return Promise.resolve(); } return mutate(() => api(`/product-entitlements/tenant/configurations/${feature.featureKey}`, undefined, { method: 'PUT', body: JSON.stringify({ policyValues }) }));
-    };
-    return <><Section title="Assinatura atual do IRON"><Data value={data.subscription ? [data.subscription] : []} /></Section><Section title="Recursos e configurações" subtitle="Personalize os recursos disponíveis no plano da sua academia.">{features.map((feature: any) => <View key={feature.featureKey} style={styles.row}><Text style={styles.rowTitle}>{featureLabel(feature.featureKey)}</Text><Text style={styles.muted}>Tipo: {entitlementKindLabels[feature.kind] ?? feature.kind} · Estado: {entitlementValueText(feature.value)} · Origem: {entitlementSourceLabels[feature.source] ?? feature.source ?? '—'} {feature.reason ? `· ${feature.reason}` : ''}</Text>{feature.kind !== 'FEATURE' ? <Field label={feature.kind === 'LIMIT' ? 'Novo limite' : 'Regras separadas por vírgula'} value={configDraft[feature.featureKey] ?? ''} onChangeText={(value) => setConfigDraft((current) => ({ ...current, [feature.featureKey]: value }))} /> : null}<View style={styles.actions}><Button label={feature.kind === 'FEATURE' ? 'Desativar para a academia' : 'Aplicar configuração'} disabled={saving || feature.source === 'FAIL_CLOSED_DEFAULT'} onPress={() => { void configure(feature); }} /><Button secondary label="Herdar do plano" disabled={saving} onPress={() => void mutate(() => api(`/product-entitlements/tenant/configurations/${feature.featureKey}`, undefined, { method: 'DELETE' }))} /></View></View>)}</Section><Section title="Configurações da academia"><Data value={data.configurations} /></Section></>;
+    return <EntitlementsWorkspace
+      subscription={data.subscription ?? subscription}
+      features={list(data.features)}
+      saving={saving}
+      onSetConfiguration={async (featureKey, payload) => {
+        await mutate(() => api(`/product-entitlements/tenant/configurations/${featureKey}`, undefined, {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        }));
+      }}
+      onResetConfiguration={async (featureKey) => {
+        await mutate(() => api(`/product-entitlements/tenant/configurations/${featureKey}`, undefined, {
+          method: 'DELETE',
+        }));
+      }}
+    />;
   }
   function creatorView() {
     return <View style={styles.creatorWrap}><Text style={styles.moduleIntro}>Conteúdo, utilização e desempenho da rede de criadores vinculada à sua academia.</Text><View style={styles.creatorGrid}><View style={styles.creatorPane}><Section compact title="Visão geral" subtitle="Resumo operacional da rede de criadores."><Data value={data.overview ? [data.overview] : []} /></Section></View><View style={styles.creatorPane}><Section compact title="Conteúdo" subtitle="Materiais disponíveis para utilização na academia."><Data value={data.items} /></Section></View><View style={styles.creatorPane}><Section compact title="Indicadores" subtitle="Desempenho dos últimos 30 dias."><Data value={data.analytics ? [data.analytics] : []} /></Section></View></View></View>;
