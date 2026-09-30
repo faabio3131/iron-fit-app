@@ -289,7 +289,9 @@ export function CommercialWebApp() {
       }
       if (key === 'entitlements') { [next.features, next.configurations] = await Promise.all([api('/product-entitlements/tenant/features'), api('/product-entitlements/tenant/configurations')]); next.subscription = subscription; }
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
-      setData(next);
+      setData((current) => key === 'workouts'
+        ? { ...next, workoutCompatibleEquipment: current.workoutCompatibleEquipment ?? [] }
+        : next);
     } catch (reason) { setError(message(reason)); setData({}); } finally { setLoading(false); }
   }, [activeTenantId, adminStepUpActive, can, enabled, equipmentCategory, equipmentSearch, selectedStudent, subscription]);
 
