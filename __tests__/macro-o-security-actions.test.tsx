@@ -251,6 +251,7 @@ test('Workout Studio monta sessão completa e envia rascunho canônico', async (
   fireEvent.press(view.getByTestId('nav-workouts'));
 
   await waitFor(() => expect(view.getByText('Workout Studio')).toBeTruthy());
+  await waitFor(() => expect(view.getAllByText('Aluno 360').length).toBeGreaterThan(0));
   fireEvent.press(view.getAllByText('Aluno 360')[0]);
 
   await waitFor(() => expect(view.getByText('Agachamento')).toBeTruthy());
