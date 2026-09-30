@@ -6,16 +6,18 @@ import { money } from './DashboardOverview';
 // Deliberately opt in to presentation fields. Unknown API properties and nested secrets never render.
 const labels: Record<string, string> = {
   email: 'E-mail', phone: 'Telefone', status: 'Situação', active: 'Ativo', description: 'Descrição',
+  birthDate: 'Nascimento', enrollmentDate: 'Matrícula', gender: 'Gênero', goal: 'Objetivo',
+  consentHealth: 'Consentimento de saúde', consentComm: 'Consentimento de comunicação', consentBiometry: 'Consentimento de biometria',
   timezone: 'Fuso horário', roleName: 'Função', muscleGroup: 'Grupo muscular', level: 'Nível',
   weight: 'Peso (kg)', height: 'Altura (m)', bmi: 'IMC', bodyFatPercent: 'Gordura corporal (%)', notes: 'Observações',
   weekday: 'Dia', startTime: 'Início', endTime: 'Fim', capacity: 'Vagas', quantity: 'Quantidade',
   type: 'Tipo', result: 'Resultado', reason: 'Motivo', amount: 'Valor', balance: 'Saldo', initialBalance: 'Saldo inicial',
-  paymentMethod: 'Pagamento', dueDate: 'Vencimento', paidAt: 'Pagamento em', createdAt: 'Criado em',
+  paymentMethod: 'Pagamento', dueDate: 'Vencimento', paidAt: 'Pagamento em', createdAt: 'Criado em', date: 'Data', checkedInAt: 'Check-in',
   expiresAt: 'Expiração', nextBillingAt: 'Próxima cobrança', currentPeriodEnd: 'Fim do ciclo', trialEndsAt: 'Fim do teste',
   nextStep: 'Próxima etapa', completedSteps: 'Etapas concluídas', trialStatus: 'Teste grátis', subscriptionStatus: 'Assinatura',
   featureKey: 'Recurso', featureEnabled: 'Habilitado', limitValue: 'Limite', policyValues: 'Opções',
   provider: 'Provedor', providerCode: 'Provedor', environment: 'Ambiente', authModel: 'Autenticação', capabilities: 'Recursos',
-  title: 'Título', durationSeconds: 'Duração (s)', views: 'Visualizações', total: 'Total',
+  title: 'Título', planName: 'Plano', allowed: 'Acesso permitido', denialReason: 'Motivo da negativa', durationSeconds: 'Duração (s)', views: 'Visualizações', total: 'Total',
 };
 const words: Record<string, string> = {
   ACTIVE: 'Ativo', INACTIVE: 'Inativo', PENDING: 'Pendente', PAID: 'Pago', OVERDUE: 'Vencido', CANCELED: 'Cancelado',
