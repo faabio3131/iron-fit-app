@@ -2,6 +2,9 @@ import fs from 'node:fs';
 
 const storage = fs.readFileSync('src/storage/token-storage.ts', 'utf8');
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
+const securityPanel = fs.readFileSync('src/components/AccountSecurityPanel.tsx', 'utf8');
+const integrationsPanel = fs.readFileSync('src/components/IntegrationCredentialsPanel.tsx', 'utf8');
+const billingPanel = fs.readFileSync('src/components/SaasBillingPanel.tsx', 'utf8');
 const workflow = fs.readFileSync('.github/workflows/mobile-ci.yml', 'utf8');
 
 test('Web auth survives reload only for the browser session and never uses localStorage', () => {
@@ -26,4 +29,23 @@ test('CI keeps dependency high-severity audit and production exports', () => {
   expect(workflow).toContain('npm audit --audit-level=high');
   expect(workflow).toMatch(/expo export --platform android/);
   expect(workflow).toMatch(/expo export --platform web/);
+});
+
+
+test('interactive touch controls in critical Web surfaces have explicit handlers', () => {
+  for (const source of [web, securityPanel, integrationsPanel, billingPanel]) {
+    const touchables = source.match(/<TouchableOpacity\b/g) ?? [];
+    const handlers = source.match(/\bonPress=/g) ?? [];
+    expect(touchables.length).toBeGreaterThan(0);
+    expect(handlers.length).toBeGreaterThanOrEqual(touchables.length);
+    expect(source).not.toContain('onPress={() => undefined}');
+  }
+});
+
+test('sensitive commercial surfaces remain narrowed by role in the Web shell', () => {
+  expect(web).toContain("{ key: 'team', label: 'Equipe', icon: 'shield-checkmark-outline', roles: ['SUPER_ADMIN', 'OWNER'] }");
+  expect(web).toContain("{ key: 'financial', label: 'Financeiro', icon: 'wallet-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER'] }");
+  expect(web).toContain("{ key: 'integrations', label: 'Integrações', icon: 'git-network-outline', roles: ['OWNER'] }");
+  expect(web).toContain("showFinancial={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}");
+  expect(web).toContain("canSeeFinancialDashboard ? api('/dashboard/revenue?days=30') : Promise.resolve(null)");
 });
