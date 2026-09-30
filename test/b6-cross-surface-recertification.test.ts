@@ -59,7 +59,7 @@ test('B6 commercial Web consumes canonical backend domains and entitlement resol
 test('B6 Web operational mutations follow current security and EQ5 contracts', () => {
   expect(web).toContain('strongPassword(member.password)');
   expect(web).toContain('equipment-catalog-select');
-  expect(web).toContain('catalogItemIds: [selectedCatalogEquipment]');
+  expect(web).toContain('catalogItemIds: [item.id]');
   expect(web).not.toContain('member.password.length < 6');
 });
 
