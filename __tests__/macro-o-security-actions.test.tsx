@@ -52,7 +52,13 @@ function installApi() {
     if (path === '/dashboard/overdue') return [];
     if (path.startsWith('/dashboard/birthdays')) return [];
     if (path === '/schedule-slots') return [{ id: 'slot-1', weekday: 1, startTime: '08:00', endTime: '09:00', capacity: 12, active: true }];
-    if (path === '/workouts') return [{ id: 'workout-ai-1', status: 'PENDING_REVIEW', createdByAI: true, goal: 'Hipertrofia', student: { user: { name: 'Aluno IA' } } }];
+    if (path === '/workouts' && options?.method === 'POST') return { id: 'workout-manual-1', status: 'DRAFT' };
+    if (path === '/workouts') return [
+      { id: 'workout-ai-1', status: 'PENDING_REVIEW', createdByAI: true, goal: 'Hipertrofia', student: { user: { name: 'Aluno IA' } }, sessions: [] },
+      { id: 'workout-approved-1', status: 'APPROVED', createdByAI: false, goal: 'Força', student: { user: { name: 'Aluno 360' } }, sessions: [{ id: 'session-1', name: 'Treino A', exercises: [{ id: 'we-1', sets: 3, reps: '10', exercise: { name: 'Agachamento' }, equipment: { name: 'Leg Press' } }] }] },
+    ];
+    if (path === '/workouts/workout-ai-1/status' && options?.method === 'PATCH') return { id: 'workout-ai-1', status: 'APPROVED' };
+    if (path === '/workouts/workout-approved-1/status' && options?.method === 'PATCH') return { id: 'workout-approved-1', status: 'ACTIVE' };
     if (path === '/equipments') return [{ id: 'inv-1', name: 'Leg Press', catalogItemId: 'catalog-1', active: true, catalogItem: { id: 'catalog-1', name: 'Leg Press', category: 'PLATE_LOADED' } }];
     if (path.startsWith('/equipments/catalog?') || path === '/equipments/catalog') return [{ id: 'catalog-1', name: 'Leg Press', category: 'PLATE_LOADED', selected: true, inventoryId: 'inv-1' }, { id: 'catalog-2', name: 'Esteira', category: 'CARDIO', selected: false, inventoryId: null }];
     if (path === '/equipments/catalog/candidates' && !options?.method) return [{ id: 'candidate-1', proposedName: 'Máquina Especial', status: 'PENDING', proposedCategory: 'SPECIALIZED_STRENGTH' }];
@@ -237,6 +243,50 @@ test('Avaliações mostram evolução corporal, composição, restrições e con
   expect(view.getAllByText(/Cintura: 84 cm/).length).toBeGreaterThan(0);
   expect(view.getAllByText(/Cuidado com joelho direito/).length).toBeGreaterThan(0);
   expect(view.getByText('Hipertrofia')).toBeTruthy();
+});
+
+test('Workout Studio monta sessão completa e envia rascunho canônico', async () => {
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-workouts')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-workouts'));
+
+  await waitFor(() => expect(view.getByText('Workout Studio')).toBeTruthy());
+  fireEvent.press(view.getByText('Aluno 360'));
+
+  await waitFor(() => expect(view.getByText('Agachamento')).toBeTruthy());
+  fireEvent.press(view.getByText('Agachamento'));
+  fireEvent.press(view.getByText('Buscar equipamentos compatíveis'));
+  await waitFor(() => expect(view.getByText('Leg Press')).toBeTruthy());
+  fireEvent.press(view.getByText('Leg Press'));
+  fireEvent.press(view.getByTestId('workout-add-exercise'));
+  await waitFor(() => expect(view.getByTestId('workout-add-session')).toBeTruthy());
+  fireEvent.press(view.getByTestId('workout-add-session'));
+  fireEvent.press(view.getByTestId('manual-workout-create'));
+
+  await waitFor(() => {
+    const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/workouts' && options?.method === 'POST');
+    expect(call).toBeTruthy();
+    const body = JSON.parse(String(call?.[2]?.body ?? '{}'));
+    expect(body.studentId).toBe('student-1');
+    expect(body.sessions).toHaveLength(1);
+    expect(body.sessions[0].exercises[0]).toMatchObject({
+      exerciseId: 'exercise-1',
+      equipmentId: 'inv-1',
+      sets: 3,
+      reps: '10',
+      restSeconds: 60,
+    });
+  });
+});
+
+test('Workout Studio exige aprovação humana antes de oferecer ativação', async () => {
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-workouts')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-workouts'));
+
+  await waitFor(() => expect(view.getByTestId('workout-approve-workout-ai-1')).toBeTruthy());
+  expect(view.queryByTestId('workout-activate-workout-ai-1')).toBeNull();
+  expect(view.getByTestId('workout-activate-workout-approved-1')).toBeTruthy();
 });
 
 test('área administrativa exige reautenticação antes de carregar Financeiro', async () => {
