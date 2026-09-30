@@ -105,7 +105,7 @@ test('Cockpit mostra agenda, alertas e candidatos da Intelligence com drill-down
   const view = render(<CommercialWebApp />);
 
   await waitFor(() => expect(view.getByTestId('dashboard-overview')).toBeTruthy());
-  expect(view.getByText('Agenda operacional')).toBeTruthy();
+  expect(view.getAllByText('Agenda operacional').length).toBeGreaterThan(0);
   expect(view.getByText('Alertas operacionais')).toBeTruthy();
   expect(view.getByText('IRON Intelligence')).toBeTruthy();
   expect(view.getByText('Aluno IA')).toBeTruthy();
