@@ -35,12 +35,13 @@ function DailyBars({ rows, financial }: { rows: { date: string; value: number }[
 }
 export function DashboardOverview({ data, navigate, canNavigate = () => true, showFinancial = true }: { data: DashboardData; canNavigate?: (module: 'students' | 'financial' | 'workouts' | 'equipment') => boolean; navigate: (module: 'students' | 'financial' | 'workouts' | 'equipment') => void; showFinancial?: boolean }) {
   const summary = data.summary;
-  const metrics: { label: string; value: string; detail: string; icon: Icon; target: 'students' | 'financial' | 'workouts' | 'equipment'; financial?: boolean }[] = [
+  const allMetrics: { label: string; value: string; detail: string; icon: Icon; target: 'students' | 'financial' | 'workouts' | 'equipment'; financial?: boolean }[] = [
     { label: 'Alunos ativos', value: count(summary?.students?.active), detail: `${count(summary?.students?.total)} alunos cadastrados`, icon: 'people-outline', target: 'students' },
     { label: 'Receita do mês', value: money(summary?.revenue?.thisMonth), detail: 'Recebimentos confirmados', icon: 'wallet-outline', target: 'financial', financial: true },
     { label: 'Cobranças vencidas', value: count(summary?.charges?.overdue), detail: `${count(summary?.charges?.pending)} cobranças pendentes`, icon: 'time-outline', target: 'financial', financial: true },
     { label: 'Treinos aprovados', value: count(summary?.workouts?.approved), detail: 'Aprovados e ativos', icon: 'barbell-outline', target: 'workouts' },
-  ].filter((metric) => showFinancial || !metric.financial);
+  ];
+  const metrics = allMetrics.filter((metric) => showFinancial || !metric.financial);
   const revenue = Array.isArray(data.revenue) ? data.revenue : [];
   const attendance = Array.isArray(data.attendance) ? data.attendance : [];
   const overdue = Array.isArray(data.overdue) ? data.overdue : [];
