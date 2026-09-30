@@ -429,6 +429,7 @@ export function CommercialWebApp() {
   function teamView() {
     const teamRoleOptions = can('SUPER_ADMIN', 'OWNER') ? ownerTeamRoleOptions : baseTeamRoleOptions;
     const members = list(data.users);
+    const teamLoaded = Array.isArray(data.users);
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email.trim());
     const roleOk = teamRoleOptions.some((option) => option.id === member.roleName);
     const inviteIssue = !member.name.trim()
@@ -461,9 +462,9 @@ export function CommercialWebApp() {
         {passwordIssue ? <Text style={styles.helper}>Senha inicial: {passwordIssue}</Text> : null}
         <View style={styles.actions}>
           <Button
-            testID="team-invite"
+            testID={teamLoaded ? "team-invite" : undefined}
             label={saving ? 'Enviando…' : 'Enviar convite'}
-            disabled={saving}
+            disabled={saving || !teamLoaded}
             onPress={() => {
               if (inviteIssue) { setError(inviteIssue); return; }
               void mutate(
@@ -481,10 +482,10 @@ export function CommercialWebApp() {
             }}
           />
           <Button
-            testID="team-add"
+            testID={teamLoaded ? "team-add" : undefined}
             secondary
             label={saving ? 'Adicionando…' : 'Cadastrar com senha inicial'}
-            disabled={saving}
+            disabled={saving || !teamLoaded}
             onPress={() => {
               const directIssue = inviteIssue || (!member.password ? 'Informe a senha inicial ou use Enviar convite.' : passwordIssue);
               if (directIssue) { setError(directIssue); return; }
