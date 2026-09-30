@@ -251,13 +251,13 @@ test('Workout Studio monta sessão completa e envia rascunho canônico', async (
   fireEvent.press(view.getByTestId('nav-workouts'));
 
   await waitFor(() => expect(view.getByText('Workout Studio')).toBeTruthy());
-  fireEvent.press(view.getByText('Aluno 360'));
+  fireEvent.press(view.getAllByText('Aluno 360')[0]);
 
   await waitFor(() => expect(view.getByText('Agachamento')).toBeTruthy());
-  fireEvent.press(view.getByText('Agachamento'));
+  fireEvent.press(view.getAllByText('Agachamento')[0]);
   fireEvent.press(view.getByText('Buscar equipamentos compatíveis'));
   await waitFor(() => expect(view.getByText('Leg Press')).toBeTruthy());
-  fireEvent.press(view.getByText('Leg Press'));
+  fireEvent.press(view.getAllByText('Leg Press')[0]);
   fireEvent.press(view.getByTestId('workout-add-exercise'));
   await waitFor(() => expect(view.getByTestId('workout-add-session')).toBeTruthy());
   fireEvent.press(view.getByTestId('workout-add-session'));
