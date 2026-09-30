@@ -257,7 +257,11 @@ test('Workout Studio monta sessão completa e envia rascunho canônico', async (
   await waitFor(() => expect(view.getByText('Agachamento')).toBeTruthy());
   fireEvent.press(view.getAllByText('Agachamento')[0]);
   fireEvent.press(view.getByText('Buscar equipamentos compatíveis'));
-  await waitFor(() => expect(view.getByText('Leg Press')).toBeTruthy());
+  await waitFor(
+    () => expect(mockApi.mock.calls.some(([path]) => path === '/equipments/exercises/exercise-1/compatible')).toBe(true),
+    { timeout: 12000 },
+  );
+  await waitFor(() => expect(view.getAllByText('Leg Press').length).toBeGreaterThan(0), { timeout: 12000 });
   fireEvent.press(view.getAllByText('Leg Press')[0]);
   fireEvent.press(view.getByTestId('workout-add-exercise'));
   await waitFor(() => expect(view.getByTestId('workout-add-session')).toBeTruthy());
