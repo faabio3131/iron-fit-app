@@ -869,9 +869,228 @@ export function CommercialWebApp() {
     </>;
   }
   function workoutsView() {
-    const students = list(data.students); const workouts = list(data.workouts);
+    const students = list(data.students);
+    const workouts = list(data.workouts);
+    const exercises = list(data.workoutExercises);
+    const inventory = list(data.workoutInventory);
+    const assessments = list(data.workoutAssessments);
+    const compatibleEquipment = list(data.workoutCompatibleEquipment);
     const weeklyFrequency = workoutDraft.weeklyFrequency.trim() ? Number(workoutDraft.weeklyFrequency) : undefined;
-    return <><View style={styles.compactGrid}><View style={styles.compactPane}><Section compact title="Criar treino manual" subtitle="Monte um rascunho para revisar antes de ativar."><Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} /><View style={styles.form}><Field label="Objetivo" value={workoutDraft.goal} onChangeText={(goal) => setWorkoutDraft((v) => ({ ...v, goal }))} /><Field label="Nível" value={workoutDraft.level} onChangeText={(level) => setWorkoutDraft((v) => ({ ...v, level }))} /><Field label="Frequência semanal" value={workoutDraft.weeklyFrequency} numeric onChangeText={(value) => setWorkoutDraft((v) => ({ ...v, weeklyFrequency: value }))} /><Field label="Observações" value={workoutDraft.notes} onChangeText={(notes) => setWorkoutDraft((v) => ({ ...v, notes }))} /></View><Button testID="manual-workout-create" label="Criar rascunho" disabled={saving || !selectedStudent || (weeklyFrequency !== undefined && (!Number.isInteger(weeklyFrequency) || weeklyFrequency < 1))} onPress={() => void mutate(() => api('/workouts', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedStudent, ...(workoutDraft.goal.trim() ? { goal: workoutDraft.goal.trim() } : {}), ...(workoutDraft.level.trim() ? { level: workoutDraft.level.trim() } : {}), ...(weeklyFrequency !== undefined ? { weeklyFrequency } : {}), ...(workoutDraft.notes.trim() ? { notes: workoutDraft.notes.trim() } : {}) }) }), () => setWorkoutDraft({ goal: '', level: '', weeklyFrequency: '', notes: '' }))} /></Section></View>{enabled('ai.workout_generation') ? <View style={styles.compactPane}><Section compact title="Iron Intelligence — candidato de treino" subtitle="Sugestão da IA com revisão humana obrigatória."><Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} /><Field label="Instruções opcionais" value={aiInstructions} onChangeText={setAiInstructions} /><Button label="Gerar candidato" disabled={saving || !selectedStudent} onPress={() => void mutate(() => api('/ai/workout-candidates', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedStudent, ...(aiInstructions.trim() ? { instructions: aiInstructions.trim() } : {}) }) }))} /></Section></View> : null}</View><Section compact title="Treinos e revisão humana">{workouts.length ? workouts.map((workout: any) => <View key={workout.id} style={styles.row}><Text style={styles.rowTitle}>{workout.student?.user?.name ?? workout.goal ?? workout.id}</Text><Text style={styles.muted}>Situação: {workout.status} · IA: {workout.createdByAI ? 'sim' : 'não'}</Text>{workout.status === 'PENDING_REVIEW' ? <View style={styles.actions}><Button label="Aprovar" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'APPROVED' }) }))} /><Button secondary label="Ativar" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'ACTIVE' }) }))} /></View> : null}</View>) : <Text style={styles.muted}>Nenhum treino encontrado.</Text>}</Section></>;
+    const intValue = (value: string) => value.trim() && Number.isInteger(Number(value)) ? Number(value) : undefined;
+    const assessmentOptions = assessments.map((item: any) => ({
+      id: item.id,
+      name: `${item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : 'Avaliação'} · IMC ${item.bmi ?? '—'} · Gordura ${item.bodyFatPercent ?? '—'}%`,
+    }));
+    const selectedExercise = exercises.find((item: any) => item.id === selectedWorkoutExercise);
+
+    const resetStudio = () => {
+      setWorkoutDraft({ goal: '', level: '', weeklyFrequency: '', notes: '' });
+      setWorkoutAssessmentId('');
+      setWorkoutSessions([]);
+      setWorkoutSessionExercises([]);
+      setWorkoutSessionDraft({ name: 'Treino A', sessionType: '', estimatedMinutes: '60' });
+      setSelectedWorkoutExercise('');
+      setSelectedWorkoutEquipment('');
+      setWorkoutExerciseDraft({ sets: '3', reps: '10', restSeconds: '60', suggestedLoad: '', notes: '' });
+      setData((current) => ({ ...current, workoutCompatibleEquipment: [] }));
+    };
+
+    const addExerciseToSession = () => {
+      if (!selectedExercise) {
+        setError('Selecione um exercício para adicionar à sessão.');
+        return;
+      }
+      const equipment = compatibleEquipment.find((item: any) => item.id === selectedWorkoutEquipment);
+      setWorkoutSessionExercises((current) => [...current, {
+        exerciseId: selectedExercise.id,
+        exerciseName: selectedExercise.name,
+        ...(equipment ? { equipmentId: equipment.id, equipmentName: equipment.catalogItem?.name ?? equipment.name ?? equipment.id } : {}),
+        ...(intValue(workoutExerciseDraft.sets) !== undefined ? { sets: intValue(workoutExerciseDraft.sets) } : {}),
+        ...(workoutExerciseDraft.reps.trim() ? { reps: workoutExerciseDraft.reps.trim() } : {}),
+        ...(intValue(workoutExerciseDraft.restSeconds) !== undefined ? { restSeconds: intValue(workoutExerciseDraft.restSeconds) } : {}),
+        ...(workoutExerciseDraft.suggestedLoad.trim() ? { suggestedLoad: workoutExerciseDraft.suggestedLoad.trim() } : {}),
+        ...(workoutExerciseDraft.notes.trim() ? { notes: workoutExerciseDraft.notes.trim() } : {}),
+      }]);
+      setSelectedWorkoutExercise('');
+      setSelectedWorkoutEquipment('');
+      setWorkoutExerciseDraft({ sets: '3', reps: '10', restSeconds: '60', suggestedLoad: '', notes: '' });
+      setData((current) => ({ ...current, workoutCompatibleEquipment: [] }));
+      setError('');
+    };
+
+    const addSessionToWorkout = () => {
+      if (!workoutSessionDraft.name.trim()) {
+        setError('Informe o nome da sessão.');
+        return;
+      }
+      if (!workoutSessionExercises.length) {
+        setError('Adicione pelo menos um exercício à sessão.');
+        return;
+      }
+      setWorkoutSessions((current) => [...current, {
+        name: workoutSessionDraft.name.trim(),
+        ...(workoutSessionDraft.sessionType.trim() ? { sessionType: workoutSessionDraft.sessionType.trim() } : {}),
+        ...(intValue(workoutSessionDraft.estimatedMinutes) !== undefined ? { estimatedMinutes: intValue(workoutSessionDraft.estimatedMinutes) } : {}),
+        order: current.length + 1,
+        exercises: workoutSessionExercises,
+      }]);
+      setWorkoutSessionExercises([]);
+      setWorkoutSessionDraft((current) => ({ ...current, name: `Treino ${String.fromCharCode(65 + workoutSessions.length + 1)}` }));
+      setError('');
+    };
+
+    const manualPayload = () => ({
+      studentId: selectedStudent,
+      ...(workoutAssessmentId ? { assessmentId: workoutAssessmentId } : {}),
+      ...(workoutDraft.goal.trim() ? { goal: workoutDraft.goal.trim() } : {}),
+      ...(workoutDraft.level.trim() ? { level: workoutDraft.level.trim() } : {}),
+      ...(weeklyFrequency !== undefined ? { weeklyFrequency } : {}),
+      ...(workoutDraft.notes.trim() ? { notes: workoutDraft.notes.trim() } : {}),
+      sessions: workoutSessions.map((session: any, sessionIndex: number) => ({
+        name: session.name,
+        ...(session.sessionType ? { sessionType: session.sessionType } : {}),
+        order: sessionIndex + 1,
+        ...(session.estimatedMinutes ? { estimatedMinutes: session.estimatedMinutes } : {}),
+        exercises: session.exercises.map((item: any, exerciseIndex: number) => ({
+          exerciseId: item.exerciseId,
+          ...(item.equipmentId ? { equipmentId: item.equipmentId } : {}),
+          order: exerciseIndex + 1,
+          ...(item.sets ? { sets: item.sets } : {}),
+          ...(item.reps ? { reps: item.reps } : {}),
+          ...(item.restSeconds ? { restSeconds: item.restSeconds } : {}),
+          ...(item.suggestedLoad ? { suggestedLoad: item.suggestedLoad } : {}),
+          ...(item.notes ? { notes: item.notes } : {}),
+        })),
+      })),
+    });
+
+    return <>
+      <Section compact title="Workout Studio" subtitle="Aluno → avaliação → exercícios/equipamentos → sessões → revisão → aprovação → ativação.">
+        <View style={styles.compactGrid}>
+          <View style={styles.compactPane}>
+            <View style={styles.studioStep}>
+              <Text style={styles.rowTitle}>1. Aluno e avaliação</Text>
+              <Text style={styles.label}>Aluno</Text>
+              <Chips rows={students} selected={selectedStudent} onSelect={(id) => { setSelectedStudent(id); setWorkoutAssessmentId(''); }} />
+              {selectedStudent ? <>
+                <Text style={styles.label}>Avaliação de referência</Text>
+                {assessmentOptions.length ? <Chips rows={[{ id: '', name: 'Sem avaliação vinculada' }, ...assessmentOptions]} selected={workoutAssessmentId} onSelect={setWorkoutAssessmentId} /> : <Text style={styles.helper}>Este aluno ainda não possui avaliação registrada.</Text>}
+              </> : <Text style={styles.helper}>Selecione um aluno para carregar avaliações e montar o treino.</Text>}
+            </View>
+          </View>
+
+          <View style={styles.compactPane}>
+            <View style={styles.studioStep}>
+              <Text style={styles.rowTitle}>2. Estrutura do treino</Text>
+              <View style={styles.form}>
+                <Field label="Objetivo" value={workoutDraft.goal} onChangeText={(goal) => setWorkoutDraft((v) => ({ ...v, goal }))} />
+                <Field label="Nível" value={workoutDraft.level} onChangeText={(level) => setWorkoutDraft((v) => ({ ...v, level }))} />
+                <Field label="Frequência semanal" value={workoutDraft.weeklyFrequency} numeric onChangeText={(value) => setWorkoutDraft((v) => ({ ...v, weeklyFrequency: value }))} />
+                <Field label="Observações" value={workoutDraft.notes} onChangeText={(notes) => setWorkoutDraft((v) => ({ ...v, notes }))} />
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.studioStep}>
+          <Text style={styles.rowTitle}>3. Montar sessão</Text>
+          <View style={styles.form}>
+            <Field label="Nome da sessão" value={workoutSessionDraft.name} onChangeText={(name) => setWorkoutSessionDraft((v) => ({ ...v, name }))} />
+            <Field label="Tipo da sessão" value={workoutSessionDraft.sessionType} onChangeText={(sessionType) => setWorkoutSessionDraft((v) => ({ ...v, sessionType }))} />
+            <Field label="Duração estimada (min)" value={workoutSessionDraft.estimatedMinutes} numeric onChangeText={(estimatedMinutes) => setWorkoutSessionDraft((v) => ({ ...v, estimatedMinutes }))} />
+          </View>
+
+          <Text style={styles.label}>Exercício</Text>
+          <Chips rows={exercises} selected={selectedWorkoutExercise} onSelect={(id) => {
+            setSelectedWorkoutExercise(id);
+            setSelectedWorkoutEquipment('');
+            setData((current) => ({ ...current, workoutCompatibleEquipment: [] }));
+          }} />
+          {selectedExercise ? <View style={styles.actions}>
+            <Button secondary label="Buscar equipamentos compatíveis" onPress={() => { void (async () => {
+              setSaving(true); setError('');
+              try {
+                const result = await api(`/equipments/exercises/${selectedExercise.id}/compatible`);
+                setData((current) => ({ ...current, workoutCompatibleEquipment: result }));
+              } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
+            })(); }} />
+          </View> : null}
+
+          {selectedExercise ? <>
+            <Text style={styles.label}>Equipamento compatível (opcional)</Text>
+            {compatibleEquipment.length ? <Chips rows={[{ id: '', name: 'Sem equipamento' }, ...compatibleEquipment.map((item: any) => ({ ...item, name: item.catalogItem?.name ?? item.name ?? item.id }))]} selected={selectedWorkoutEquipment} onSelect={setSelectedWorkoutEquipment} /> : <Text style={styles.helper}>{inventory.length ? 'Busque a compatibilidade para selecionar equipamento do inventário.' : 'A academia não possui equipamentos ativos no inventário.'}</Text>}
+            <View style={styles.form}>
+              <Field label="Séries" value={workoutExerciseDraft.sets} numeric onChangeText={(sets) => setWorkoutExerciseDraft((v) => ({ ...v, sets }))} />
+              <Field label="Repetições" value={workoutExerciseDraft.reps} onChangeText={(reps) => setWorkoutExerciseDraft((v) => ({ ...v, reps }))} />
+              <Field label="Descanso (s)" value={workoutExerciseDraft.restSeconds} numeric onChangeText={(restSeconds) => setWorkoutExerciseDraft((v) => ({ ...v, restSeconds }))} />
+              <Field label="Carga sugerida" value={workoutExerciseDraft.suggestedLoad} onChangeText={(suggestedLoad) => setWorkoutExerciseDraft((v) => ({ ...v, suggestedLoad }))} />
+              <Field label="Observação do exercício" value={workoutExerciseDraft.notes} onChangeText={(notes) => setWorkoutExerciseDraft((v) => ({ ...v, notes }))} />
+            </View>
+            <Button testID="workout-add-exercise" secondary label="Adicionar exercício à sessão" onPress={addExerciseToSession} />
+          </> : null}
+
+          {workoutSessionExercises.length ? <View style={styles.studioList}>
+            {workoutSessionExercises.map((item: any, index: number) => <View key={`${item.exerciseId}-${index}`} style={styles.studioSessionCard}>
+              <View style={styles.teamRowHead}><Text style={styles.rowTitle}>{index + 1}. {item.exerciseName}</Text><Button secondary label="Remover" onPress={() => setWorkoutSessionExercises((current) => current.filter((_, itemIndex) => itemIndex !== index))} /></View>
+              <Text style={styles.muted}>{item.sets ?? '—'} séries · {item.reps ?? '—'} reps · {item.restSeconds ?? '—'}s descanso{item.suggestedLoad ? ` · carga ${item.suggestedLoad}` : ''}</Text>
+              {item.equipmentName ? <Text style={styles.helper}>Equipamento: {item.equipmentName}</Text> : null}
+            </View>)}
+            <Button testID="workout-add-session" label="Adicionar sessão ao treino" onPress={addSessionToWorkout} />
+          </View> : null}
+        </View>
+
+        {workoutSessions.length ? <View style={styles.studioStep}>
+          <Text style={styles.rowTitle}>4. Sessões prontas para o rascunho</Text>
+          <View style={styles.compactGrid}>
+            {workoutSessions.map((session: any, index: number) => <View key={`${session.name}-${index}`} style={styles.studioSessionCard}>
+              <View style={styles.teamRowHead}><Text style={styles.rowTitle}>{session.name}</Text><Button secondary label="Remover sessão" onPress={() => setWorkoutSessions((current) => current.filter((_, itemIndex) => itemIndex !== index))} /></View>
+              <Text style={styles.muted}>{session.exercises.length} exercícios · {session.estimatedMinutes ?? '—'} min</Text>
+              {session.exercises.map((item: any, exerciseIndex: number) => <Text key={`${item.exerciseId}-${exerciseIndex}`} style={styles.helper}>{exerciseIndex + 1}. {item.exerciseName} · {item.sets ?? '—'}×{item.reps ?? '—'}</Text>)}
+            </View>)}
+          </View>
+        </View> : null}
+
+        <Button
+          testID="manual-workout-create"
+          label="Criar rascunho para revisão"
+          disabled={saving || !selectedStudent || !workoutSessions.length || (weeklyFrequency !== undefined && (!Number.isInteger(weeklyFrequency) || weeklyFrequency < 1))}
+          disabledReason={!selectedStudent ? 'Selecione o aluno.' : !workoutSessions.length ? 'Monte e adicione pelo menos uma sessão.' : 'Revise a frequência semanal.'}
+          onPress={() => void mutate(() => api('/workouts', undefined, { method: 'POST', body: JSON.stringify(manualPayload()) }), resetStudio)}
+        />
+      </Section>
+
+      {enabled('ai.workout_generation') ? <Section compact title="IRON Intelligence — candidato de treino" subtitle="A IA recebe contexto reconstruído pelo servidor e nunca aprova ou ativa o treino.">
+        <Text style={styles.label}>Aluno</Text>
+        <Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} />
+        {selectedStudent ? <Text style={styles.helper}>Contexto disponível: {assessments.length} avaliações · {inventory.length} equipamentos ativos. A seleção final é validada pelo backend.</Text> : null}
+        <Field label="Instruções opcionais" value={aiInstructions} onChangeText={setAiInstructions} />
+        <Button label="Gerar candidato para revisão" disabled={saving || !selectedStudent} onPress={() => void mutate(() => api('/ai/workout-candidates', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedStudent, ...(aiInstructions.trim() ? { instructions: aiInstructions.trim() } : {}) }) }))} />
+      </Section> : null}
+
+      <Section compact title="Treinos e revisão humana" subtitle="Nenhum treino entra em ACTIVE sem passar por aprovação humana.">
+        {workouts.length ? workouts.map((workout: any) => <View key={workout.id} style={styles.row}>
+          <View style={styles.teamRowHead}>
+            <View style={styles.rowText}>
+              <Text style={styles.rowTitle}>{workout.student?.user?.name ?? workout.goal ?? 'Treino'}</Text>
+              <Text style={styles.muted}>Situação: {workout.status} · Origem: {workout.createdByAI ? 'IRON Intelligence' : 'Profissional'}</Text>
+            </View>
+            <Text style={[styles.teamStatus, workout.status === 'ACTIVE' ? styles.teamStatusActive : styles.teamStatusInactive]}>{workout.status}</Text>
+          </View>
+          {workout.assessmentId ? <Text style={styles.helper}>Avaliação vinculada: {workout.assessmentId}</Text> : null}
+          {Array.isArray(workout.sessions) && workout.sessions.length ? <View style={styles.studioList}>{workout.sessions.map((session: any) => <View key={session.id ?? session.name} style={styles.studioSessionCard}>
+            <Text style={styles.rowTitle}>{session.name ?? 'Sessão'}</Text>
+            {(session.exercises ?? []).map((item: any, index: number) => <Text key={item.id ?? index} style={styles.helper}>{index + 1}. {item.exercise?.name ?? 'Exercício'} · {item.sets ?? '—'}×{item.reps ?? '—'}{item.equipment?.name ? ` · ${item.equipment.name}` : ''}</Text>)}
+          </View>)}</View> : null}
+          {(workout.status === 'DRAFT' || workout.status === 'PENDING_REVIEW') ? <View style={styles.actions}>
+            <Button testID={`workout-approve-${workout.id}`} label="Aprovar após revisão" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'APPROVED' }) }))} />
+          </View> : null}
+          {workout.status === 'APPROVED' ? <View style={styles.actions}>
+            <Button testID={`workout-activate-${workout.id}`} label="Ativar treino aprovado" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'ACTIVE' }) }))} />
+          </View> : null}
+          {workout.status === 'ACTIVE' ? <Button secondary label="Encerrar treino" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'EXPIRED' }) }))} /> : null}
+        </View>) : <Text style={styles.muted}>Nenhum treino encontrado.</Text>}
+      </Section>
+    </>;
   }
   function scheduleView() {
     const students = list(data.students); const slots = list(data.slots);
@@ -941,6 +1160,9 @@ const styles = StyleSheet.create({
   assessmentMetricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   assessmentMetric: { flexGrow: 1, flexBasis: 120, minWidth: 110, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 10, padding: 10 },
   kpiValue: { color: '#eef7ff', fontSize: 22, fontWeight: '900' },
+  studioStep: { backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 11, marginBottom: 8 },
+  studioList: { width: '100%', gap: 7, marginTop: 8 },
+  studioSessionCard: { flexGrow: 1, flexBasis: 260, minWidth: 240, backgroundColor: '#08172a', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 10 },
   navSection: { color: '#6fa8dc', fontSize: 10, fontWeight: '800', letterSpacing: 0.7, marginTop: 10, marginBottom: 4, marginHorizontal: 12 },
   restrictedNote: { color: '#bfdbfe', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, fontSize: 11, fontWeight: '700', marginBottom: 8 },
   adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
