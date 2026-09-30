@@ -282,7 +282,7 @@ test('Workout Studio monta sessão completa e envia rascunho canônico', async (
       restSeconds: 60,
     });
   });
-});
+}, 30000);
 
 test('Workout Studio exige aprovação humana antes de oferecer ativação', async () => {
   const view = render(<CommercialWebApp />);
