@@ -422,6 +422,11 @@ export function IntegrationCredentialsPanel() {
                   disabled={saving || capabilities.length === 0}
                   onPress={() => { void createConnection(); }}
                 />
+                {capabilities.length === 0 ? (
+                  <Text style={styles.muted}>Selecione pelo menos um recurso para habilitar esta integração.</Text>
+                ) : (
+                  <Text style={styles.muted}>Ao salvar, sua senha atual confirma esta alteração sensível.</Text>
+                )}
               </>
             ) : null}
           </>
