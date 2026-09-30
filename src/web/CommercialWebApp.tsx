@@ -181,14 +181,17 @@ export function CommercialWebApp() {
       const next: Record<string, any> = {};
       if (key === 'overview') {
         const canSeeFinancialDashboard = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
-        const [summary, revenue, attendance, overdue, birthdays, gym] = await Promise.all([
+        const canSeeWorkoutOperations = can('SUPER_ADMIN', 'OWNER', 'MANAGER');
+        const [summary, revenue, attendance, overdue, birthdays, agendaSlots, cockpitWorkouts, gym] = await Promise.all([
           api('/dashboard/summary'),
           canSeeFinancialDashboard ? api('/dashboard/revenue?days=30') : Promise.resolve(null),
           api('/dashboard/attendance?days=7'),
           canSeeFinancialDashboard ? api('/dashboard/overdue') : Promise.resolve(null),
           api('/dashboard/birthdays?days=30'),
+          api('/schedule-slots'),
+          canSeeWorkoutOperations ? api('/workouts') : Promise.resolve([]),
           activeTenantId && can('OWNER', 'MANAGER') ? api(`/gyms/${activeTenantId}`).catch(() => null) : Promise.resolve(null),
-        ]); Object.assign(next, { summary, revenue, attendance, overdue, birthdays, gym });
+        ]); Object.assign(next, { summary, revenue, attendance, overdue, birthdays, agendaSlots, cockpitWorkouts, gym });
       }
       if (key === 'students') next.students = await api('/students');
       if (key === 'team') next.users = await api('/users');
