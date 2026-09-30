@@ -141,8 +141,12 @@ export function CommercialWebApp() {
   const [selectedEquipmentExercise, setSelectedEquipmentExercise] = useState('');
   const [equipmentCandidate, setEquipmentCandidate] = useState({ proposedName: '', proposedCategory: '', manufacturerName: '', modelName: '', evidenceUrl: '', notes: '' });
   const [equipmentReviewNotes, setEquipmentReviewNotes] = useState('');
-  const [exercise, setExercise] = useState({ name: '', muscleGroup: '', level: '' });
-  const [assessment, setAssessment] = useState({ weight: '', height: '', bodyFatPercent: '', notes: '' });
+  const [exercise, setExercise] = useState({ name: '', muscleGroup: '', movement: '', level: '', videoUrl: '', contraindications: '' });
+  const [exerciseSearch, setExerciseSearch] = useState('');
+  const [exerciseMuscleGroup, setExerciseMuscleGroup] = useState('');
+  const [exerciseLevel, setExerciseLevel] = useState('');
+  const [selectedExerciseLibrary, setSelectedExerciseLibrary] = useState('');
+  const [assessment, setAssessment] = useState({ weight: '', height: '', bodyFatPercent: '', chest: '', waist: '', hip: '', restrictions: '', notes: '' });
   const [schedule, setSchedule] = useState({ weekday: '1', startTime: '08:00', endTime: '09:00', capacity: '10' });
   const [account, setAccount] = useState({ name: '', type: 'CASH', initialBalance: '0' });
   const [studentPlan, setStudentPlan] = useState({ planName: '', amount: '', nextBillingAt: '' });
@@ -244,8 +248,18 @@ export function CommercialWebApp() {
         ]);
         Object.assign(next, { inventory, catalog, candidates, equipmentExercises: exercises, governanceCandidates });
       }
-      if (key === 'exercises') next.exercises = await api('/exercises');
-      if (key === 'assessments') { next.students = await api('/students'); if (selectedStudent) next.assessments = await api(`/students/${selectedStudent}/assessments`); }
+      if (key === 'exercises') {
+        [next.exercises, next.exerciseInventory] = await Promise.all([api('/exercises'), api('/equipments')]);
+      }
+      if (key === 'assessments') {
+        next.students = await api('/students');
+        if (selectedStudent) {
+          [next.assessments, next.assessmentWorkouts] = await Promise.all([
+            api(`/students/${selectedStudent}/assessments`),
+            can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER') ? api(`/students/${selectedStudent}/workouts`) : Promise.resolve([]),
+          ]);
+        }
+      }
       if (key === 'workouts') { [next.workouts, next.students] = await Promise.all([api('/workouts'), api('/students')]); }
       if (key === 'schedule') { [next.slots, next.students] = await Promise.all([api('/schedule-slots'), api('/students')]); }
       if (key === 'access') { [next.events, next.students] = await Promise.all([api('/access/events'), api('/students')]); }
@@ -642,12 +656,201 @@ export function CommercialWebApp() {
     </>;
   }
   function exercisesView() {
-    return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER') ? <Section title="Novo exercício"><View style={styles.form}><Field label="Nome" value={exercise.name} onChangeText={(name) => setExercise((v) => ({ ...v, name }))} /><Field label="Grupo muscular" value={exercise.muscleGroup} onChangeText={(muscleGroup) => setExercise((v) => ({ ...v, muscleGroup }))} /><Field label="Nível" value={exercise.level} onChangeText={(level) => setExercise((v) => ({ ...v, level }))} /></View><Button label="Criar exercício" disabled={saving || !exercise.name.trim()} onPress={() => void mutate(() => api('/exercises', undefined, { method: 'POST', body: JSON.stringify({ name: exercise.name.trim(), ...(exercise.muscleGroup.trim() ? { muscleGroup: exercise.muscleGroup.trim() } : {}), ...(exercise.level.trim() ? { level: exercise.level.trim() } : {}) }) }), () => setExercise({ name: '', muscleGroup: '', level: '' }))} /></Section> : null}<Section title="Biblioteca"><Data value={data.exercises} /></Section></>;
+    const exercises = list(data.exercises);
+    const inventory = list(data.exerciseInventory);
+    const normalized = exerciseSearch.trim().toLocaleLowerCase('pt-BR');
+    const filtered = exercises.filter((item: any) => {
+      const matchesSearch = !normalized || [item.name, item.muscleGroup, item.movement, item.level].some((value) => String(value ?? '').toLocaleLowerCase('pt-BR').includes(normalized));
+      const matchesGroup = !exerciseMuscleGroup || String(item.muscleGroup ?? '') === exerciseMuscleGroup;
+      const matchesLevel = !exerciseLevel || String(item.level ?? '') === exerciseLevel;
+      return matchesSearch && matchesGroup && matchesLevel;
+    });
+    const muscleGroups = [...new Set(exercises.map((item: any) => String(item.muscleGroup ?? '')).filter(Boolean))].sort().map((name) => ({ id: name, name }));
+    const levels = [...new Set(exercises.map((item: any) => String(item.level ?? '')).filter(Boolean))].sort().map((name) => ({ id: name, name }));
+    const compatibility = list(data.exerciseCompatibility);
+    const selected = exercises.find((item: any) => item.id === selectedExerciseLibrary);
+    const contraindicationsText = (value: unknown) => {
+      if (!value) return 'Nenhuma contraindicação informada.';
+      if (Array.isArray(value)) return value.join(' · ');
+      if (typeof value === 'object') return Object.entries(value as Record<string, unknown>).map(([key, item]) => `${key}: ${Array.isArray(item) ? item.join(', ') : String(item)}`).join(' · ');
+      return String(value);
+    };
+
+    return <>
+      {can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER') ? <Section compact title="Novo exercício" subtitle="Cadastre conteúdo canônico para uso no Workout Studio.">
+        <View style={styles.form}>
+          <Field label="Nome" value={exercise.name} onChangeText={(name) => setExercise((v) => ({ ...v, name }))} />
+          <Field label="Grupo muscular" value={exercise.muscleGroup} onChangeText={(muscleGroup) => setExercise((v) => ({ ...v, muscleGroup }))} />
+          <Field label="Movimento" value={exercise.movement} onChangeText={(movement) => setExercise((v) => ({ ...v, movement }))} />
+          <Field label="Nível" value={exercise.level} onChangeText={(level) => setExercise((v) => ({ ...v, level }))} />
+          <Field label="Vídeo / conteúdo (URL)" value={exercise.videoUrl} onChangeText={(videoUrl) => setExercise((v) => ({ ...v, videoUrl }))} />
+          <Field label="Contraindicações (texto)" value={exercise.contraindications} onChangeText={(contraindications) => setExercise((v) => ({ ...v, contraindications }))} />
+        </View>
+        <Button
+          label="Criar exercício"
+          disabled={saving || !exercise.name.trim()}
+          onPress={() => void mutate(() => api('/exercises', undefined, {
+            method: 'POST',
+            body: JSON.stringify({
+              name: exercise.name.trim(),
+              ...(exercise.muscleGroup.trim() ? { muscleGroup: exercise.muscleGroup.trim() } : {}),
+              ...(exercise.movement.trim() ? { movement: exercise.movement.trim() } : {}),
+              ...(exercise.level.trim() ? { level: exercise.level.trim() } : {}),
+              ...(exercise.videoUrl.trim() ? { videoUrl: exercise.videoUrl.trim() } : {}),
+              ...(exercise.contraindications.trim() ? { contraindications: { notes: exercise.contraindications.trim() } } : {}),
+            }),
+          }), () => setExercise({ name: '', muscleGroup: '', movement: '', level: '', videoUrl: '', contraindications: '' }))}
+        />
+      </Section> : null}
+
+      <View style={styles.compactGrid}>
+        <View style={styles.compactPaneWide}><Section compact title="Biblioteca de exercícios" subtitle="Pesquise e filtre por grupo muscular e nível.">
+          <Field label="Buscar exercício" value={exerciseSearch} onChangeText={setExerciseSearch} />
+          <Text style={styles.label}>Grupo muscular</Text>
+          <Chips rows={[{ id: '', name: 'Todos' }, ...muscleGroups]} selected={exerciseMuscleGroup} onSelect={setExerciseMuscleGroup} />
+          <Text style={styles.label}>Nível</Text>
+          <Chips rows={[{ id: '', name: 'Todos' }, ...levels]} selected={exerciseLevel} onSelect={setExerciseLevel} />
+          <View style={styles.equipmentCatalogGrid}>
+            {filtered.length ? filtered.map((item: any) => <TouchableOpacity
+              key={item.id}
+              accessibilityRole="button"
+              style={[styles.equipmentCard, selectedExerciseLibrary === item.id && styles.exerciseCardSelected]}
+              onPress={() => setSelectedExerciseLibrary(item.id)}
+            >
+              <Text style={styles.rowTitle}>{item.name}</Text>
+              <Text style={styles.muted}>{item.muscleGroup || 'Grupo não informado'}{item.level ? ` · ${item.level}` : ''}</Text>
+              {item.movement ? <Text style={styles.muted}>Movimento: {item.movement}</Text> : null}
+              <Text style={styles.helper}>{item.videoUrl ? 'Conteúdo em vídeo disponível' : 'Sem conteúdo em vídeo'}</Text>
+            </TouchableOpacity>) : <Text style={styles.muted}>Nenhum exercício encontrado.</Text>}
+          </View>
+        </Section></View>
+
+        <View style={styles.compactPane}><Section compact title="Detalhes e compatibilidade" subtitle="A compatibilidade usa somente o inventário ativo da academia.">
+          {selected ? <>
+            <Text style={styles.rowTitle}>{selected.name}</Text>
+            <Text style={styles.muted}>Grupo: {selected.muscleGroup || '—'} · Nível: {selected.level || '—'}</Text>
+            {selected.movement ? <Text style={styles.muted}>Movimento: {selected.movement}</Text> : null}
+            <Text style={styles.muted}>Contraindicações: {contraindicationsText(selected.contraindications)}</Text>
+            <Text style={styles.muted}>Conteúdo: {selected.videoUrl || 'Nenhum vídeo cadastrado'}</Text>
+            <Button
+              secondary
+              label="Consultar equipamentos compatíveis"
+              disabled={saving}
+              onPress={() => { void (async () => {
+                setSaving(true); setError('');
+                try {
+                  const result = await api(`/equipments/exercises/${selected.id}/compatible`);
+                  setData((current) => ({ ...current, exerciseCompatibility: result }));
+                } catch (reason) { setError(message(reason)); } finally { setSaving(false); }
+              })(); }}
+            />
+            {compatibility.length ? <Data value={compatibility} /> : <Text style={styles.helper}>{inventory.length ? 'Consulte a compatibilidade para relacionar este exercício ao inventário ativo.' : 'A academia ainda não possui equipamentos ativos no inventário.'}</Text>}
+            <Text style={styles.helper}>A associação do exercício às sessões acontece no Workout Studio; esta tela mantém a biblioteca e a compatibilidade canônicas.</Text>
+          </> : <Text style={styles.muted}>Selecione um exercício da biblioteca.</Text>}
+        </Section></View>
+      </View>
+    </>;
   }
   function assessmentsView() {
     const students = list(data.students);
+    const assessments = list(data.assessments);
+    const workouts = list(data.assessmentWorkouts);
     const number = (value: string) => value.trim() && Number.isFinite(Number(value)) ? Number(value) : undefined;
-    return <Section title="Avaliações"><Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} />{selectedStudent && can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER') ? <><View style={styles.form}><Field label="Peso" value={assessment.weight} numeric onChangeText={(weight) => setAssessment((v) => ({ ...v, weight }))} /><Field label="Altura" value={assessment.height} numeric onChangeText={(height) => setAssessment((v) => ({ ...v, height }))} /><Field label="% gordura" value={assessment.bodyFatPercent} numeric onChangeText={(bodyFatPercent) => setAssessment((v) => ({ ...v, bodyFatPercent }))} /><Field label="Observações" value={assessment.notes} onChangeText={(notes) => setAssessment((v) => ({ ...v, notes }))} /></View><Button label="Registrar avaliação" disabled={saving} onPress={() => void mutate(() => api(`/students/${selectedStudent}/assessments`, undefined, { method: 'POST', body: JSON.stringify({ ...(number(assessment.weight) !== undefined ? { weight: number(assessment.weight) } : {}), ...(number(assessment.height) !== undefined ? { height: number(assessment.height) } : {}), ...(number(assessment.bodyFatPercent) !== undefined ? { bodyFatPercent: number(assessment.bodyFatPercent) } : {}), ...(assessment.notes.trim() ? { notes: assessment.notes.trim() } : {}) }) }), () => setAssessment({ weight: '', height: '', bodyFatPercent: '', notes: '' }))} /></> : null}<Data value={data.assessments} empty={selectedStudent ? 'Nenhuma avaliação.' : 'Selecione um aluno.'} /></Section>;
+    const latest = assessments[0];
+    const previous = assessments[1];
+    const delta = (current: unknown, before: unknown, suffix = '') => {
+      if (typeof current !== 'number' || typeof before !== 'number') return '—';
+      const value = Math.round((current - before) * 10) / 10;
+      return `${value > 0 ? '+' : ''}${value}${suffix}`;
+    };
+    const dateLabel = (value: unknown) => {
+      if (!value) return '—';
+      const date = new Date(String(value));
+      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString('pt-BR');
+    };
+    const measurementSummary = (value: any) => {
+      if (!value || typeof value !== 'object') return 'Sem medidas adicionais';
+      const labels: Record<string, string> = { chest: 'Peito', waist: 'Cintura', hip: 'Quadril', rightArm: 'Braço D', leftArm: 'Braço E', rightThigh: 'Coxa D', leftThigh: 'Coxa E', rightCalf: 'Panturrilha D', leftCalf: 'Panturrilha E' };
+      return Object.entries(value).filter(([, item]) => item != null).map(([key, item]) => `${labels[key] ?? key}: ${String(item)} cm`).join(' · ') || 'Sem medidas adicionais';
+    };
+    const restrictionsSummary = (value: any) => {
+      if (!value || typeof value !== 'object') return 'Nenhuma restrição informada';
+      const entries = [
+        ...(Array.isArray(value.injuries) ? value.injuries : []),
+        ...(Array.isArray(value.conditions) ? value.conditions : []),
+        ...(Array.isArray(value.medications) ? value.medications : []),
+        ...(value.notes ? [value.notes] : []),
+      ];
+      return entries.join(' · ') || 'Nenhuma restrição informada';
+    };
+
+    return <>
+      <Section compact title="Avaliações" subtitle="Histórico corporal e contexto para evolução do treino.">
+        <Text style={styles.label}>Aluno</Text>
+        <Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} />
+        {selectedStudent && can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER') ? <>
+          <View style={styles.form}>
+            <Field label="Peso (kg)" value={assessment.weight} numeric onChangeText={(weight) => setAssessment((v) => ({ ...v, weight }))} />
+            <Field label="Altura (cm)" value={assessment.height} numeric onChangeText={(height) => setAssessment((v) => ({ ...v, height }))} />
+            <Field label="Gordura corporal (%)" value={assessment.bodyFatPercent} numeric onChangeText={(bodyFatPercent) => setAssessment((v) => ({ ...v, bodyFatPercent }))} />
+            <Field label="Peito (cm)" value={assessment.chest} numeric onChangeText={(chest) => setAssessment((v) => ({ ...v, chest }))} />
+            <Field label="Cintura (cm)" value={assessment.waist} numeric onChangeText={(waist) => setAssessment((v) => ({ ...v, waist }))} />
+            <Field label="Quadril (cm)" value={assessment.hip} numeric onChangeText={(hip) => setAssessment((v) => ({ ...v, hip }))} />
+            <Field label="Restrições / lesões" value={assessment.restrictions} onChangeText={(restrictions) => setAssessment((v) => ({ ...v, restrictions }))} />
+            <Field label="Observações" value={assessment.notes} onChangeText={(notes) => setAssessment((v) => ({ ...v, notes }))} />
+          </View>
+          <Button
+            testID="assessment-create"
+            label="Registrar avaliação"
+            disabled={saving}
+            onPress={() => void mutate(() => api(`/students/${selectedStudent}/assessments`, undefined, {
+              method: 'POST',
+              body: JSON.stringify({
+                ...(number(assessment.weight) !== undefined ? { weight: number(assessment.weight) } : {}),
+                ...(number(assessment.height) !== undefined ? { height: number(assessment.height) } : {}),
+                ...(number(assessment.bodyFatPercent) !== undefined ? { bodyFatPercent: number(assessment.bodyFatPercent) } : {}),
+                ...([assessment.chest, assessment.waist, assessment.hip].some((value) => number(value) !== undefined) ? {
+                  measurements: {
+                    ...(number(assessment.chest) !== undefined ? { chest: number(assessment.chest) } : {}),
+                    ...(number(assessment.waist) !== undefined ? { waist: number(assessment.waist) } : {}),
+                    ...(number(assessment.hip) !== undefined ? { hip: number(assessment.hip) } : {}),
+                  },
+                } : {}),
+                ...(assessment.restrictions.trim() ? { restrictions: { notes: assessment.restrictions.trim() } } : {}),
+                ...(assessment.notes.trim() ? { notes: assessment.notes.trim() } : {}),
+              }),
+            }), () => setAssessment({ weight: '', height: '', bodyFatPercent: '', chest: '', waist: '', hip: '', restrictions: '', notes: '' }))}
+          />
+        </> : null}
+      </Section>
+
+      {selectedStudent ? <View style={styles.compactGrid}>
+        <View style={styles.compactPane}><Section compact title="Evolução corporal" subtitle="Comparação da avaliação mais recente com a anterior.">
+          {latest ? <>
+            <View style={styles.assessmentMetricGrid}>
+              <View style={styles.assessmentMetric}><Text style={styles.kpiValue}>{latest.weight ?? '—'}</Text><Text style={styles.muted}>Peso kg · Δ {delta(latest.weight, previous?.weight, ' kg')}</Text></View>
+              <View style={styles.assessmentMetric}><Text style={styles.kpiValue}>{latest.bmi ?? '—'}</Text><Text style={styles.muted}>IMC · Δ {delta(latest.bmi, previous?.bmi)}</Text></View>
+              <View style={styles.assessmentMetric}><Text style={styles.kpiValue}>{latest.bodyFatPercent ?? '—'}</Text><Text style={styles.muted}>Gordura % · Δ {delta(latest.bodyFatPercent, previous?.bodyFatPercent, ' p.p.')}</Text></View>
+            </View>
+            <Text style={styles.helper}>Última avaliação: {dateLabel(latest.createdAt)}</Text>
+            <Text style={styles.muted}>{measurementSummary(latest.measurements)}</Text>
+            <Text style={styles.muted}>Restrições: {restrictionsSummary(latest.restrictions)}</Text>
+          </> : <Text style={styles.muted}>Nenhuma avaliação registrada.</Text>}
+        </Section></View>
+        <View style={styles.compactPane}><Section compact title="Contexto de treino" subtitle="Treinos do aluno disponíveis para revisão junto ao histórico físico.">
+          {workouts.length ? workouts.slice(0, 8).map((workout: any) => <View key={workout.id} style={styles.row}><Text style={styles.rowTitle}>{workout.goal ?? 'Treino'}</Text><Text style={styles.muted}>Situação: {workout.status ?? '—'} · Nível: {workout.level ?? '—'}{workout.createdByAI ? ' · candidato da IA/revisado' : ''}</Text></View>) : <Text style={styles.muted}>Nenhum treino encontrado para este aluno.</Text>}
+        </Section></View>
+      </View> : null}
+
+      {selectedStudent ? <Section compact title="Histórico de avaliações">
+        {assessments.length ? assessments.map((item: any) => <View key={item.id} style={styles.row}>
+          <View style={styles.teamRowHead}><Text style={styles.rowTitle}>{dateLabel(item.createdAt)}</Text><Text style={styles.muted}>{item.weight != null ? `${item.weight} kg` : 'Peso —'} · IMC {item.bmi ?? '—'} · Gordura {item.bodyFatPercent ?? '—'}%</Text></View>
+          <Text style={styles.muted}>{measurementSummary(item.measurements)}</Text>
+          <Text style={styles.muted}>Restrições: {restrictionsSummary(item.restrictions)}</Text>
+          {item.notes ? <Text style={styles.helper}>Observações: {item.notes}</Text> : null}
+        </View>) : <Text style={styles.muted}>Nenhuma avaliação registrada.</Text>}
+      </Section> : <Section compact title="Histórico de avaliações"><Text style={styles.muted}>Selecione um aluno para visualizar o histórico.</Text></Section>}
+    </>;
   }
   function workoutsView() {
     const students = list(data.students); const workouts = list(data.workouts);
@@ -718,6 +921,10 @@ const styles = StyleSheet.create({
   creatorPane: { flexGrow: 1, flexBasis: 300, minWidth: 270 },
   equipmentCatalogGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   equipmentCard: { flexGrow: 1, flexBasis: 260, minWidth: 240, maxWidth: 420, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 11 },
+  exerciseCardSelected: { borderColor: '#2f91ff', backgroundColor: '#071a31' },
+  assessmentMetricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  assessmentMetric: { flexGrow: 1, flexBasis: 120, minWidth: 110, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 10, padding: 10 },
+  kpiValue: { color: '#eef7ff', fontSize: 22, fontWeight: '900' },
   navSection: { color: '#6fa8dc', fontSize: 10, fontWeight: '800', letterSpacing: 0.7, marginTop: 10, marginBottom: 4, marginHorizontal: 12 },
   restrictedNote: { color: '#bfdbfe', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, fontSize: 11, fontWeight: '700', marginBottom: 8 },
   adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
