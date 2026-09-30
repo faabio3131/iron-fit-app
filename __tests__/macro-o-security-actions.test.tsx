@@ -50,6 +50,12 @@ function installApi() {
     if (path.startsWith('/dashboard/birthdays')) return [];
     if (path === '/schedule-slots') return [{ id: 'slot-1', weekday: 1, startTime: '08:00', endTime: '09:00', capacity: 12, active: true }];
     if (path === '/workouts') return [{ id: 'workout-ai-1', status: 'PENDING_REVIEW', createdByAI: true, goal: 'Hipertrofia', student: { user: { name: 'Aluno IA' } } }];
+    if (path === '/equipments') return [{ id: 'inv-1', name: 'Leg Press', catalogItemId: 'catalog-1', active: true, catalogItem: { id: 'catalog-1', name: 'Leg Press', category: 'PLATE_LOADED' } }];
+    if (path.startsWith('/equipments/catalog?') || path === '/equipments/catalog') return [{ id: 'catalog-1', name: 'Leg Press', category: 'PLATE_LOADED', selected: true, inventoryId: 'inv-1' }, { id: 'catalog-2', name: 'Esteira', category: 'CARDIO', selected: false, inventoryId: null }];
+    if (path === '/equipments/catalog/candidates' && !options?.method) return [{ id: 'candidate-1', proposedName: 'Máquina Especial', status: 'PENDING', proposedCategory: 'SPECIALIZED_STRENGTH' }];
+    if (path === '/equipments/catalog/candidates' && options?.method === 'POST') return { id: 'candidate-new', proposedName: 'Equipamento Novo', status: 'PENDING' };
+    if (path === '/exercises') return [{ id: 'exercise-1', name: 'Agachamento' }];
+    if (path === '/equipments/exercises/exercise-1/compatible') return [{ id: 'inv-1', name: 'Leg Press', compatibility: 'SUPPORTED', mappingPriority: 1 }];
     if (path === '/gyms/gym-1') return { id: 'gym-1', name: 'Academia QA' };
     if (path === '/users' && options?.method === 'POST') return { id: 'member-1', name: 'Professor QA', email: 'professor@example.com' };
     if (path === '/users/invite' && options?.method === 'POST') return { id: 'member-invite-1', name: 'Recepção Convite', email: 'recepcao.convite@example.com', invitation: { accepted: true, delivery: 'PASSWORD_SETUP_EMAIL' } };
@@ -158,6 +164,35 @@ test('Cockpit mostra agenda, alertas e candidatos da Intelligence com drill-down
   expect(view.getByText('IRON Intelligence')).toBeTruthy();
   expect(view.getByText('Aluno IA')).toBeTruthy();
   expect(view.getByText(/Seg · 08:00–09:00/)).toBeTruthy();
+});
+
+test('Equipment Intelligence oferece catálogo, inventário, compatibilidade e candidate intake sem cadastro manual', async () => {
+  mockFeatureSet = [
+    { featureKey: 'equipment.catalog', kind: 'FEATURE', value: true, source: 'PLAN' },
+    { featureKey: 'equipment.inventory', kind: 'FEATURE', value: true, source: 'PLAN' },
+  ];
+  const view = render(<CommercialWebApp />);
+
+  await waitFor(() => expect(view.getByTestId('nav-equipment')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-equipment'));
+
+  await waitFor(() => expect(view.getByText('Catálogo mestre')).toBeTruthy());
+  expect(view.getByText('Inventário inteligente')).toBeTruthy();
+  expect(view.getByText('Compatibilidade por exercício')).toBeTruthy();
+  expect(view.getByText('Não encontrou o equipamento?')).toBeTruthy();
+  expect(view.queryByText('Novo equipamento')).toBeNull();
+
+  fireEvent.press(view.getByText('Agachamento'));
+  fireEvent.press(view.getByText('Consultar compatibilidade'));
+  await waitFor(() => expect(mockApi.mock.calls.some(([path]) => path === '/equipments/exercises/exercise-1/compatible')).toBe(true));
+
+  fireEvent.changeText(view.getByLabelText('Nome proposto'), 'Equipamento Novo');
+  fireEvent.press(view.getByTestId('equipment-candidate-submit'));
+  await waitFor(() => {
+    const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/equipments/catalog/candidates' && options?.method === 'POST');
+    expect(call).toBeTruthy();
+    expect(JSON.parse(String(call?.[2]?.body ?? '{}')).toMatchObject({ proposedName: 'Equipamento Novo' });
+  });
 });
 
 test('área administrativa exige reautenticação antes de carregar Financeiro', async () => {
