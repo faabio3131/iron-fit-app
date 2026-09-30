@@ -2,6 +2,7 @@ import { RecordList } from './RecordList';
 import { IronBrand } from '../components/IronBrand';
 import { IronInput as TextInput } from '../components/IronInput';
 import { DashboardOverview } from './DashboardOverview';
+import { ScheduleWorkspace } from './ScheduleWorkspace';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
@@ -147,7 +148,6 @@ export function CommercialWebApp() {
   const [exerciseLevel, setExerciseLevel] = useState('');
   const [selectedExerciseLibrary, setSelectedExerciseLibrary] = useState('');
   const [assessment, setAssessment] = useState({ weight: '', height: '', bodyFatPercent: '', chest: '', waist: '', hip: '', restrictions: '', notes: '' });
-  const [schedule, setSchedule] = useState({ weekday: '1', startTime: '08:00', endTime: '09:00', capacity: '10' });
   const [account, setAccount] = useState({ name: '', type: 'CASH', initialBalance: '0' });
   const [studentPlan, setStudentPlan] = useState({ planName: '', amount: '', nextBillingAt: '' });
   const [charge, setCharge] = useState({ amount: '', dueDate: '', paymentMethod: '' });
@@ -162,10 +162,6 @@ export function CommercialWebApp() {
   const [selectedWorkoutExercise, setSelectedWorkoutExercise] = useState('');
   const [selectedWorkoutEquipment, setSelectedWorkoutEquipment] = useState('');
   const [workoutExerciseDraft, setWorkoutExerciseDraft] = useState({ sets: '3', reps: '10', restSeconds: '60', suggestedLoad: '', notes: '' });
-  const [selectedScheduleStudent, setSelectedScheduleStudent] = useState('');
-  const [selectedScheduleSlot, setSelectedScheduleSlot] = useState('');
-  const [bookingDate, setBookingDate] = useState('');
-  const [lastBooking, setLastBooking] = useState<any>(null);
   const [selectedAccessStudent, setSelectedAccessStudent] = useState('');
   const [credentialType, setCredentialType] = useState('QR_CODE');
   const [credentialExpiresAt, setCredentialExpiresAt] = useState('');
@@ -277,7 +273,7 @@ export function CommercialWebApp() {
         ]);
         Object.assign(next, { workouts, students, workoutExercises: exercises, workoutInventory: inventory, workoutAssessments: assessments });
       }
-      if (key === 'schedule') { [next.slots, next.students] = await Promise.all([api('/schedule-slots'), api('/students')]); }
+      if (key === 'schedule') { [next.slots, next.students, next.bookings] = await Promise.all([api('/schedule-slots'), api('/students'), api('/schedules')]); }
       if (key === 'access') { [next.events, next.students] = await Promise.all([api('/access/events'), api('/students')]); }
       if (key === 'financial') { [next.accounts, next.charges, next.students] = await Promise.all([api('/financial/accounts'), api('/financial/charges'), api('/students')]); }
       if (key === 'entitlements') { [next.features, next.configurations] = await Promise.all([api('/product-entitlements/tenant/features'), api('/product-entitlements/tenant/configurations')]); next.subscription = subscription; }
@@ -1093,8 +1089,31 @@ export function CommercialWebApp() {
     </>;
   }
   function scheduleView() {
-    const students = list(data.students); const slots = list(data.slots);
-    return <><View style={styles.compactGrid}>{can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? <View style={styles.compactPane}><Section compact title="Criar horário"><View style={styles.form}><Field label="Dia da semana (0 a 6)" value={schedule.weekday} numeric onChangeText={(weekday) => setSchedule((v) => ({ ...v, weekday }))} /><Field label="Início" value={schedule.startTime} onChangeText={(startTime) => setSchedule((v) => ({ ...v, startTime }))} /><Field label="Fim" value={schedule.endTime} onChangeText={(endTime) => setSchedule((v) => ({ ...v, endTime }))} /><Field label="Capacidade" value={schedule.capacity} numeric onChangeText={(capacity) => setSchedule((v) => ({ ...v, capacity }))} /></View><Button label="Criar horário" disabled={saving} onPress={() => void mutate(() => api('/schedule-slots', undefined, { method: 'POST', body: JSON.stringify({ weekday: Number(schedule.weekday), startTime: schedule.startTime.trim(), endTime: schedule.endTime.trim(), capacity: Number(schedule.capacity), active: true }) }))} /></Section></View> : null}{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <View style={styles.compactPane}><Section compact title="Agendar aluno e check-in" subtitle="Selecione aluno, horário e data."><Text style={styles.label}>Aluno</Text><Chips rows={students} selected={selectedScheduleStudent} onSelect={setSelectedScheduleStudent} /><Text style={styles.label}>Horário</Text><Chips rows={slots} selected={selectedScheduleSlot} onSelect={setSelectedScheduleSlot} /><Field label="Data (AAAA-MM-DD)" value={bookingDate} onChangeText={setBookingDate} /><Button testID="schedule-book" label="Agendar aluno" disabled={saving || !selectedScheduleStudent || !selectedScheduleSlot || !bookingDate.trim()} onPress={() => void mutate(async () => { const created = await api('/schedules', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedScheduleStudent, slotId: selectedScheduleSlot, date: bookingDate.trim() }) }); setLastBooking(created); return created; })} />{lastBooking?.id ? <View style={styles.invite}><Text style={styles.rowTitle}>Agendamento criado</Text><Text style={styles.muted}>Identificador: {lastBooking.id}</Text><Button secondary testID="schedule-check-in" label="Registrar check-in" disabled={saving} onPress={() => void mutate(() => api(`/schedules/${lastBooking.id}/check-in`, undefined, { method: 'PATCH' }), () => setLastBooking(null))} /></View> : null}</Section></View> : null}</View><Section compact title="Agenda"><Data value={slots} /></Section></>;
+    return <ScheduleWorkspace
+      students={list(data.students)}
+      slots={list(data.slots)}
+      bookings={list(data.bookings)}
+      saving={saving}
+      canCreateSlot={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
+      canManageBookings={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')}
+      onCreateSlot={async (payload) => {
+        await mutate(() => api('/schedule-slots', undefined, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        }));
+      }}
+      onBook={async (payload) => {
+        await mutate(() => api('/schedules', undefined, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        }));
+      }}
+      onCheckIn={async (bookingId) => {
+        await mutate(() => api(`/schedules/${bookingId}/check-in`, undefined, {
+          method: 'PATCH',
+        }));
+      }}
+    />;
   }
   function accessView() {
     const students = list(data.students);
