@@ -4,6 +4,7 @@ const api = fs.readFileSync('src/services/api.ts', 'utf8');
 const auth = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
 const navigator = fs.readFileSync('src/navigation/RootNavigator.tsx', 'utf8');
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
+const entitlements = fs.readFileSync('src/web/EntitlementsWorkspace.tsx', 'utf8');
 const trial = fs.readFileSync('src/web/TrialSignupScreen.tsx', 'utf8');
 const workouts = fs.readFileSync('src/screens/WorkoutsScreen.tsx', 'utf8');
 const schedules = fs.readFileSync('src/screens/SchedulesScreen.tsx', 'utf8');
@@ -51,7 +52,7 @@ test('B6 commercial Web consumes canonical backend domains and entitlement resol
   }
   expect(web).toContain('equipment.inventory');
   expect(web).toContain('equipment.catalog');
-  expect(web).toContain('FAIL_CLOSED_DEFAULT');
+  expect(entitlements).toContain('FAIL_CLOSED_DEFAULT');
   expect(web).not.toMatch(/plan\s*===|planName\s*===/);
   expect(web).not.toMatch(/api\('\/equipments', undefined, \{ method: 'POST'/);
 });
