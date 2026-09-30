@@ -155,6 +155,13 @@ export function CommercialWebApp() {
   const [aiInstructions, setAiInstructions] = useState('');
   const [configDraft, setConfigDraft] = useState<Record<string, string>>({});
   const [workoutDraft, setWorkoutDraft] = useState({ goal: '', level: '', weeklyFrequency: '', notes: '' });
+  const [workoutAssessmentId, setWorkoutAssessmentId] = useState('');
+  const [workoutSessions, setWorkoutSessions] = useState<any[]>([]);
+  const [workoutSessionDraft, setWorkoutSessionDraft] = useState({ name: 'Treino A', sessionType: '', estimatedMinutes: '60' });
+  const [workoutSessionExercises, setWorkoutSessionExercises] = useState<any[]>([]);
+  const [selectedWorkoutExercise, setSelectedWorkoutExercise] = useState('');
+  const [selectedWorkoutEquipment, setSelectedWorkoutEquipment] = useState('');
+  const [workoutExerciseDraft, setWorkoutExerciseDraft] = useState({ sets: '3', reps: '10', restSeconds: '60', suggestedLoad: '', notes: '' });
   const [selectedScheduleStudent, setSelectedScheduleStudent] = useState('');
   const [selectedScheduleSlot, setSelectedScheduleSlot] = useState('');
   const [bookingDate, setBookingDate] = useState('');
@@ -260,7 +267,16 @@ export function CommercialWebApp() {
           ]);
         }
       }
-      if (key === 'workouts') { [next.workouts, next.students] = await Promise.all([api('/workouts'), api('/students')]); }
+      if (key === 'workouts') {
+        const [workouts, students, exercises, inventory, assessments] = await Promise.all([
+          api('/workouts'),
+          api('/students'),
+          api('/exercises'),
+          api('/equipments'),
+          selectedStudent ? api(`/students/${selectedStudent}/assessments`) : Promise.resolve([]),
+        ]);
+        Object.assign(next, { workouts, students, workoutExercises: exercises, workoutInventory: inventory, workoutAssessments: assessments });
+      }
       if (key === 'schedule') { [next.slots, next.students] = await Promise.all([api('/schedule-slots'), api('/students')]); }
       if (key === 'access') { [next.events, next.students] = await Promise.all([api('/access/events'), api('/students')]); }
       if (key === 'financial') { [next.accounts, next.charges, next.students] = await Promise.all([api('/financial/accounts'), api('/financial/charges'), api('/students')]); }
