@@ -33,14 +33,14 @@ function DailyBars({ rows, financial }: { rows: { date: string; value: number }[
     {!financial && <Text style={styles.axis}>{day(row.date)}</Text>}
   </View>)}</View>{financial && <View style={styles.range}><Text style={styles.muted}>{day(valid[0].date)}</Text><Text style={styles.muted}>{day(valid[valid.length - 1].date)}</Text></View>}</View>;
 }
-export function DashboardOverview({ data, navigate, canNavigate = () => true }: { data: DashboardData; canNavigate?: (module: 'students' | 'financial' | 'workouts' | 'equipment') => boolean; navigate: (module: 'students' | 'financial' | 'workouts' | 'equipment') => void }) {
+export function DashboardOverview({ data, navigate, canNavigate = () => true, showFinancial = true }: { data: DashboardData; canNavigate?: (module: 'students' | 'financial' | 'workouts' | 'equipment') => boolean; navigate: (module: 'students' | 'financial' | 'workouts' | 'equipment') => void; showFinancial?: boolean }) {
   const summary = data.summary;
-  const metrics: { label: string; value: string; detail: string; icon: Icon; target: 'students' | 'financial' | 'workouts' | 'equipment' }[] = [
+  const metrics: { label: string; value: string; detail: string; icon: Icon; target: 'students' | 'financial' | 'workouts' | 'equipment'; financial?: boolean }[] = [
     { label: 'Alunos ativos', value: count(summary?.students?.active), detail: `${count(summary?.students?.total)} alunos cadastrados`, icon: 'people-outline', target: 'students' },
-    { label: 'Receita do mês', value: money(summary?.revenue?.thisMonth), detail: 'Recebimentos confirmados', icon: 'wallet-outline', target: 'financial' },
-    { label: 'Cobranças vencidas', value: count(summary?.charges?.overdue), detail: `${count(summary?.charges?.pending)} cobranças pendentes`, icon: 'time-outline', target: 'financial' },
+    { label: 'Receita do mês', value: money(summary?.revenue?.thisMonth), detail: 'Recebimentos confirmados', icon: 'wallet-outline', target: 'financial', financial: true },
+    { label: 'Cobranças vencidas', value: count(summary?.charges?.overdue), detail: `${count(summary?.charges?.pending)} cobranças pendentes`, icon: 'time-outline', target: 'financial', financial: true },
     { label: 'Treinos aprovados', value: count(summary?.workouts?.approved), detail: 'Aprovados e ativos', icon: 'barbell-outline', target: 'workouts' },
-  ];
+  ].filter((metric) => showFinancial || !metric.financial);
   const revenue = Array.isArray(data.revenue) ? data.revenue : [];
   const attendance = Array.isArray(data.attendance) ? data.attendance : [];
   const overdue = Array.isArray(data.overdue) ? data.overdue : [];
@@ -51,11 +51,11 @@ export function DashboardOverview({ data, navigate, canNavigate = () => true }: 
       <Text style={styles.metricValue}>{metric.value}</Text><Text style={styles.muted}>{metric.detail}</Text>
     </TouchableOpacity>)}</View>
     <View style={styles.grid}>
-      <Panel title="Receita diária" subtitle="Últimos 30 dias · recebimentos confirmados"><DailyBars financial rows={revenue.map(row => ({ date: row.date, value: row.amount }))} /></Panel>
+      {showFinancial ? <Panel title="Receita diária" subtitle="Últimos 30 dias · recebimentos confirmados"><DailyBars financial rows={revenue.map(row => ({ date: row.date, value: row.amount }))} /></Panel> : null}
       <Panel title="Frequência" subtitle="Últimos 7 dias · check-ins realizados"><DailyBars rows={attendance.map(row => ({ date: row.date, value: row.count }))} /></Panel>
     </View>
     <View style={styles.grid}>
-      <Panel title="Atenção às cobranças" subtitle="Vencimentos em aberto · até 20 registros">{overdue.length ? overdue.map(row => <View style={styles.listRow} key={row.id}><View style={styles.rowText}><Text style={styles.item}>{row.student?.user?.name ?? 'Aluno'}</Text><Text style={styles.muted}>Venceu em {day(row.dueDate)}</Text></View><Text style={styles.amount}>{money(row.amount)}</Text></View>) : <Text style={styles.empty}>{data.overdue ? 'Nenhuma cobrança vencida.' : 'Informações indisponíveis.'}</Text>}</Panel>
+      {showFinancial ? <Panel title="Atenção às cobranças" subtitle="Vencimentos em aberto · até 20 registros">{overdue.length ? overdue.map(row => <View style={styles.listRow} key={row.id}><View style={styles.rowText}><Text style={styles.item}>{row.student?.user?.name ?? 'Aluno'}</Text><Text style={styles.muted}>Venceu em {day(row.dueDate)}</Text></View><Text style={styles.amount}>{money(row.amount)}</Text></View>) : <Text style={styles.empty}>{data.overdue ? 'Nenhuma cobrança vencida.' : 'Informações indisponíveis.'}</Text>}</Panel> : null}
       <Panel title="Aniversariantes" subtitle="Próximos 30 dias">{birthdays.length ? birthdays.map(row => <View key={row.studentId} style={styles.listRow}><Ionicons name="gift-outline" size={20} color={iron.cyan} /><Text style={[styles.item, styles.rowText]}>{row.name ?? 'Aluno'}</Text><Text style={styles.muted}>{day(row.nextBirthday)}</Text></View>) : <Text style={styles.empty}>{data.birthdays ? 'Nenhum aniversário neste período.' : 'Informações indisponíveis.'}</Text>}</Panel>
     </View>
   </View>;
