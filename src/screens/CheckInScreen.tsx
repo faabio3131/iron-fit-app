@@ -46,8 +46,8 @@ const styles = StyleSheet.create({
   title: { color: '#eef7ff', fontSize: 16, fontWeight: '800' },
   sub: { color: '#ffffffcc', fontSize: 12, marginTop: 2 },
   message: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 16 },
-  messageOk: { backgroundColor: '#10b98120', borderColor: '#10b98150' },
+  messageOk: { backgroundColor: '#071a31', borderColor: '#1e4d7a' },
   messageError: { backgroundColor: '#ef444420', borderColor: '#ef444450' },
-  okText: { color: '#10b981', fontWeight: '600' },
+  okText: { color: '#67d6ff', fontWeight: '700' },
   errorText: { color: '#ef4444', fontWeight: '600' },
 });
