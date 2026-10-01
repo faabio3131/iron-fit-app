@@ -365,6 +365,7 @@ export function SaasBillingPanel({
                 {current ? <Text style={styles.currentBadge}>Plano atual</Text> : null}
                 {action ? (
                   <TouchableOpacity
+                    accessibilityRole="button"
                     testID={`saas-billing-action-${price.priceCode}`}
                     style={[styles.button, saving && styles.disabled]}
                     disabled={saving}
@@ -380,6 +381,7 @@ export function SaasBillingPanel({
 
         {agreement && agreement.status !== 'CANCELED' && !agreement.cancelAtPeriodEnd ? (
           <TouchableOpacity
+            accessibilityRole="button"
             testID="saas-billing-cancel-period-end"
             style={[styles.secondaryButton, saving && styles.disabled]}
             disabled={saving}
@@ -515,6 +517,7 @@ export function SaasBillingPanel({
           <Text style={styles.muted}>A alteração foi registrada e o estado comercial foi atualizado.</Text>
           {typeof lastAction?.checkoutUrl === 'string' && lastAction.checkoutUrl ? (
             <TouchableOpacity
+              accessibilityRole="button"
               testID="saas-billing-open-checkout"
               style={styles.button}
               onPress={() => void Linking.openURL(lastAction.checkoutUrl)}
@@ -564,8 +567,8 @@ const styles = StyleSheet.create({
   invoiceMain: { flex: 1, minWidth: 0 },
   invoiceAmount: { alignItems: 'flex-end', gap: 6 },
   rowTitle: { color: '#eef7ff', fontSize: 12, fontWeight: '900' },
-  button: { alignSelf: 'flex-start', backgroundColor: '#176bc1', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
-  secondaryButton: { alignSelf: 'flex-start', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#2a3b52', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
+  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#176bc1', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
+  secondaryButton: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#2a3b52', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
   buttonText: { color: '#fff', fontSize: 11, fontWeight: '900' },
   secondaryButtonText: { color: '#dce9f6', fontSize: 11, fontWeight: '900' },
   inlineButton: { backgroundColor: '#08172a', borderWidth: 1, borderColor: '#2f91ff', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5 },
