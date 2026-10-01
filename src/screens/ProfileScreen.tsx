@@ -175,6 +175,8 @@ export function ProfileScreen() {
       </View>
 
       <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel="Abrir Segurança da Conta"
         testID="account-security"
         style={styles.security}
         onPress={() => setSecurityMode(true)}
@@ -184,6 +186,8 @@ export function ProfileScreen() {
         <Text style={styles.securityText}>Segurança da conta</Text>
       </TouchableOpacity>
       <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel="Sair da conta"
         testID="logout-submit"
         style={styles.logout}
         onPress={() => void logout()}
