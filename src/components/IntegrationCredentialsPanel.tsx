@@ -80,7 +80,14 @@ function commercialCapabilities(provider: Provider) {
       (capability) => capability === 'meta.whatsapp',
     );
   }
+  if (provider.providerCode === 'google') {
+    return [];
+  }
   return provider.capabilities;
+}
+
+function commercialProviders(providers: Provider[]) {
+  return providers.filter((provider) => commercialCapabilities(provider).length > 0);
 }
 
 const authModelLabels: Record<string, string> = {
@@ -258,7 +265,8 @@ export function IntegrationCredentialsPanel({
         api('/integrations/providers'),
         api('/integrations/connections'),
       ]);
-      const nextProviders = Array.isArray(catalog?.providers) ? catalog.providers : [];
+      const catalogProviders = Array.isArray(catalog?.providers) ? catalog.providers : [];
+      const nextProviders = commercialProviders(catalogProviders);
       setProviders(nextProviders);
       setEnvironment(typeof catalog?.environment === 'string' ? catalog.environment : '');
       setConnections(Array.isArray(current) ? current : []);
