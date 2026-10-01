@@ -27,7 +27,7 @@ export function EvolutionScreen() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-      <View style={styles.header}><View><Text style={styles.heading}>Sua evolução</Text><Text style={styles.sub}>Acompanhe seu progresso 📈</Text></View><Ionicons name="trending-up" size={24} color="#f59e0b" /></View>
+      <View style={styles.header}><View><Text style={styles.heading}>Sua evolução</Text><Text style={styles.sub}>Acompanhe seu progresso 📈</Text></View><Ionicons name="trending-up" size={24} color="#2f91ff" /></View>
       <AIProjectionCard assessmentCount={assessments.length} latestAssessmentDate={assessments[0]?.createdAt} />
       <Text style={styles.sectionTitle}>Avaliações Físicas</Text>
       {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : assessments.length === 0 ? (
