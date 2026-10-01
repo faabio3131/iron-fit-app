@@ -74,6 +74,15 @@ function capabilityLabel(value: string) {
     .join(' ');
 }
 
+function commercialCapabilities(provider: Provider) {
+  if (provider.providerCode === 'meta') {
+    return provider.capabilities.filter(
+      (capability) => capability === 'meta.whatsapp',
+    );
+  }
+  return provider.capabilities;
+}
+
 const authModelLabels: Record<string, string> = {
   API_KEY: 'Chave de API',
   ACCESS_TOKEN: 'Token de acesso',
@@ -257,7 +266,7 @@ export function IntegrationCredentialsPanel({
         const first = nextProviders[0];
         setSelectedProviderCode(first.providerCode);
         setAuthModel(first.authModels?.[0] ?? '');
-        setCapabilities(Array.isArray(first.capabilities) ? [...first.capabilities] : []);
+        setCapabilities(commercialCapabilities(first));
       }
     } catch (reason) {
       setError(errorMessage(reason));
@@ -276,7 +285,7 @@ export function IntegrationCredentialsPanel({
   function selectProvider(provider: Provider) {
     setSelectedProviderCode(provider.providerCode);
     setAuthModel(provider.authModels?.[0] ?? '');
-    setCapabilities(Array.isArray(provider.capabilities) ? [...provider.capabilities] : []);
+    setCapabilities(commercialCapabilities(provider));
     setPublicConfigRows([{ id: rowId(), key: '', value: '' }]);
     setSecret('');
     setStepUp(EMPTY_STEP);
@@ -572,7 +581,7 @@ export function IntegrationCredentialsPanel({
 
           <Text style={styles.label}>Recursos autorizados</Text>
           <View style={styles.chips}>
-            {selectedProvider.capabilities.map((capability) => (
+            {commercialCapabilities(selectedProvider).map((capability) => (
               <TouchableOpacity
                 accessibilityRole="button"
                 accessibilityState={{ selected: capabilities.includes(capability) }}
