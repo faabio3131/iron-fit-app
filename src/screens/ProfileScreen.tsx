@@ -68,7 +68,6 @@ export function ProfileScreen() {
         <Ionicons name="log-out-outline" size={20} color="#eef7ff" />
         <Text style={styles.logoutText}>Sair da conta</Text>
       </TouchableOpacity>
-      <Text style={styles.version}>Iron Fit v0.2.0</Text>
     </ScrollView>
   );
 }
@@ -101,7 +100,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#312e81',
+    backgroundColor: '#176bc1',
+    borderWidth: 1,
+    borderColor: '#2f91ff',
     paddingVertical: 14,
     borderRadius: 12,
     gap: 8,
@@ -118,5 +119,4 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   logoutText: { color: '#eef7ff', fontWeight: '700', fontSize: 15 },
-  version: { color: '#9fb0c5', textAlign: 'center', fontSize: 11, marginTop: 16 },
 });
