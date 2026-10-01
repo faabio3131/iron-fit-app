@@ -39,7 +39,7 @@ function recordCount(record: unknown, key: string) {
 
 function recordTotal(record: unknown) {
   if (!record || typeof record !== 'object') return 0;
-  return Object.values(record as Record<string, unknown>).reduce(
+  return Object.values(record as Record<string, unknown>).reduce<number>(
     (sum, value) => sum + (Number(value) || 0),
     0,
   );
