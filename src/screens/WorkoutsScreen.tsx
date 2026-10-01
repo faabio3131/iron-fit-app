@@ -40,7 +40,7 @@ export function WorkoutsScreen() {
         </View>
         <View style={styles.stats}>
           <StatCard icon="barbell" value={String(workouts.length)} label="Treinos" color="#2f91ff" />
-          <StatCard icon="calendar" value={String(weeklyFrequency)} label="Dias/semana" color="#f59e0b" />
+          <StatCard icon="calendar" value={String(weeklyFrequency)} label="Dias/semana" color="#67d6ff" />
         </View>
         <AIInsightCard workoutCount={workouts.length} weeklyFrequency={weeklyFrequency} onOpenAssistant={() => setAssistantVisible(true)} />
         <Text style={styles.sectionTitle}>Seus Treinos</Text>
