@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
   input: { color: '#eef7ff', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#243247', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   policy: { color: '#9fb0c5', fontSize: 10, lineHeight: 15, marginTop: 6 },
   help: { color: '#8296ab', fontSize: 10, lineHeight: 15, marginTop: 8 },
-  button: { alignSelf: 'flex-start', backgroundColor: '#176bc1', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
+  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#176bc1', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
   buttonSecondary: { backgroundColor: '#08172a', borderWidth: 1, borderColor: '#2a3b52' },
   buttonDanger: { backgroundColor: '#7f1d1d' },
   buttonText: { color: '#fff', fontWeight: '900', fontSize: 10 },
