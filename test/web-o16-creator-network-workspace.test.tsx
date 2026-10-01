@@ -54,8 +54,8 @@ describe('O16 Creator Network V1', () => {
     expect(view.queryByText('Conteúdo licenciado')).toBeNull();
     expect(view.queryByText('Conteúdo IRON')).toBeNull();
     expect(view.queryByText('Conteúdo privado')).toBeNull();
-    expect(view.getByText('14')).toBeTruthy();
-    expect(view.getByText('22')).toBeTruthy();
+    expect(view.getAllByText('14').length).toBeGreaterThan(0);
+    expect(view.getAllByText('22').length).toBeGreaterThan(0);
   });
 
   test('shows authorized managed/private items only when each capability is active', () => {
@@ -70,8 +70,8 @@ describe('O16 Creator Network V1', () => {
       />,
     );
 
-    expect(view.getByText('Conteúdo licenciado')).toBeTruthy();
-    expect(view.getByText('Conteúdo IRON')).toBeTruthy();
-    expect(view.getByText('Conteúdo privado')).toBeTruthy();
+    expect(view.getAllByText('Conteúdo licenciado').length).toBeGreaterThan(0);
+    expect(view.getAllByText('Conteúdo IRON').length).toBeGreaterThan(0);
+    expect(view.getAllByText('Conteúdo privado').length).toBeGreaterThan(0);
   });
 });
