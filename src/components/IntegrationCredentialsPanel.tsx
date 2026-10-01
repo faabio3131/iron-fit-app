@@ -532,7 +532,7 @@ export function IntegrationCredentialsPanel({
         <Text style={styles.title}>Escolha um provedor</Text>
         <Text style={styles.muted}>As opções abaixo vêm do catálogo canônico do backend e respeitam seu plano.</Text>
         {providers.length === 0 ? (
-          <Text style={styles.empty}>Nenhum provedor registrado para este ambiente.</Text>
+          <Text style={styles.empty}>Nenhum provedor comercial está disponível para esta versão.</Text>
         ) : (
           <View style={styles.providerGrid}>
             {providers.map((provider) => {
