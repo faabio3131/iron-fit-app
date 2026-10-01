@@ -7,7 +7,7 @@ test('O16 Creator Network uses dedicated product UI instead of generic raw recor
   expect(workspace).toContain('CREATOR NETWORK');
   expect(workspace).toContain('Conteúdo autorizado');
   expect(workspace).toContain('Utilização');
-  expect(workspace).toContain('Engajamento');
+  expect(workspace).toContain('Indicadores');
   expect(web).toContain('<CreatorNetworkWorkspace');
   expect(web).not.toContain('Resumo operacional da rede de criadores.');
 });
