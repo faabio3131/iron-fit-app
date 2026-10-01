@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: '#eef7ff', fontSize: 16, fontWeight: '900' },
   sectionSubtitle: { color: '#8296ab', fontSize: 9, marginTop: 2, marginBottom: 7 },
   featureGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start' },
-  featureCard: { flexGrow: 1, flexBasis: 390, minWidth: 300, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 10 },
+  featureCard: { flexGrow: 1, flexBasis: 390, minWidth: 0, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 10 },
   featureCardBlocked: { borderColor: '#5a3040' },
   featureHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
   featureCopy: { flex: 1, minWidth: 220 },
