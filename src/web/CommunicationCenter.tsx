@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
   alertCard: { borderColor: '#7f2d3a', backgroundColor: '#1a1018' },
   bigValue: { color: '#eef7ff', fontSize: 20, fontWeight: '900', marginTop: 4 },
   columns: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start' },
-  column: { flexGrow: 1, flexBasis: 430, minWidth: 320, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 13, marginBottom: 8 },
+  column: { flexGrow: 1, flexBasis: 430, minWidth: 0, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 13, marginBottom: 8 },
   section: { backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 13, marginBottom: 8 },
   sectionTitle: { color: '#eef7ff', fontSize: 16, fontWeight: '900', marginBottom: 4 },
   label: { color: '#9fb0c5', fontSize: 10, fontWeight: '800', marginTop: 8, marginBottom: 4 },
