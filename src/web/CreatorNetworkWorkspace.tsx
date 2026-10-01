@@ -118,7 +118,7 @@ export function CreatorNetworkWorkspace({
           <Text style={styles.eyebrow}>CREATOR NETWORK</Text>
           <Text style={styles.heroTitle}>Conteúdo e utilização</Text>
           <Text style={styles.muted}>
-            Conteúdo autorizado, utilização e desempenho sem expor consoles internos de governança.
+            Conteúdo, utilização e desempenho da rede de criadores vinculada à sua academia, sem expor consoles internos de governança.
           </Text>
         </View>
         <View style={styles.periodCard}>
@@ -132,6 +132,7 @@ export function CreatorNetworkWorkspace({
         </View>
       </View>
 
+      <Text style={styles.sectionHeading}>Visão geral</Text>
       <View style={styles.summaryGrid}>
         <View style={styles.summaryCard}>
           <Text style={styles.kicker}>Conteúdos ativos</Text>
@@ -184,7 +185,7 @@ export function CreatorNetworkWorkspace({
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Conteúdo autorizado</Text>
+        <Text style={styles.sectionTitle}>Conteúdo</Text>
         <Text style={styles.muted}>
           Apenas itens compatíveis com as capacidades comerciais ativas são exibidos.
         </Text>
@@ -245,7 +246,7 @@ export function CreatorNetworkWorkspace({
         </View>
 
         <View style={styles.column}>
-          <Text style={styles.sectionTitle}>Engajamento</Text>
+          <Text style={styles.sectionTitle}>Indicadores</Text>
           <Text style={styles.muted}>Eventos observados no período.</Text>
           {eventRows.length ? eventRows.map(([key, value]) => (
             <View key={key} style={styles.metricRow}>
@@ -271,6 +272,7 @@ const styles = StyleSheet.create({
   kicker: { color: '#71879e', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
   periodValue: { color: '#eef7ff', fontSize: 15, fontWeight: '900', marginTop: 3 },
   meta: { color: '#8296ab', fontSize: 9, lineHeight: 13, marginTop: 3 },
+  sectionHeading: { color: '#eef7ff', fontSize: 16, fontWeight: '900', marginBottom: 6 },
   summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   summaryCard: { flexGrow: 1, flexBasis: 210, minWidth: 180, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 10 },
   alertCard: { borderColor: '#7f2d3a', backgroundColor: '#1a1018' },
