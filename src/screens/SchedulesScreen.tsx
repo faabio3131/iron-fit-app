@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '../components/EmptyState';
+import { RequestErrorState } from '../components/RequestErrorState';
 import { api } from '../services/api';
 import { CheckInScreen } from './CheckInScreen';
 
@@ -14,21 +15,25 @@ function fmtDate(value?: string) {
 export function SchedulesScreen() {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  const loadSchedules = useCallback(async () => {
+    setLoading(true);
+    setLoadError('');
+    try {
+      const data = await api('/me/schedules');
+      setSchedules(Array.isArray(data) ? data : []);
+    } catch {
+      setLoadError('Não foi possível carregar sua agenda. Sem conexão ou serviço indisponível.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    api('/me/schedules')
-      .then((data) => {
-        if (active) setSchedules(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (active) setSchedules([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => { active = false; };
-  }, []);
+    const timer = setTimeout(() => { void loadSchedules(); }, 0);
+    return () => clearTimeout(timer);
+  }, [loadSchedules]);
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -38,7 +43,9 @@ export function SchedulesScreen() {
       </View>
       <CheckInScreen />
       <Text style={styles.sectionTitle}>Horários reservados</Text>
-      {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : schedules.length === 0 ? (
+      {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : loadError ? (
+        <RequestErrorState message={loadError} onRetry={() => { void loadSchedules(); }} />
+      ) : schedules.length === 0 ? (
         <EmptyState icon="calendar-outline" title="Nenhum horário reservado" subtitle="Quando sua academia abrir a agenda, suas reservas aparecem aqui." />
       ) : schedules.map((schedule, index) => (
         <View key={schedule.id || index} style={styles.card}>
