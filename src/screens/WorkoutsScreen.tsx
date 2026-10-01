@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AIInsightCard } from '../components/AIInsightCard';
@@ -6,6 +6,7 @@ import { AIWorkoutAssistant } from '../components/AIWorkoutAssistant';
 import { AIContentRecommendation, getContentRecommendations } from '../services/ai';
 import { EmptyState } from '../components/EmptyState';
 import { StatCard } from '../components/StatCard';
+import { RequestErrorState } from '../components/RequestErrorState';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
@@ -13,23 +14,27 @@ export function WorkoutsScreen() {
   const { profile } = useAuth();
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [assistantVisible, setAssistantVisible] = useState(false);
   const [contentRecommendations, setContentRecommendations] = useState<AIContentRecommendation[]>([]);
 
-  useEffect(() => {
-    let active = true;
-    api('/me/workouts')
-      .then((data) => {
-        if (active) setWorkouts(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (active) setWorkouts([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => { active = false; };
+  const loadWorkouts = useCallback(async () => {
+    setLoading(true);
+    setLoadError('');
+    try {
+      const data = await api('/me/workouts');
+      setWorkouts(Array.isArray(data) ? data : []);
+    } catch {
+      setLoadError('Não foi possível carregar seus treinos. Sem conexão ou serviço indisponível.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => { void loadWorkouts(); }, 0);
+    return () => clearTimeout(timer);
+  }, [loadWorkouts]);
 
   const weeklyFrequency = workouts.reduce((sum, workout) => sum + (workout.weeklyFrequency || 0), 0);
   const recommendationExerciseIds = useMemo(
@@ -61,11 +66,11 @@ export function WorkoutsScreen() {
           <View style={styles.avatar}><Ionicons name="person" size={24} color="#2f91ff" /></View>
         </View>
         <View style={styles.stats}>
-          <StatCard icon="barbell" value={String(workouts.length)} label="Treinos" color="#2f91ff" />
-          <StatCard icon="calendar" value={String(weeklyFrequency)} label="Dias/semana" color="#67d6ff" />
+          <StatCard icon="barbell" value={loading || loadError ? "—" : String(workouts.length)} label="Treinos" color="#2f91ff" />
+          <StatCard icon="calendar" value={loading || loadError ? "—" : String(weeklyFrequency)} label="Dias/semana" color="#67d6ff" />
         </View>
-        <AIInsightCard workoutCount={workouts.length} weeklyFrequency={weeklyFrequency} onOpenAssistant={() => setAssistantVisible(true)} />
-        {contentRecommendations.length > 0 ? (
+        {!loading && !loadError ? <AIInsightCard workoutCount={workouts.length} weeklyFrequency={weeklyFrequency} onOpenAssistant={() => setAssistantVisible(true)} /> : null}
+        {!loading && !loadError && contentRecommendations.length > 0 ? (
           <View style={styles.contentRecommendationSection} testID="ai-content-recommendations">
             <View style={styles.contentRecommendationHeader}>
               <Ionicons name="play-circle-outline" size={19} color="#67d6ff" />
@@ -93,7 +98,9 @@ export function WorkoutsScreen() {
           </View>
         ) : null}
         <Text style={styles.sectionTitle}>Seus Treinos</Text>
-        {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : workouts.length === 0 ? (
+        {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : loadError ? (
+          <RequestErrorState message={loadError} onRetry={() => { void loadWorkouts(); }} />
+        ) : workouts.length === 0 ? (
           <EmptyState icon="barbell-outline" title="Nenhum treino ainda" subtitle="Seu instrutor ainda não liberou treinos para você." />
         ) : workouts.map((workout) => (
           <View key={workout.id} style={styles.card}>
