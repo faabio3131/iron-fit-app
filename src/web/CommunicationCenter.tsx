@@ -110,7 +110,6 @@ export function CommunicationCenter({
   const [templateTitle, setTemplateTitle] = useState('');
   const [templateBody, setTemplateBody] = useState('');
   const [loading, setLoading] = useState(true);
-  const [studentLoading, setStudentLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -154,26 +153,27 @@ export function CommunicationCenter({
   }, [load]);
 
   useEffect(() => {
-    if (!selectedStudentId) {
-      setSelectedStudent(null);
-      return;
-    }
+    if (!selectedStudentId) return;
     let active = true;
-    setStudentLoading(true);
     api('/students/' + selectedStudentId)
       .then((student) => {
         if (active) setSelectedStudent(student);
       })
       .catch((reason) => {
         if (active) setError(reason instanceof Error ? reason.message : 'Falha ao verificar o aluno.');
-      })
-      .finally(() => {
-        if (active) setStudentLoading(false);
       });
     return () => {
       active = false;
     };
   }, [selectedStudentId]);
+
+  const studentLoading =
+    !!selectedStudentId && selectedStudent?.id !== selectedStudentId;
+
+  function selectStudent(studentId: string) {
+    setSelectedStudent(null);
+    setSelectedStudentId(studentId);
+  }
 
   async function execute(operation: () => Promise<unknown>, success: string) {
     setSaving(true);
@@ -324,7 +324,7 @@ export function CommunicationCenter({
                 accessibilityRole="button"
                 accessibilityState={{ selected: selectedStudentId === student.id }}
                 style={[styles.chip, selectedStudentId === student.id && styles.chipActive]}
-                onPress={() => setSelectedStudentId(student.id)}
+                onPress={() => selectStudent(student.id)}
               >
                 <Text style={styles.chipText}>{student.name ?? student.email ?? 'Aluno'}</Text>
               </TouchableOpacity>
