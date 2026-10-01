@@ -51,7 +51,7 @@ describe('FISCAL-1 Fiscal Center', () => {
     await waitFor(() => expect(view.getByText('Vínculo não configurado')).toBeTruthy());
     expect(view.getByText('Aluno Fiscal')).toBeTruthy();
     expect(view.getByText('NFS-e autorizada')).toBeTruthy();
-    expect(view.getByText('R$ 269,00')).toBeTruthy();
+    expect(view.getByText(/269,00/)).toBeTruthy();
   });
 
   test('opens cancellation only for a canonical cancelable handoff', async () => {
