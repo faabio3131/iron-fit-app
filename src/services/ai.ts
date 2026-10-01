@@ -29,6 +29,21 @@ export type AIChatReply = {
   message: string;
 };
 
+export type AIContentRecommendation = {
+  exerciseId: string;
+  exerciseName: string;
+  reason: string;
+  contentKind: 'MANAGED_CONTENT' | 'EXTERNAL_REFERENCE';
+  url: string;
+};
+
+export type AIContentRecommendationResult = {
+  source: 'ai' | 'fallback';
+  recommendations: AIContentRecommendation[];
+  advisory: true;
+  reason?: string;
+};
+
 const BLOCKED_KEY_PATTERN = /(password|senha|passcode|access.?token|refresh.?token|authorization|api.?key|secret|card.?number|credit.?card|debit.?card|cvv|cvc|bank.?account|pix.?key|billing|charge|financial)/i;
 
 function redactString(value: string) {
@@ -167,6 +182,95 @@ export async function getWorkoutInsights(context: unknown = {}, timeoutMs = AI_R
 export async function getEvolutionProjection(context: unknown = {}, timeoutMs = AI_REQUEST_TIMEOUT_MS): Promise<AIProjectionResult> {
   const insight = await loadInsight('evolution_projection', context, timeoutMs);
   return { source: insight.source, ...insight.projection };
+}
+
+function safeHttpsUrl(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const parsed = new URL(value.trim());
+    return parsed.protocol === 'https:' ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeContentRecommendation(value: unknown): AIContentRecommendation | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  const exerciseId = toText(record.exerciseId);
+  const exerciseName = toText(record.exerciseName);
+  const reason = toText(record.reason);
+  const content = record.content && typeof record.content === 'object' && !Array.isArray(record.content)
+    ? record.content as Record<string, unknown>
+    : null;
+  const kind = toText(content?.kind);
+  const delivery = content?.delivery && typeof content.delivery === 'object' && !Array.isArray(content.delivery)
+    ? content.delivery as Record<string, unknown>
+    : null;
+  const url = kind === 'MANAGED_CONTENT'
+    ? safeHttpsUrl(delivery?.url)
+    : kind === 'EXTERNAL_REFERENCE'
+      ? safeHttpsUrl(content?.url)
+      : null;
+
+  if (
+    !exerciseId
+    || !exerciseName
+    || !reason
+    || !url
+    || (kind !== 'MANAGED_CONTENT' && kind !== 'EXTERNAL_REFERENCE')
+  ) {
+    return null;
+  }
+
+  return {
+    exerciseId,
+    exerciseName,
+    reason,
+    contentKind: kind,
+    url,
+  };
+}
+
+export async function getContentRecommendations(
+  exerciseIds: string[],
+  limit = 4,
+  timeoutMs = AI_REQUEST_TIMEOUT_MS,
+): Promise<AIContentRecommendationResult> {
+  const uniqueIds = [...new Set(exerciseIds.filter((value) => typeof value === 'string' && value.trim()))].slice(0, 20);
+  if (uniqueIds.length === 0) {
+    return { source: 'fallback', recommendations: [], advisory: true, reason: 'NO_EXERCISES' };
+  }
+
+  try {
+    const payload = await requestAi('/me/ai/content-recommendations', {
+      exerciseIds: uniqueIds,
+      limit: Math.min(Math.max(Math.trunc(limit), 1), 10),
+    }, timeoutMs);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new Error('IRON_AI_CONTENT_INVALID');
+    }
+    const record = payload as Record<string, unknown>;
+    const recommendations = Array.isArray(record.recommendations)
+      ? record.recommendations
+          .map(normalizeContentRecommendation)
+          .filter((item): item is AIContentRecommendation => item !== null)
+      : [];
+
+    return {
+      source: 'ai',
+      recommendations,
+      advisory: true,
+      ...(toText(record.reason) ? { reason: toText(record.reason)! } : {}),
+    };
+  } catch {
+    return {
+      source: 'fallback',
+      recommendations: [],
+      advisory: true,
+      reason: 'AI_CONTENT_UNAVAILABLE',
+    };
+  }
 }
 
 export async function chatWithWorkoutAssistant(message: string, context: unknown = {}, timeoutMs = AI_REQUEST_TIMEOUT_MS): Promise<AIChatReply> {

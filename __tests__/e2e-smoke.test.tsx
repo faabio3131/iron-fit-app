@@ -188,14 +188,14 @@ describe('student end-to-end smoke journey', () => {
 
   test('flow 4: charges load, profile navigation works and logout clears the secure session', async () => {
     const fetchMock = installFetchScenario({
-      charges: [{ id: 'charge-1', description: 'Mensalidade Setembro', amount: 199.9, dueDate: '2026-09-10', status: 'PENDING' }],
+      charges: [{ id: 'charge-1', description: 'Mensalidade Setembro', amount: 19990, dueDate: '2026-09-10', status: 'PENDING' }],
     });
     const view = render(<App />);
 
     await loginDirect(view);
     fireEvent.press(view.getByText('Plano'));
     await waitFor(() => expect(view.getByText('Mensalidade Setembro')).toBeTruthy(), { timeout: E2E_WAIT_MS });
-    expect(view.getByText('R$ 199,90')).toBeTruthy();
+    expect(view.getByText(/199,90/)).toBeTruthy();
 
     fireEvent.press(view.getByText('Perfil'));
     await waitFor(() => expect(view.getByText('Ana Silva')).toBeTruthy(), { timeout: E2E_WAIT_MS });

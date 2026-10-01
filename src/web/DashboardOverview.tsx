@@ -1,0 +1,114 @@
+import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { iron } from '../design/iron-theme';
+
+// FinancialTransaction and Charge store integer centavos (canonical seed/financial service).
+export function money(value: unknown): string {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? (value / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—';
+}
+const count = (value: unknown) => typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('pt-BR') : '—';
+function day(value: unknown) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? `${value.slice(8, 10)}/${value.slice(5, 7)}` : '—';
+}
+type Icon = React.ComponentProps<typeof Ionicons>['name'];
+type DashboardData = {
+  summary?: {
+    students?: { total?: number; active?: number; inactive?: number };
+    revenue?: { thisMonth?: number };
+    charges?: { pending?: number; overdue?: number };
+    workouts?: { total?: number; approved?: number; drafts?: number };
+    equipments?: { total?: number };
+  };
+  revenue?: { date: string; amount: number }[];
+  attendance?: { date: string; count: number }[];
+  overdue?: { id: string; amount?: number; dueDate?: string; student?: { user?: { name?: string } } }[];
+  birthdays?: { studentId: string; name?: string; nextBirthday?: string }[];
+  agendaSlots?: { id: string; weekday?: number; startTime?: string; endTime?: string; capacity?: number; active?: boolean }[];
+  cockpitWorkouts?: { id: string; status?: string; createdByAI?: boolean; student?: { user?: { name?: string } }; goal?: string }[];
+};
+function Panel({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+  return <View style={styles.panel}><Text accessibilityRole="header" style={styles.heading}>{title}</Text><Text style={styles.muted}>{subtitle}</Text><View style={styles.panelBody}>{children}</View></View>;
+}
+function DailyBars({ rows, financial }: { rows: { date: string; value: number }[]; financial?: boolean }) {
+  const valid = rows.filter(row => typeof row.value === 'number' && Number.isFinite(row.value));
+  if (!valid.length) return <Text style={styles.empty}>Nenhum dado disponível para este período.</Text>;
+  if (valid.every(row => row.value === 0)) return <Text style={styles.empty}>{financial ? 'Nenhum recebimento no período.' : 'Nenhum check-in no período.'}</Text>;
+  const max = Math.max(...valid.map(row => Math.abs(row.value)), 1);
+  return <View><View style={styles.chart}>{valid.map((row, index) => <View key={`${row.date}-${index}`} style={styles.barColumn} accessible accessibilityLabel={`${day(row.date)}: ${financial ? money(row.value) : `${count(row.value)} presenças`}`}>
+    <View style={styles.barTrack}><View style={[styles.bar, { height: `${Math.abs(row.value) / max * 100}%`, backgroundColor: row.value < 0 ? '#fca5a5' : iron.primary }]} /></View>
+    {!financial && <Text style={styles.axis}>{day(row.date)}</Text>}
+  </View>)}</View>{financial && <View style={styles.range}><Text style={styles.muted}>{day(valid[0].date)}</Text><Text style={styles.muted}>{day(valid[valid.length - 1].date)}</Text></View>}</View>;
+}
+type CockpitTarget = 'students' | 'financial' | 'workouts' | 'equipment' | 'schedule';
+
+export function DashboardOverview({ data, navigate, canNavigate = () => true, showFinancial = true }: { data: DashboardData; canNavigate?: (module: CockpitTarget) => boolean; navigate: (module: CockpitTarget) => void; showFinancial?: boolean }) {
+  const summary = data.summary;
+  const allMetrics: { label: string; value: string; detail: string; icon: Icon; target: CockpitTarget; financial?: boolean }[] = [
+    { label: 'Alunos ativos', value: count(summary?.students?.active), detail: `${count(summary?.students?.total)} alunos cadastrados`, icon: 'people-outline', target: 'students' },
+    { label: 'Treinos aprovados', value: count(summary?.workouts?.approved), detail: `${count(summary?.workouts?.drafts)} rascunhos ou em revisão`, icon: 'barbell-outline', target: 'workouts' },
+    { label: 'Equipamentos', value: count(summary?.equipments?.total), detail: 'Ativos no inventário', icon: 'fitness-outline', target: 'equipment' },
+    { label: 'Horários ativos', value: count((data.agendaSlots ?? []).filter((slot) => slot.active !== false).length), detail: 'Agenda operacional', icon: 'calendar-outline', target: 'schedule' },
+    { label: 'Receita do mês', value: money(summary?.revenue?.thisMonth), detail: 'Recebimentos confirmados', icon: 'wallet-outline', target: 'financial', financial: true },
+    { label: 'Cobranças vencidas', value: count(summary?.charges?.overdue), detail: `${count(summary?.charges?.pending)} cobranças pendentes`, icon: 'time-outline', target: 'financial', financial: true },
+  ];
+  const metrics = allMetrics.filter((metric) => showFinancial || !metric.financial);
+  const revenue = Array.isArray(data.revenue) ? data.revenue : [];
+  const attendance = Array.isArray(data.attendance) ? data.attendance : [];
+  const overdue = Array.isArray(data.overdue) ? data.overdue : [];
+  const birthdays = Array.isArray(data.birthdays) ? data.birthdays : [];
+  const agendaSlots = Array.isArray(data.agendaSlots) ? data.agendaSlots.filter((slot) => slot.active !== false).slice(0, 6) : [];
+  const cockpitWorkouts = Array.isArray(data.cockpitWorkouts) ? data.cockpitWorkouts : [];
+  const aiPendingReview = cockpitWorkouts.filter((workout) => workout.createdByAI === true && workout.status === 'PENDING_REVIEW');
+  const humanDrafts = typeof summary?.workouts?.drafts === 'number' ? summary.workouts.drafts : 0;
+  const inactiveStudents = typeof summary?.students?.inactive === 'number' ? summary.students.inactive : 0;
+  const weekday = (value?: number) => ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][value ?? -1] ?? '—';
+
+  return <View testID="dashboard-overview">
+    <View style={styles.metrics}>{metrics.map(metric => <TouchableOpacity key={metric.label} disabled={!canNavigate(metric.target)} accessibilityRole="button" accessibilityState={{ disabled: !canNavigate(metric.target) }} accessibilityLabel={`${metric.label}: ${metric.value}${canNavigate(metric.target) ? ". Abrir detalhes" : ""}`} style={styles.metric} onPress={() => navigate(metric.target)}>
+      <View style={styles.metricTop}><Text style={styles.metricLabel}>{metric.label}</Text><Ionicons name={metric.icon} size={21} color={iron.cyan} /></View>
+      <Text style={styles.metricValue}>{metric.value}</Text><Text style={styles.muted}>{metric.detail}</Text>
+    </TouchableOpacity>)}</View>
+    <View style={styles.grid}>
+      {showFinancial ? <Panel title="Receita diária" subtitle="Últimos 30 dias · recebimentos confirmados"><DailyBars financial rows={revenue.map(row => ({ date: row.date, value: row.amount }))} /></Panel> : null}
+      <Panel title="Frequência" subtitle="Últimos 7 dias · check-ins realizados"><DailyBars rows={attendance.map(row => ({ date: row.date, value: row.count }))} /></Panel>
+    </View>
+    <View style={styles.grid}>
+      {showFinancial ? <Panel title="Atenção às cobranças" subtitle="Vencimentos em aberto · até 20 registros">{overdue.length ? overdue.map(row => <View style={styles.listRow} key={row.id}><View style={styles.rowText}><Text style={styles.item}>{row.student?.user?.name ?? 'Aluno'}</Text><Text style={styles.muted}>Venceu em {day(row.dueDate)}</Text></View><Text style={styles.amount}>{money(row.amount)}</Text></View>) : <Text style={styles.empty}>{data.overdue ? 'Nenhuma cobrança vencida.' : 'Informações indisponíveis.'}</Text>}</Panel> : null}
+      <Panel title="Aniversariantes" subtitle="Próximos 30 dias">{birthdays.length ? birthdays.map(row => <View key={row.studentId} style={styles.listRow}><Ionicons name="gift-outline" size={20} color={iron.cyan} /><Text style={[styles.item, styles.rowText]}>{row.name ?? 'Aluno'}</Text><Text style={styles.muted}>{day(row.nextBirthday)}</Text></View>) : <Text style={styles.empty}>{data.birthdays ? 'Nenhum aniversário neste período.' : 'Informações indisponíveis.'}</Text>}</Panel>
+    </View>
+    <View style={styles.grid}>
+      <Panel title="Agenda operacional" subtitle="Horários ativos da academia">{agendaSlots.length ? agendaSlots.map(slot => <TouchableOpacity key={slot.id} disabled={!canNavigate('schedule')} accessibilityRole="button" accessibilityState={{ disabled: !canNavigate('schedule') }} style={styles.listRow} onPress={() => navigate('schedule')}><Ionicons name="calendar-outline" size={18} color={iron.cyan} /><View style={styles.rowText}><Text style={styles.item}>{weekday(slot.weekday)} · {slot.startTime ?? '—'}–{slot.endTime ?? '—'}</Text><Text style={styles.muted}>{typeof slot.capacity === 'number' ? `${slot.capacity} vagas` : 'Capacidade não informada'}</Text></View></TouchableOpacity>) : <Text style={styles.empty}>Nenhum horário ativo configurado.</Text>}</Panel>
+      <Panel title="Alertas operacionais" subtitle="Itens que merecem atenção da equipe">
+        <TouchableOpacity disabled={!canNavigate('students')} accessibilityRole="button" accessibilityState={{ disabled: !canNavigate('students') }} style={styles.alertRow} onPress={() => navigate('students')}><Ionicons name="people-outline" size={18} color={iron.cyan} /><View style={styles.rowText}><Text style={styles.item}>{count(inactiveStudents)} alunos inativos</Text><Text style={styles.muted}>Revisar situação cadastral quando necessário.</Text></View></TouchableOpacity>
+        <TouchableOpacity disabled={!canNavigate('workouts')} accessibilityRole="button" accessibilityState={{ disabled: !canNavigate('workouts') }} style={styles.alertRow} onPress={() => navigate('workouts')}><Ionicons name="clipboard-outline" size={18} color={iron.cyan} /><View style={styles.rowText}><Text style={styles.item}>{count(humanDrafts)} treinos fora do estado aprovado/ativo</Text><Text style={styles.muted}>Abrir o Workout Studio para revisão.</Text></View></TouchableOpacity>
+      </Panel>
+      {canNavigate('workouts') ? <Panel title="IRON Intelligence" subtitle="Candidatos de treino aguardando revisão humana">{aiPendingReview.length ? aiPendingReview.slice(0, 6).map(workout => <TouchableOpacity key={workout.id} accessibilityRole="button" style={styles.listRow} onPress={() => navigate('workouts')}><Ionicons name="sparkles-outline" size={18} color={iron.cyan} /><View style={styles.rowText}><Text style={styles.item}>{workout.student?.user?.name ?? workout.goal ?? 'Candidato de treino'}</Text><Text style={styles.muted}>IA gerou candidato · revisão humana obrigatória</Text></View></TouchableOpacity>) : <Text style={styles.empty}>Nenhum candidato de IA aguardando revisão.</Text>}</Panel> : null}
+    </View>
+  </View>;
+}
+const styles = StyleSheet.create({
+  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 },
+  metric: { flexGrow: 1, flexShrink: 1, flexBasis: 210, padding: 16, borderWidth: 1, borderColor: iron.line, backgroundColor: iron.elevated, borderRadius: 16 },
+  metricTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, alignItems: 'center' },
+  metricLabel: { color: iron.muted, fontSize: 13, fontWeight: '600', flexShrink: 1 },
+  metricValue: { color: iron.text, fontSize: 28, fontWeight: '800', letterSpacing: -.8, marginTop: 10, marginBottom: 4 },
+  muted: { color: iron.muted, fontSize: 12, lineHeight: 18 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 },
+  panel: { flexGrow: 1, flexShrink: 1, flexBasis: 350, minWidth: 0, backgroundColor: iron.surface, borderWidth: 1, borderColor: iron.line, borderRadius: 16, padding: 18 },
+  heading: { color: iron.text, fontSize: 18, fontWeight: '700', marginBottom: 6 },
+  panelBody: { marginTop: 14 },
+  empty: { color: iron.muted, fontSize: 14, lineHeight: 22, paddingVertical: 12 },
+  range: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  chart: { flexDirection: 'row', height: 140, gap: 4 },
+  barColumn: { flex: 1, minWidth: 0, height: 140 },
+  barTrack: { flex: 1, justifyContent: 'flex-end', borderBottomWidth: 1, borderBottomColor: iron.line },
+  bar: { width: '100%', borderTopLeftRadius: 4, borderTopRightRadius: 4 },
+  axis: { color: iron.muted, fontSize: 9, height: 24, paddingTop: 7, textAlign: 'center' },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: iron.line },
+  alertRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: iron.line },
+  rowText: { flex: 1, minWidth: 0 },
+  item: { color: iron.text, fontSize: 14, fontWeight: '600', marginBottom: 3 },
+  amount: { color: '#fca5a5', fontWeight: '700', fontSize: 14 },
+});

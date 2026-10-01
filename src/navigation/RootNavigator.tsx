@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { ActivityIndicator, Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { TabItem } from '../components/TabItem';
 import { useAuth } from '../context/AuthContext';
@@ -25,7 +26,7 @@ export function RootNavigator() {
   const [recoveryMode, setRecoveryMode] = useState(false);
 
   if (!sessionReady) {
-    return <View style={styles.boot}><StatusBar barStyle="light-content" backgroundColor="#0a0e1a" /><ActivityIndicator size="large" color="#8b5cf6" /></View>;
+    return <View style={styles.boot}><StatusBar barStyle="light-content" backgroundColor="#030811" /><ActivityIndicator size="large" color="#2f91ff" /></View>;
   }
 
   if (!session && pendingTenantSelection) return <TenantSelectionScreen />;
@@ -44,7 +45,7 @@ export function RootNavigator() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0a0e1a" />
+      <StatusBar barStyle="light-content" backgroundColor="#030811" />
       <View style={styles.screen}>
         {tab === 'treino' ? <WorkoutsScreen /> : null}
         {tab === 'agenda' ? <SchedulesScreen /> : null}
@@ -64,8 +65,8 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0e1a' },
-  boot: { flex: 1, backgroundColor: '#0a0e1a', alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#030811' },
+  boot: { flex: 1, backgroundColor: '#030811', alignItems: 'center', justifyContent: 'center' },
   screen: { flex: 1 },
-  tabBar: { flexDirection: 'row', backgroundColor: '#131826', borderTopWidth: 1, borderTopColor: '#252d47', paddingBottom: 16 },
+  tabBar: { flexDirection: 'row', backgroundColor: '#050b14', borderTopWidth: 1, borderTopColor: '#203b55', paddingBottom: 16 },
 });

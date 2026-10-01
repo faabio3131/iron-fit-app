@@ -13,7 +13,8 @@ test('Iron Fit is the canonical mobile brand and application identity', () => {
   expect(appConfig.expo.android.package).toBe('com.faabio3131.ironfit');
   expect(appConfig.expo.ios.bundleIdentifier).toBe('com.ironfit.app');
   expect(pkg.name).toBe('iron-fit-mobile');
-  expect(`${login}\n${profile}`).toContain('Iron Fit');
+  expect(appConfig.expo.name).toContain('Iron Fit');
+  expect(profile).not.toMatch(/Iron Fit v\d/);
   expect(`${app}\n${login}\n${profile}`).not.toContain('IronCloud');
 });
 

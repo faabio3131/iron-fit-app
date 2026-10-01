@@ -22,7 +22,7 @@ export function AIProjectionCard({ assessmentCount, latestAssessmentDate }: Prop
   return (
     <View style={styles.card} testID="iron-intelligence-projection">
       <View style={styles.header}>
-        <View style={styles.titleRow}><Ionicons name="analytics" size={18} color="#f59e0b" /><Text style={styles.title}>{projection.label}</Text></View>
+        <View style={styles.titleRow}><Ionicons name="analytics" size={18} color="#67d6ff" /><Text style={styles.title}>{projection.label}</Text></View>
         <Text style={styles.source}>{projection.source === 'ai' ? 'IA' : 'Seguro'}</Text>
       </View>
       <Text style={styles.value}>{projection.value}</Text>
@@ -32,11 +32,11 @@ export function AIProjectionCard({ assessmentCount, latestAssessmentDate }: Prop
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#1b1728', borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: '#f59e0b33' },
+  card: { backgroundColor: '#071528', borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: '#203b55' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  title: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
-  source: { color: '#fbbf24', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
-  value: { color: '#fde68a', fontSize: 18, fontWeight: '800', marginBottom: 4 },
-  detail: { color: '#94a3b8', fontSize: 12, lineHeight: 17 },
+  title: { color: '#eef7ff', fontSize: 14, fontWeight: '700' },
+  source: { color: '#93c5fd', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
+  value: { color: '#eef7ff', fontSize: 18, fontWeight: '800', marginBottom: 4 },
+  detail: { color: '#9fb0c5', fontSize: 12, lineHeight: 17 },
 });
