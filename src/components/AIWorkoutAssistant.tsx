@@ -55,7 +55,7 @@ export function AIWorkoutAssistant({ visible, onClose, workoutCount, weeklyFrequ
         <View style={styles.panel}>
           <View style={styles.header}>
             <View style={styles.titleRow}><Ionicons name="sparkles" size={19} color="#67d6ff" /><Text style={styles.title}>Assistente de Treino</Text></View>
-            <TouchableOpacity onPress={onClose} accessibilityLabel="Fechar assistente"><Ionicons name="close" size={24} color="#cbd5e1" /></TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} accessibilityRole="button" accessibilityLabel="Fechar assistente"><Ionicons name="close" size={24} color="#cbd5e1" /></TouchableOpacity>
           </View>
           <Text style={styles.notice}>Orientação complementar. Não substitui avaliação ou prescrição profissional.</Text>
           <ScrollView style={styles.messages} contentContainerStyle={styles.messagesContent}>
@@ -77,7 +77,7 @@ export function AIWorkoutAssistant({ visible, onClose, workoutCount, weeklyFrequ
               multiline
               maxLength={600}
             />
-            <TouchableOpacity style={[styles.send, sending ? styles.sendDisabled : null]} onPress={sendMessage} disabled={sending} accessibilityLabel="Enviar pergunta">
+            <TouchableOpacity style={[styles.send, sending ? styles.sendDisabled : null]} onPress={sendMessage} disabled={sending} accessibilityRole="button" accessibilityState={{ disabled: sending, busy: sending }} accessibilityLabel="Enviar pergunta">
               <Ionicons name="send" size={18} color="#eef7ff" />
             </TouchableOpacity>
           </View>
@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
   loading: { alignSelf: 'flex-start', margin: 8 },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 10 },
   input: { flex: 1, minHeight: 44, maxHeight: 110, backgroundColor: '#050b14', color: '#eef7ff', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 12, paddingVertical: 10 },
+  closeButton: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   send: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#176bc1' },
   sendDisabled: { opacity: 0.55 },
 });
