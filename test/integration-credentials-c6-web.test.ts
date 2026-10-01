@@ -43,7 +43,7 @@ test('C6 Web derives provider/auth/capabilities from backend catalog and treats 
   expect(panel).toContain('catalog?.providers');
   expect(panel).toContain('catalog?.environment');
   expect(panel).toContain('selectedProvider.authModels');
-  expect(panel).toContain('selectedProvider.capabilities');
+  expect(panel).toContain('commercialCapabilities(selectedProvider)');
   expect(panel).toContain('tenantEntitlementFeatureKey');
   expect(panel).toContain('Definido pelo servidor');
   expect(panel).not.toMatch(/providerCode: selectedProvider\.providerCode,\s*environment,/);
