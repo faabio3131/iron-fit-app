@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   statusBadge: { color: '#bfdbfe', backgroundColor: '#0b2340', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 8, fontWeight: '800' },
   empty: { color: '#71879e', fontSize: 10, paddingVertical: 9 },
   columns: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start' },
-  column: { flexGrow: 1, flexBasis: 380, minWidth: 300, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 13, marginBottom: 8 },
+  column: { flexGrow: 1, flexBasis: 380, minWidth: 0, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 13, marginBottom: 8 },
   metricRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, borderTopWidth: 1, borderTopColor: '#17263a', paddingVertical: 8 },
   metricLabel: { color: '#9fb0c5', fontSize: 10, fontWeight: '700' },
   metricValue: { color: '#eef7ff', fontSize: 11, fontWeight: '900' },
