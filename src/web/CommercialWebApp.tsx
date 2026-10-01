@@ -8,6 +8,7 @@ import { FinancialWorkspace } from './FinancialWorkspace';
 import { EntitlementsWorkspace } from './EntitlementsWorkspace';
 import { CreatorNetworkWorkspace } from './CreatorNetworkWorkspace';
 import { PrivacyCenter } from './PrivacyCenter';
+import { CommunicationCenter } from './CommunicationCenter';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
@@ -18,7 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { PASSWORD_POLICY_TEXT, strongPassword } from '../security/password-policy';
 import { api } from '../services/api';
 
-type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'schedule' | 'access' | 'financial' | 'saasBilling' | 'security' | 'privacy' | 'entitlements' | 'integrations' | 'creator';
+type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'schedule' | 'access' | 'communication' | 'financial' | 'saasBilling' | 'security' | 'privacy' | 'entitlements' | 'integrations' | 'creator';
 type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; value: boolean | number | string[] | null; source?: string; reason?: string | null };
 type ModuleDefinition = { key: ModuleKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name']; roles?: string[]; entitlement?: string[] };
 const restrictedAdminModules: ModuleKey[] = ['financial', 'saasBilling', 'entitlements', 'integrations'];
@@ -36,6 +37,7 @@ const modules: ModuleDefinition[] = [
   { key: 'workouts', label: 'Treinos', icon: 'clipboard-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER'] },
   { key: 'schedule', label: 'Agenda', icon: 'calendar-outline', roles: staff },
   { key: 'access', label: 'Acessos', icon: 'key-outline', roles: operational },
+  { key: 'communication', label: 'Comunicação', icon: 'chatbubbles-outline', roles: operational },
   { key: 'creator', label: 'Creator Network', icon: 'images-outline', roles: ['OWNER', 'MANAGER'], entitlement: ['content.external_youtube', 'content.iron_managed', 'content.tenant_private'] },
   { key: 'security', label: 'Segurança', icon: 'shield-checkmark-outline' },
   { key: 'privacy', label: 'Privacidade', icon: 'document-lock-outline' },
@@ -1209,7 +1211,7 @@ export function CommercialWebApp() {
   }
   function content() {
     if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
-    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'financial') return financialView(); if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} canAdministerBilling={can('SUPER_ADMIN')} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />; return creatorView();
+    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenter canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} canInspectIntegrations={can('SUPER_ADMIN', 'OWNER')} />; if (active === 'financial') return financialView(); if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} canAdministerBilling={can('SUPER_ADMIN')} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />; return creatorView();
   }
 
   const topBar = <View style={styles.top}><IronBrand compact /><View style={styles.actions}><Text style={styles.muted}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
