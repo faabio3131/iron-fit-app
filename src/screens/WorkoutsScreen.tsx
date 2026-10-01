@@ -116,7 +116,7 @@ export function WorkoutsScreen() {
                       <Text style={styles.exerciseName}>{item.exercise?.name}</Text>
                       <Text style={styles.exerciseMeta}>{item.sets && item.reps ? `${item.sets}x${item.reps}` : ''}{item.restSeconds ? ` · ${item.restSeconds}s` : ''}{item.suggestedLoad ? ` · ${item.suggestedLoad}` : ''}</Text>
                       {item.exercise?.videoUrl ? (
-                        <TouchableOpacity style={styles.videoButton} onPress={() => Linking.openURL(item.exercise.videoUrl)}>
+                        <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Abrir vídeo de ${item.exercise?.name ?? 'exercício'}`} style={styles.videoButton} onPress={() => Linking.openURL(item.exercise.videoUrl)}>
                           <Ionicons name="play-circle" size={16} color="#2f91ff" /><Text style={styles.videoText}>Ver vídeo</Text>
                         </TouchableOpacity>
                       ) : null}
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#071528', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#203b55' }, cardTitle: { color: '#eef7ff', fontSize: 16, fontWeight: '700' }, meta: { color: '#9fb0c5', fontSize: 12, marginTop: 2, marginBottom: 16 },
   session: { marginBottom: 12 }, sessionTitle: { color: '#2f91ff', fontSize: 14, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' }, exercise: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#203b55' },
   number: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#050b14', alignItems: 'center', justifyContent: 'center', marginRight: 12 }, numberText: { color: '#2f91ff', fontWeight: '700', fontSize: 12 }, exerciseContent: { flex: 1 }, exerciseName: { color: '#eef7ff', fontSize: 15, fontWeight: '600' }, exerciseMeta: { color: '#9fb0c5', fontSize: 11, marginTop: 4 },
-  videoButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2f91ff15', borderWidth: 1, borderColor: '#2f91ff40', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, alignSelf: 'flex-start', marginTop: 8, gap: 6 }, videoText: { color: '#2f91ff', fontWeight: '600', fontSize: 13 },
+  videoButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', backgroundColor: '#2f91ff15', borderWidth: 1, borderColor: '#2f91ff40', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, alignSelf: 'flex-start', marginTop: 8, gap: 6 }, videoText: { color: '#2f91ff', fontWeight: '600', fontSize: 13 },
   contentRecommendationSection: { backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 16, padding: 14, marginBottom: 20 },
   contentRecommendationHeader: { flexDirection: 'row', gap: 9, alignItems: 'flex-start', marginBottom: 9 },
   contentRecommendationHeaderCopy: { flex: 1 },
