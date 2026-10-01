@@ -98,7 +98,7 @@ function Data({ value, empty = 'Nenhum registro encontrado.' }: { value: any; em
   return <RecordList rows={list(value)} empty={empty} />;
 }
 function Chips({ rows, selected, onSelect }: { rows: any[]; selected: string; onSelect: (id: string) => void }) {
-  return <View style={styles.chips}>{rows.map((row) => <TouchableOpacity key={row.id} style={[styles.chip, selected === row.id && styles.chipActive]} onPress={() => onSelect(row.id)}><Text style={styles.chipText}>{row.name ?? row.user?.name ?? row.id}</Text></TouchableOpacity>)}</View>;
+  return <View style={styles.chips}>{rows.map((row) => <TouchableOpacity key={row.id} accessibilityRole="button" accessibilityState={{ selected: selected === row.id }} style={[styles.chip, selected === row.id && styles.chipActive]} onPress={() => onSelect(row.id)}><Text style={styles.chipText}>{row.name ?? row.user?.name ?? row.id}</Text></TouchableOpacity>)}</View>;
 }
 
 export function CommercialWebApp() {
@@ -1273,7 +1273,7 @@ const styles = StyleSheet.create({
   form: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
   fieldWrap: { minWidth: 180, flexGrow: 1, flexBasis: 220 },
   label: { color: '#9fb0c5', fontSize: 11, fontWeight: '700', marginBottom: 4 },
-  input: { color: '#eef7ff', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#243247', borderRadius: 10, paddingHorizontal: 11, paddingVertical: 8 },
+  input: { minHeight: 44, color: '#eef7ff', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#243247', borderRadius: 10, paddingHorizontal: 11, paddingVertical: 8 },
   buttonWrap: { alignSelf: 'flex-start', maxWidth: '100%' },
   button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#176bc1', borderRadius: 11, paddingHorizontal: 15, paddingVertical: 11, marginTop: 4 },
   secondary: { backgroundColor: '#111a29', borderWidth: 1, borderColor: '#2a3b52' },
@@ -1283,7 +1283,7 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.42 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, alignItems: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 7 },
-  chip: { borderWidth: 1, borderColor: '#2a3b52', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#090f1a' },
+  chip: { minHeight: 36, justifyContent: 'center', borderWidth: 1, borderColor: '#2a3b52', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#090f1a' },
   chipActive: { backgroundColor: '#102b4d', borderColor: '#2f91ff' },
   chipText: { color: '#d5deea', fontSize: 12 },
   invite: { backgroundColor: '#08271c', borderWidth: 1, borderColor: '#145c3c', borderRadius: 13, padding: 14, marginTop: 13 },
