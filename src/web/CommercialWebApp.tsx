@@ -6,6 +6,7 @@ import { ScheduleWorkspace } from './ScheduleWorkspace';
 import { AccessCenterWorkspace } from './AccessCenterWorkspace';
 import { FinancialWorkspace } from './FinancialWorkspace';
 import { EntitlementsWorkspace } from './EntitlementsWorkspace';
+import { CreatorNetworkWorkspace } from './CreatorNetworkWorkspace';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
@@ -1195,7 +1196,14 @@ export function CommercialWebApp() {
     />;
   }
   function creatorView() {
-    return <View style={styles.creatorWrap}><Text style={styles.moduleIntro}>Conteúdo, utilização e desempenho da rede de criadores vinculada à sua academia.</Text><View style={styles.creatorGrid}><View style={styles.creatorPane}><Section compact title="Visão geral" subtitle="Resumo operacional da rede de criadores."><Data value={data.overview ? [data.overview] : []} /></Section></View><View style={styles.creatorPane}><Section compact title="Conteúdo" subtitle="Materiais disponíveis para utilização na academia."><Data value={data.items} /></Section></View><View style={styles.creatorPane}><Section compact title="Indicadores" subtitle="Desempenho dos últimos 30 dias."><Data value={data.analytics ? [data.analytics] : []} /></Section></View></View></View>;
+    return <CreatorNetworkWorkspace
+      items={list(data.items)}
+      overview={data.overview}
+      analytics={data.analytics}
+      externalYoutubeEnabled={enabled('content.external_youtube')}
+      ironManagedEnabled={enabled('content.iron_managed')}
+      tenantPrivateEnabled={enabled('content.tenant_private')}
+    />;
   }
   function content() {
     if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
