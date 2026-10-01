@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '../components/EmptyState';
+import { RequestErrorState } from '../components/RequestErrorState';
 import { api } from '../services/api';
 
 function fmtDate(value?: string) {
@@ -35,21 +36,33 @@ function chargeStatusInfo(status?: string) {
 export function FinancialScreen() {
   const [charges, setCharges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  const loadCharges = useCallback(async () => {
+    setLoading(true);
+    setLoadError('');
+    try {
+      const data = await api('/me/charges');
+      setCharges(Array.isArray(data) ? data : []);
+    } catch {
+      setLoadError('Não foi possível carregar suas cobranças. Sem conexão ou serviço indisponível.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    api('/me/charges')
-      .then((data) => { if (active) setCharges(Array.isArray(data) ? data : []); })
-      .catch(() => { if (active) setCharges([]); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
+    const timer = setTimeout(() => { void loadCharges(); }, 0);
+    return () => clearTimeout(timer);
+  }, [loadCharges]);
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.header}><View><Text style={styles.heading}>Meu Plano</Text><Text style={styles.sub}>Mensalidades e pagamentos 💳</Text></View><Ionicons name="wallet" size={24} color="#2f91ff" /></View>
       <Text style={styles.sectionTitle}>Cobranças</Text>
-      {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : charges.length === 0 ? (
+      {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : loadError ? (
+        <RequestErrorState message={loadError} onRetry={() => { void loadCharges(); }} />
+      ) : charges.length === 0 ? (
         <EmptyState icon="card-outline" title="Nenhuma cobrança" subtitle="Suas mensalidades aparecem aqui." />
       ) : charges.map((charge, index) => {
         const status = chargeStatusInfo(charge.status);
