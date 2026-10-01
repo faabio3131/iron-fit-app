@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AIInsightCard } from '../components/AIInsightCard';
 import { AIWorkoutAssistant } from '../components/AIWorkoutAssistant';
+import { AIContentRecommendation, getContentRecommendations } from '../services/ai';
 import { EmptyState } from '../components/EmptyState';
 import { StatCard } from '../components/StatCard';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +14,7 @@ export function WorkoutsScreen() {
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [assistantVisible, setAssistantVisible] = useState(false);
+  const [contentRecommendations, setContentRecommendations] = useState<AIContentRecommendation[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -30,6 +32,26 @@ export function WorkoutsScreen() {
   }, []);
 
   const weeklyFrequency = workouts.reduce((sum, workout) => sum + (workout.weeklyFrequency || 0), 0);
+  const recommendationExerciseIds = useMemo(
+    () => [...new Set(
+      workouts.flatMap((workout) =>
+        (workout.sessions || []).flatMap((session: any) =>
+          (session.exercises || []).map((item: any) => item.exercise?.id).filter(Boolean),
+        ),
+      ),
+    )].slice(0, 20) as string[],
+    [workouts],
+  );
+
+  useEffect(() => {
+    if (recommendationExerciseIds.length === 0) return undefined;
+    let active = true;
+    getContentRecommendations(recommendationExerciseIds)
+      .then((result) => {
+        if (active) setContentRecommendations(result.recommendations);
+      });
+    return () => { active = false; };
+  }, [recommendationExerciseIds]);
 
   return (
     <>
@@ -43,6 +65,33 @@ export function WorkoutsScreen() {
           <StatCard icon="calendar" value={String(weeklyFrequency)} label="Dias/semana" color="#67d6ff" />
         </View>
         <AIInsightCard workoutCount={workouts.length} weeklyFrequency={weeklyFrequency} onOpenAssistant={() => setAssistantVisible(true)} />
+        {contentRecommendations.length > 0 ? (
+          <View style={styles.contentRecommendationSection} testID="ai-content-recommendations">
+            <View style={styles.contentRecommendationHeader}>
+              <Ionicons name="play-circle-outline" size={19} color="#67d6ff" />
+              <View style={styles.contentRecommendationHeaderCopy}>
+                <Text style={styles.contentRecommendationTitle}>Conteúdo recomendado</Text>
+                <Text style={styles.contentRecommendationSubtitle}>
+                  Sugestões consultivas para exercícios do seu treino. O conteúdo final é validado pelo IRON.
+                </Text>
+              </View>
+            </View>
+            {contentRecommendations.map((recommendation) => (
+              <TouchableOpacity
+                key={recommendation.exerciseId}
+                accessibilityRole="button"
+                style={styles.contentRecommendationCard}
+                onPress={() => { void Linking.openURL(recommendation.url); }}
+              >
+                <View style={styles.contentRecommendationCopy}>
+                  <Text style={styles.contentRecommendationExercise}>{recommendation.exerciseName}</Text>
+                  <Text style={styles.contentRecommendationReason}>{recommendation.reason}</Text>
+                </View>
+                <Ionicons name="open-outline" size={18} color="#2f91ff" />
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
         <Text style={styles.sectionTitle}>Seus Treinos</Text>
         {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : workouts.length === 0 ? (
           <EmptyState icon="barbell-outline" title="Nenhum treino ainda" subtitle="Seu instrutor ainda não liberou treinos para você." />
@@ -91,4 +140,13 @@ const styles = StyleSheet.create({
   session: { marginBottom: 12 }, sessionTitle: { color: '#2f91ff', fontSize: 14, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' }, exercise: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#203b55' },
   number: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#050b14', alignItems: 'center', justifyContent: 'center', marginRight: 12 }, numberText: { color: '#2f91ff', fontWeight: '700', fontSize: 12 }, exerciseContent: { flex: 1 }, exerciseName: { color: '#eef7ff', fontSize: 15, fontWeight: '600' }, exerciseMeta: { color: '#9fb0c5', fontSize: 11, marginTop: 4 },
   videoButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2f91ff15', borderWidth: 1, borderColor: '#2f91ff40', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, alignSelf: 'flex-start', marginTop: 8, gap: 6 }, videoText: { color: '#2f91ff', fontWeight: '600', fontSize: 13 },
+  contentRecommendationSection: { backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 16, padding: 14, marginBottom: 20 },
+  contentRecommendationHeader: { flexDirection: 'row', gap: 9, alignItems: 'flex-start', marginBottom: 9 },
+  contentRecommendationHeaderCopy: { flex: 1 },
+  contentRecommendationTitle: { color: '#eef7ff', fontSize: 15, fontWeight: '800' },
+  contentRecommendationSubtitle: { color: '#9fb0c5', fontSize: 11, lineHeight: 16, marginTop: 2 },
+  contentRecommendationCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 11, marginTop: 7 },
+  contentRecommendationCopy: { flex: 1 },
+  contentRecommendationExercise: { color: '#dce9f6', fontSize: 13, fontWeight: '800' },
+  contentRecommendationReason: { color: '#9fb0c5', fontSize: 11, lineHeight: 16, marginTop: 3 },
 });
