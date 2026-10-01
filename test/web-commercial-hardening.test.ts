@@ -52,7 +52,7 @@ test('sensitive commercial surfaces remain narrowed by role in the Web shell', (
   expect(web).toContain('ADMINISTRAÇÃO RESTRITA');
   expect(web).toContain('Área restrita · Proprietário / Administrador');
   expect(web).toContain("roles: ['SUPER_ADMIN', 'OWNER']");
-  expect(web).toContain("restrictedAdminModules: ModuleKey[] = ['financial', 'saasBilling', 'entitlements', 'integrations']");
+  expect(web).toContain("restrictedAdminModules: ModuleKey[] = ['financial', 'fiscal', 'saasBilling', 'entitlements', 'integrations']");
   expect(web).toContain("api('/auth/step-up'");
   expect(web).toContain('Acesso administrativo protegido');
   expect(web).toContain('admin-step-up-submit');
