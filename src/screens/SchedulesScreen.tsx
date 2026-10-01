@@ -34,7 +34,7 @@ export function SchedulesScreen() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View><Text style={styles.heading}>Agenda</Text><Text style={styles.sub}>Suas aulas e entradas 📅</Text></View>
-        <Ionicons name="calendar" size={24} color="#f59e0b" />
+        <Ionicons name="calendar" size={24} color="#2f91ff" />
       </View>
       <CheckInScreen />
       <Text style={styles.sectionTitle}>Horários reservados</Text>
@@ -50,7 +50,7 @@ export function SchedulesScreen() {
               {schedule.status ? ` · ${schedule.status}` : ''}
             </Text>
           </View>
-          <Ionicons name="checkmark-circle" size={18} color="#10b981" />
+          <Ionicons name="checkmark-circle" size={18} color="#67d6ff" />
         </View>
       ))}
     </ScrollView>
