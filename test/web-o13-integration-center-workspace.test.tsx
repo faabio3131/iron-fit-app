@@ -21,7 +21,7 @@ describe('O13 Integration Center interactions', () => {
           environment: 'HOMOLOG',
           providers: [{
             providerCode: 'meta',
-            capabilities: ['meta.facebook', 'meta.instagram'],
+            capabilities: ['meta.facebook', 'meta.instagram', 'meta.whatsapp'],
             authModels: ['OAUTH2'],
             environments: ['DEV', 'HOMOLOG', 'PROD'],
             supportsWebhook: true,
@@ -58,7 +58,7 @@ describe('O13 Integration Center interactions', () => {
     const call = mockApi.mock.calls.find(([path]) => path === '/integrations/oauth/meta/start');
     const body = JSON.parse(String(call?.[2]?.body ?? '{}'));
     expect(body.currentPassword).toBe('test-step-up-value');
-    expect(body.capabilities).toEqual(['meta.facebook', 'meta.instagram']);
+    expect(body.capabilities).toEqual(['meta.whatsapp']);
     expect(body.redirectUri).toContain('/integrations/oauth/meta/callback');
     expect(body).not.toHaveProperty('gymId');
     expect(body).not.toHaveProperty('tenantId');
