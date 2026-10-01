@@ -22,7 +22,7 @@ export function CheckInScreen() {
 
   return (
     <>
-      <TouchableOpacity testID="checkin-submit" style={styles.card} onPress={handleCheckIn} disabled={checkingIn} activeOpacity={0.8}>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Registrar check-in na academia" accessibilityState={{ disabled: checkingIn, busy: checkingIn }} testID="checkin-submit" style={styles.card} onPress={handleCheckIn} disabled={checkingIn} activeOpacity={0.8}>
         <View style={styles.iconBox}><Ionicons name="qr-code" size={32} color="#eef7ff" /></View>
         <View style={styles.content}>
           <Text style={styles.title}>Check-in na academia</Text>
