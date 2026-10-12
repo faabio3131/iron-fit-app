@@ -10,7 +10,7 @@ type Props = {
 
 function countMapTotal(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return 0;
-  return Object.values(value as Record<string, unknown>).reduce((sum, item) => sum + (typeof item === 'number' ? item : 0), 0);
+  return Object.values(value as Record<string, unknown>).reduce<number>((sum, item) => sum + (typeof item === 'number' ? item : 0), 0);
 }
 
 function dateTime(value: unknown) {
