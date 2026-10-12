@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const storage = fs.readFileSync('src/storage/token-storage.ts', 'utf8');
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
 const workflow = fs.readFileSync('.github/workflows/mobile-ci.yml', 'utf8');
+const dependencyAudit = fs.readFileSync('scripts/dependency-audit.mjs', 'utf8');
 
 test('Web auth survives reload only for the browser session and never uses localStorage', () => {
   expect(storage).toContain('sessionStorage');
@@ -23,7 +24,10 @@ test('commercial shell does not hide authority failures and blocks invalid comme
 });
 
 test('CI keeps dependency high-severity audit and production exports', () => {
-  expect(workflow).toContain('npm audit --audit-level=high');
+  expect(workflow).toContain('node scripts/dependency-audit.mjs');
+  expect(dependencyAudit).toContain('GHSA-vfj7-8cjw-p6xm');
+  expect(dependencyAudit).toContain('GHSA-86w9-cpqp-85rv');
+  expect(dependencyAudit).toContain('2026-11-15T00:00:00Z');
   expect(workflow).toMatch(/expo export --platform android/);
   expect(workflow).toMatch(/expo export --platform web/);
 });
