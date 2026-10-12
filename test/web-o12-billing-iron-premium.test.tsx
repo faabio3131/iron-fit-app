@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
 import { SaasBillingPanel } from '../src/components/SaasBillingPanel';
 
 const mockApi = jest.fn();
@@ -7,6 +7,14 @@ const mockApi = jest.fn();
 jest.mock('../src/services/api', () => ({
   api: (...args: unknown[]) => mockApi(...args),
 }));
+
+const authority = {
+  billingAuthority: 'FM_COMMAND',
+  productCode: 'IRON_FIT_CORE',
+  localMutationsEnabled: false,
+  providerWebhooksAccepted: false,
+  mode: 'COMMAND_CENTRALIZED',
+};
 
 const prices = [
   {
@@ -49,25 +57,26 @@ const current = {
     dunningGraceDays: 7,
     gracePeriodEndsAt: '2026-09-27T00:00:00.000Z',
   },
+  authority,
+  projection: 'LEGACY_READ_ONLY',
 };
 
 describe('O12 Billing IRON premium workspace', () => {
   beforeEach(() => {
     mockApi.mockReset();
     mockApi.mockImplementation(async (path: string) => {
+      if (path === '/saas-billing/authority') return authority;
       if (path === '/saas-billing/current') return current;
       if (path === '/saas-billing/prices') return prices;
-      if (path === '/saas-billing/refunds') {
-        return { id: 'refund-a', status: 'SUCCEEDED' };
-      }
       throw new Error('Unexpected API path: ' + path);
     });
   });
 
-  test('renders commercial plan labels, cycle, invoices and approved grace policy without showing internal price code', async () => {
+  test('renders the legacy read model under explicit FM Command authority without exposing internal price code', async () => {
     const view = render(<SaasBillingPanel />);
 
-    await waitFor(() => expect(view.getAllByText('IRON Pro').length).toBeGreaterThan(0));
+    await waitFor(() => expect(view.getByTestId('saas-billing-command-authority')).toBeTruthy());
+    expect(view.getAllByText('IRON Pro').length).toBeGreaterThan(0);
     expect(view.getAllByText('Mensal').length).toBeGreaterThan(0);
     expect(view.getByText('27/09/2026')).toBeTruthy();
     expect(view.getByText('Período de tolerância: 7 dias')).toBeTruthy();
@@ -76,29 +85,13 @@ describe('O12 Billing IRON premium workspace', () => {
     expect(view.queryByText('Reembolsar')).toBeNull();
   });
 
-  test('refund stays SUPER_ADMIN-only and never sends tenant authority from the browser', async () => {
+  test('FM Command authority suppresses local refund even for SUPER_ADMIN', async () => {
     const view = render(<SaasBillingPanel canAdministerBilling />);
 
-    await waitFor(() => expect(view.getByTestId('saas-billing-refund-invoice-a')).toBeTruthy());
-    fireEvent.press(view.getByTestId('saas-billing-refund-invoice-a'));
+    await waitFor(() => expect(view.getByTestId('saas-billing-command-authority')).toBeTruthy());
 
-    expect(view.getByTestId('saas-billing-refund-panel')).toBeTruthy();
-    fireEvent.changeText(view.getByLabelText('Motivo do reembolso'), 'Cobrança duplicada');
-    fireEvent.press(view.getByTestId('saas-billing-confirm-refund'));
-
-    await waitFor(() =>
-      expect(mockApi).toHaveBeenCalledWith(
-        '/saas-billing/refunds',
-        undefined,
-        expect.objectContaining({ method: 'POST' }),
-      ),
-    );
-
-    const call = mockApi.mock.calls.find(([path]) => path === '/saas-billing/refunds');
-    const body = JSON.parse(String(call?.[2]?.body ?? '{}'));
-    expect(body.invoiceId).toBe('invoice-a');
-    expect(body.amountMinor).toBe(14990);
-    expect(body.reason).toBe('Cobrança duplicada');
-    expect(body).not.toHaveProperty('gymId');
+    expect(view.queryByTestId('saas-billing-refund-invoice-a')).toBeNull();
+    expect(view.queryByTestId('saas-billing-refund-panel')).toBeNull();
+    expect(mockApi.mock.calls.some(([path]) => path === '/saas-billing/refunds')).toBe(false);
   });
 });
