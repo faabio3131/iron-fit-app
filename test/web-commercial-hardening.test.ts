@@ -34,7 +34,7 @@ test('CI keeps dependency high-severity audit and production exports', () => {
 
 
 test('restricted administration is owner-only and requires session step-up', () => {
-  expect(web).toContain("restrictedAdminModules: ModuleKey[] = ['financial', 'saasBilling', 'entitlements', 'integrations']");
+  expect(web).toContain("restrictedAdminModules: ModuleKey[] = ['financial', 'fiscal', 'saasBilling', 'entitlements', 'integrations']");
   expect(web).toContain("{ key: 'financial', label: 'Financeiro', icon: 'lock-closed-outline', roles: ['SUPER_ADMIN', 'OWNER'] }");
   expect(web).toContain("{ key: 'saasBilling', label: 'Assinatura IRON', icon: 'card-outline', roles: ['SUPER_ADMIN', 'OWNER'] }");
   expect(web).toContain("api('/auth/step-up/status')");
