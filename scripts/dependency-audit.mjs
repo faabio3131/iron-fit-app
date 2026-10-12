@@ -1,17 +1,15 @@
 import { spawnSync } from "node:child_process";
 
 const APPROVED = new Map([
-  ["braces", {
-    ghsa: "GHSA-vfj7-8cjw-p6xm",
+  ["GHSA-vfj7-8cjw-p6xm", {
+    packageName: "braces",
     url: "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
-    expires: "2026-11-15T00:00:00Z",
-    rationale: "Build/test tooling only; no patched upstream release exists."
+    expires: "2026-11-15T00:00:00Z"
   }],
-  ["node-forge", {
-    ghsa: "GHSA-86w9-cpqp-85rv",
+  ["GHSA-86w9-cpqp-85rv", {
+    packageName: "node-forge",
     url: "https://github.com/advisories/GHSA-86w9-cpqp-85rv",
-    expires: "2026-11-15T00:00:00Z",
-    rationale: "Expo CLI/code-signing tooling only; no patched upstream npm release exists."
+    expires: "2026-11-15T00:00:00Z"
   }]
 ]);
 
@@ -29,35 +27,69 @@ try {
 }
 
 const vulnerabilities = audit.vulnerabilities ?? {};
+
+function rootAdvisories(name, seen = new Set()) {
+  if (seen.has(name)) return [];
+  seen.add(name);
+  const finding = vulnerabilities[name];
+  if (!finding || !Array.isArray(finding.via)) return [];
+
+  const roots = [];
+  for (const via of finding.via) {
+    if (typeof via === "string") {
+      roots.push(...rootAdvisories(via, seen));
+      continue;
+    }
+    if (via && typeof via === "object") {
+      roots.push({
+        sourcePackage: name,
+        severity: String(via.severity ?? finding.severity ?? "").toLowerCase(),
+        url: String(via.url ?? ""),
+        title: String(via.title ?? "")
+      });
+    }
+  }
+  return roots;
+}
+
 const blockers = [];
-const approvedFindings = [];
+const approvedRoots = new Map();
 
 for (const [name, finding] of Object.entries(vulnerabilities)) {
   const severity = String(finding.severity ?? "").toLowerCase();
   if (severity !== "high" && severity !== "critical") continue;
 
-  const advisories = Array.isArray(finding.via)
-    ? finding.via.filter((item) => item && typeof item === "object")
-    : [];
-  const urls = advisories.map((item) => String(item.url ?? "")).filter(Boolean);
-  const exception = APPROVED.get(name);
-
-  if (severity === "critical") {
-    blockers.push({ name, severity, urls, reason: "critical findings are never excepted" });
+  const roots = rootAdvisories(name);
+  if (!roots.length) {
+    blockers.push({ name, severity, reason: "high/critical dependency has no resolvable advisory root" });
     continue;
   }
 
-  if (!exception || !urls.includes(exception.url)) {
-    blockers.push({ name, severity, urls, reason: "not an approved temporary tooling-only advisory" });
-    continue;
-  }
+  for (const root of roots) {
+    if (root.severity !== "high" && root.severity !== "critical") continue;
+    if (root.severity === "critical") {
+      blockers.push({ name, severity, root, reason: "critical findings are never excepted" });
+      continue;
+    }
 
-  if (Date.now() >= Date.parse(exception.expires)) {
-    blockers.push({ name, severity, urls, reason: "temporary exception expired" });
-    continue;
-  }
+    const approved = [...APPROVED.entries()].find(([, rule]) => rule.url === root.url);
+    if (!approved) {
+      blockers.push({ name, severity, root, reason: "root advisory is not approved" });
+      continue;
+    }
 
-  approvedFindings.push({ name, severity, ghsa: exception.ghsa, expires: exception.expires });
+    const [ghsa, rule] = approved;
+    if (Date.now() >= Date.parse(rule.expires)) {
+      blockers.push({ name, severity, root, reason: "temporary exception expired" });
+      continue;
+    }
+
+    approvedRoots.set(ghsa, {
+      packageName: rule.packageName,
+      expires: rule.expires,
+      url: rule.url
+    });
+  }
 }
 
 if (blockers.length) {
@@ -66,12 +98,12 @@ if (blockers.length) {
   process.exit(1);
 }
 
-for (const finding of approvedFindings) {
+for (const [ghsa, rule] of approvedRoots) {
   console.warn(
-    `DEPENDENCY_AUDIT_TEMP_EXCEPTION package=${finding.name} advisory=${finding.ghsa} expires=${finding.expires}`
+    `DEPENDENCY_AUDIT_TEMP_EXCEPTION package=${rule.packageName} advisory=${ghsa} expires=${rule.expires}`
   );
 }
 
 console.log(
-  `DEPENDENCY_AUDIT_PASS high_or_critical_unapproved=0 temporary_tooling_exceptions=${approvedFindings.length}`
+  `DEPENDENCY_AUDIT_PASS high_or_critical_unapproved=0 temporary_tooling_exception_roots=${approvedRoots.size}`
 );
