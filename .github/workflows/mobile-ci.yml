@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Dependency audit (high severity gate)
-        run: npm audit --audit-level=high
+        run: node scripts/dependency-audit.mjs
 
       - name: Typecheck
         run: npm run typecheck
@@ -66,8 +66,8 @@ jobs:
             echo 'Critical module/asset resolution error found in Android production export.'
             exit 1
           fi
-          if strings "$BUNDLE" | grep -E '@testing-library/react-native|jest-expo|eslint-config-expo|__tests__/' ; then
-            echo 'Development/test-only module marker found in Android production bundle.'
+          if strings "$BUNDLE" | grep -E '@testing-library/react-native|jest-expo|eslint-config-expo|__tests__/|@expo/cli|node-forge|braces/lib/' ; then
+            echo 'Development/security-exception tooling marker found in Android production bundle.'
             exit 1
           fi
           echo "Certified Android production bundle: $BUNDLE"
@@ -90,8 +90,8 @@ jobs:
             echo 'Critical module/asset resolution error found in iOS production export.'
             exit 1
           fi
-          if strings "$BUNDLE" | grep -E '@testing-library/react-native|jest-expo|eslint-config-expo|__tests__/' ; then
-            echo 'Development/test-only module marker found in iOS production bundle.'
+          if strings "$BUNDLE" | grep -E '@testing-library/react-native|jest-expo|eslint-config-expo|__tests__/|@expo/cli|node-forge|braces/lib/' ; then
+            echo 'Development/security-exception tooling marker found in iOS production bundle.'
             exit 1
           fi
           echo "Certified iOS production bundle: $BUNDLE"
@@ -110,6 +110,10 @@ jobs:
           grep -q 'Web Bundled' expo-web-export.log
           if grep -Eqi 'Unable to resolve|Cannot find module|Module not found|error:.*asset' expo-web-export.log; then
             echo 'Critical module/asset resolution error found in Web production export.'
+            exit 1
+          fi
+          if grep -R -E '@expo/cli|node-forge|braces/lib/' dist-web; then
+            echo 'Security-exception tooling marker found in Web production export.'
             exit 1
           fi
           echo 'Certified Web production export.'
