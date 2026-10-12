@@ -3,12 +3,12 @@ import fs from 'node:fs';
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
 const hub = fs.readFileSync('src/web/AggregatorHubWorkspace.tsx', 'utf8');
 
-test('D8 exposes Aggregator Hub only inside the authenticated commercial shell', () => {
-  expect(web).toContain("type ModuleKey = 'overview'");
-  expect(web).toContain("'aggregator'");
-  expect(web).toContain("label: 'Aggregator Hub'");
-  expect(web).toContain('<AggregatorHubWorkspace');
+test('D8 keeps Aggregator Hub implemented but outside the V1 tenant menu until launch authority permits it', () => {
   expect(hub).toContain('testID="aggregator-hub-workspace"');
+  expect(web).not.toContain("key: 'aggregator'");
+  expect(web).not.toContain('AggregatorHubWorkspace');
+  expect(web).not.toContain('nav-aggregator');
+  expect(web).not.toContain('/aggregator/');
 });
 
 test('D8 consumes only canonical provider-neutral aggregator read models', () => {
