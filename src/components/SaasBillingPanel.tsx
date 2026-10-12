@@ -29,10 +29,20 @@ type BillingPolicy = {
   gracePeriodEndsAt?: string | null;
 };
 
+type BillingAuthority = {
+  billingAuthority?: string;
+  productCode?: string;
+  localMutationsEnabled?: boolean;
+  providerWebhooksAccepted?: boolean;
+  mode?: string;
+};
+
 type BillingState = {
   agreement?: any;
   invoices?: any[];
   billingPolicy?: BillingPolicy | null;
+  authority?: BillingAuthority | null;
+  projection?: string;
 };
 
 function requestId() {
@@ -132,6 +142,7 @@ export function SaasBillingPanel({
   canAdministerBilling?: boolean;
 }) {
   const [billing, setBilling] = useState<BillingState | null>(null);
+  const [authority, setAuthority] = useState<BillingAuthority | null>(null);
   const [prices, setPrices] = useState<Price[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -146,10 +157,12 @@ export function SaasBillingPanel({
     setLoading(true);
     setError('');
     try {
-      const [current, available] = await Promise.all([
+      const [authorityState, current, available] = await Promise.all([
+        api('/saas-billing/authority'),
         api('/saas-billing/current'),
         api('/saas-billing/prices'),
       ]);
+      setAuthority(authorityState ?? current?.authority ?? null);
       setBilling(current ?? { agreement: null, invoices: [], billingPolicy: null });
       setPrices(Array.isArray(available) ? available : []);
     } catch (reason: unknown) {
@@ -167,6 +180,7 @@ export function SaasBillingPanel({
   }, [load]);
 
   const agreement = billing?.agreement ?? null;
+  const commandAuthority = authority?.billingAuthority === 'FM_COMMAND' && authority?.localMutationsEnabled === false;
   const currentPrice = agreement?.price ?? null;
   const billingPolicy = billing?.billingPolicy ?? null;
   const invoices = Array.isArray(billing?.invoices) ? billing!.invoices! : [];
@@ -207,6 +221,7 @@ export function SaasBillingPanel({
   }
 
   function actionFor(price: Price) {
+    if (commandAuthority) return null;
     if (!agreement || !currentPrice || agreement.status === 'PENDING_CHECKOUT') {
       return {
         label: 'Iniciar pagamento',
@@ -292,6 +307,14 @@ export function SaasBillingPanel({
       {loading ? <View style={styles.loading}><ActivityIndicator color="#2f91ff" /><Text style={styles.muted}>Carregando sua assinatura…</Text></View> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
+      {commandAuthority ? (
+        <View style={styles.commandAuthority} testID="saas-billing-command-authority">
+          <Text style={styles.commandAuthorityTitle}>Billing centralizado no FM Command</Text>
+          <Text style={styles.commandAuthorityText}>
+            Esta tela está em modo de leitura durante a migração. Checkout, alteração de plano, cancelamento, reembolso e processamento de gateway não são executados localmente pelo IRON.
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.summaryGrid}>
         <View style={styles.summaryCard}>
@@ -379,7 +402,7 @@ export function SaasBillingPanel({
           })}
         </ScrollView>
 
-        {agreement && agreement.status !== 'CANCELED' && !agreement.cancelAtPeriodEnd ? (
+        {!commandAuthority && agreement && agreement.status !== 'CANCELED' && !agreement.cancelAtPeriodEnd ? (
           <TouchableOpacity
             accessibilityRole="button"
             testID="saas-billing-cancel-period-end"
@@ -425,7 +448,7 @@ export function SaasBillingPanel({
                 </View>
                 <View style={styles.invoiceAmount}>
                   <Text style={styles.rowTitle}>{formatMoney(invoice.amountDueMinor, invoice.currency ?? 'BRL')}</Text>
-                  {canAdministerBilling && refundable > 0 ? (
+                  {!commandAuthority && canAdministerBilling && refundable > 0 ? (
                     <TouchableOpacity
                       testID={`saas-billing-refund-${invoice.id}`}
                       accessibilityRole="button"
@@ -446,7 +469,7 @@ export function SaasBillingPanel({
         )}
       </View>
 
-      {canAdministerBilling && selectedRefundInvoice ? (
+      {!commandAuthority && canAdministerBilling && selectedRefundInvoice ? (
         <View style={styles.card} testID="saas-billing-refund-panel">
           <Text style={styles.title}>Reembolso administrativo</Text>
           <Text style={styles.muted}>
@@ -542,6 +565,9 @@ const styles = StyleSheet.create({
   loading: { flexDirection: 'row', gap: 8, alignItems: 'center', paddingVertical: 10 },
   error: { color: '#fca5a5', backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', padding: 10, borderRadius: 9, marginBottom: 8 },
   notice: { color: '#bfdbfe', backgroundColor: '#071a31', borderWidth: 1, borderColor: '#1e4d7a', padding: 10, borderRadius: 9, marginBottom: 8 },
+  commandAuthority: { backgroundColor: '#08172a', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 11, padding: 11, marginBottom: 9 },
+  commandAuthorityTitle: { color: '#bfdbfe', fontSize: 12, fontWeight: '900' },
+  commandAuthorityText: { color: '#9fb0c5', fontSize: 10, lineHeight: 15, marginTop: 4 },
   muted: { color: '#9fb0c5', fontSize: 11, lineHeight: 16 },
   summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 9 },
   summaryCard: { flexGrow: 1, flexBasis: 210, minWidth: 180, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 11 },
