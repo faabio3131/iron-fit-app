@@ -4,7 +4,7 @@ const workspace = fs.readFileSync('src/web/CreatorNetworkWorkspace.tsx', 'utf8')
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
 
 test('O16 Creator Network uses dedicated product UI instead of generic raw records', () => {
-  expect(workspace).toContain('CREATOR NETWORK');
+  expect(workspace).toContain('REDE DE CRIADORES');
   expect(workspace).toContain('Conteúdo autorizado');
   expect(workspace).toContain('Utilização');
   expect(workspace).toContain('Indicadores');
