@@ -9,7 +9,7 @@ const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
 test('C6 Web exposes OWNER-only integration administration surface', () => {
   expect(web).toContain("key: 'integrations'");
   expect(web).toContain("roles: ['SUPER_ADMIN', 'OWNER']");
-  expect(web).toContain('<IntegrationCredentialsPanel />');
+  expect(web).toContain("<IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />");
   expect(panel).toContain("api('/integrations/providers')");
   expect(panel).toContain("api('/integrations/connections')");
 });
@@ -30,20 +30,20 @@ test('C7 Web requires step-up material for credential mutations', () => {
   expect(panel).toContain('mfaCode');
   expect(panel).toContain('recoveryCode');
   expect(panel).toContain('integration-action-confirm');
-  expect(panel).toContain('Senha atual — step-up');
+  expect(panel).toContain('Senha atual — reautenticação');
 });
 
 test('C6 Web never lets the browser choose tenant authority', () => {
   expect(panel).not.toMatch(/gymId|tenantId/);
   expect(panel).toContain('/integrations/connections');
-  expect(web).toContain('Tenant derivado da sessão autenticada');
+  expect(web).toContain('const { profile, activeTenantId, logout } = useAuth()');
 });
 
 test('C6 Web derives provider/auth/capabilities from backend catalog and treats environment as server authority', () => {
   expect(panel).toContain('catalog?.providers');
   expect(panel).toContain('catalog?.environment');
   expect(panel).toContain('selectedProvider.authModels');
-  expect(panel).toContain('selectedProvider.capabilities');
+  expect(panel).toContain('commercialCapabilities(selectedProvider)');
   expect(panel).toContain('tenantEntitlementFeatureKey');
   expect(panel).toContain('Definido pelo servidor');
   expect(panel).not.toMatch(/providerCode: selectedProvider\.providerCode,\s*environment,/);
@@ -57,6 +57,6 @@ test('C6 Web exposes separate replace, rotate, provider-test and revoke actions'
   expect(panel).toContain("beginAction(connection.id, 'rotate')");
   expect(panel).toContain("beginAction(connection.id, 'verify')");
   expect(panel).toContain("beginAction(connection.id, 'revoke')");
-  expect(panel).toContain('Testar provider');
+  expect(panel).toContain('Testar provedor');
   expect(panel).not.toContain('Testar cofre');
 });

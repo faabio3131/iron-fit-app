@@ -6,7 +6,7 @@ export function InfoRow({ icon, label, value, highlight }: { icon: any; label: s
   return (
     <View style={styles.row}>
       <View style={styles.iconBox}>
-        <Ionicons name={icon} size={18} color="#8b5cf6" />
+        <Ionicons name={icon} size={18} color="#2f91ff" />
       </View>
       <View style={styles.content}>
         <Text style={styles.label}>{label}</Text>
@@ -17,10 +17,10 @@ export function InfoRow({ icon, label, value, highlight }: { icon: any; label: s
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: '#252d47' },
-  iconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#8b5cf615', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: '#203b55' },
+  iconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#2f91ff15', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   content: { flex: 1 },
-  label: { color: '#94a3b8', fontSize: 11, marginBottom: 2 },
-  value: { color: '#f1f5f9', fontSize: 15, fontWeight: '600' },
+  label: { color: '#9fb0c5', fontSize: 11, marginBottom: 2 },
+  value: { color: '#eef7ff', fontSize: 15, fontWeight: '600' },
   highlight: { color: '#10b981', fontWeight: '700' },
 });

@@ -52,7 +52,8 @@ test('B6 commercial Web consumes canonical backend domains and entitlement resol
   }
   expect(web).toContain('equipment.inventory');
   expect(web).toContain('equipment.catalog');
-  expect(web).toContain('FAIL_CLOSED_DEFAULT');
+  expect(web).toContain("subscription?.status === 'SUSPENDED'");
+  expect(web).toContain('subscription-blocked');
   expect(web).not.toMatch(/plan\s*===|planName\s*===/);
   expect(web).not.toMatch(/api\('\/equipments', undefined, \{ method: 'POST'/);
 });
@@ -60,7 +61,7 @@ test('B6 commercial Web consumes canonical backend domains and entitlement resol
 test('B6 Web operational mutations follow current security and EQ5 contracts', () => {
   expect(web).toContain('strongPassword(member.password)');
   expect(web).toContain('equipment-catalog-select');
-  expect(web).toContain('catalogItemIds: [selectedCatalogEquipment]');
+  expect(web).toContain('catalogItemIds: [item.id]');
   expect(web).not.toContain('member.password.length < 6');
 });
 

@@ -15,6 +15,8 @@ Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' });
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const App = require('../App').default as React.ComponentType;
 // eslint-disable-next-line @typescript-eslint/no-require-imports
+const { TrialSignupScreen } = require('../src/web/TrialSignupScreen') as typeof import('../src/web/TrialSignupScreen');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { clearSession } = require('../src/storage/token-storage') as typeof import('../src/storage/token-storage');
 
 const API_ROOT = 'https://example.invalid/api/v1';
@@ -54,11 +56,14 @@ function installCommercialFetch() {
     if (path === '/product-entitlements/tenant/current') return response(200, { id: 'sub-1', status: 'ACTIVE' });
     if (path === '/commercial/trial/status') return response(200, { status: 'TRIALING', subscriptionId: 'sub-1' });
     if (path === '/commercial/onboarding') return response(200, { status: 'NOT_STARTED', completedSteps: [], nextStep: 'ACADEMY_PROFILE' });
+    if (path === '/auth/step-up/status') return response(200, { active: false, expiresAt: null });
     if (path === '/dashboard/summary') return response(200, { students: { total: 0 }, charges: { pending: 0 } });
     if (path.startsWith('/dashboard/revenue')) return response(200, []);
     if (path.startsWith('/dashboard/attendance')) return response(200, []);
     if (path === '/dashboard/overdue') return response(200, []);
     if (path.startsWith('/dashboard/birthdays')) return response(200, []);
+    if (path === '/schedule-slots') return response(200, []);
+    if (path === '/workouts') return response(200, []);
     if (path === '/gyms/gym-1') return response(200, { id: 'gym-1', name: 'Academia Web', timezone: 'America/Sao_Paulo', active: true });
     return response(404, { message: `Unhandled commercial Web route: ${path}` });
   });
@@ -73,6 +78,35 @@ afterAll(() => {
 beforeEach(async () => {
   stored.clear();
   await clearSession();
+});
+
+test('trial explains password requirements instead of silently disabling submit', async () => {
+  const fetchMock = installCommercialFetch();
+  const view = render(<TrialSignupScreen onCancel={() => undefined} onCreated={() => undefined} />);
+  expect(view.getByText(/De 12 a 128 caracteres/)).toBeTruthy();
+  fireEvent.changeText(view.getByTestId('trial-name'), 'Owner QA');
+  fireEvent.changeText(view.getByTestId('trial-gym-name'), 'Academia QA');
+  fireEvent.changeText(view.getByTestId('trial-email'), 'owner@example.com');
+  fireEvent.changeText(view.getByTestId('trial-password'), 'short');
+  fireEvent.press(view.getByTestId('trial-submit'));
+  expect(view.getByText(/Use 12–128 caracteres/)).toBeTruthy();
+  expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/commercial/trial/start'))).toBe(false);
+});
+
+test('trial password visibility control safely shows and hides the password', () => {
+  const view = render(<TrialSignupScreen onCancel={() => undefined} onCreated={() => undefined} />);
+  const passwordInput = view.getByTestId('trial-password');
+  const visibilityToggle = view.getByTestId('trial-password-toggle');
+
+  expect(passwordInput.props.secureTextEntry).toBe(true);
+  expect(visibilityToggle.props.accessibilityLabel).toBe('Mostrar senha');
+
+  fireEvent.press(visibilityToggle);
+  expect(view.getByTestId('trial-password').props.secureTextEntry).toBe(false);
+  expect(view.getByTestId('trial-password-toggle').props.accessibilityLabel).toBe('Ocultar senha');
+
+  fireEvent.press(view.getByTestId('trial-password-toggle'));
+  expect(view.getByTestId('trial-password').props.secureTextEntry).toBe(true);
 });
 
 test('visitor creates trial, authenticates and reaches tenant-scoped commercial Web', async () => {
@@ -106,4 +140,4 @@ test('visitor creates trial, authenticates and reaches tenant-scoped commercial 
   const persisted = stored.get('iron-fit.auth.session.v1');
   expect(persisted).toContain('web-access');
   expect(persisted).toContain('web-refresh');
-});
+}, 15000);

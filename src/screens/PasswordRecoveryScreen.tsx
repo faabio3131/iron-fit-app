@@ -1,10 +1,10 @@
+import { AuthFrame } from '../components/AuthFrame';
+import { IronInput as TextInput } from '../components/IronInput';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -72,12 +72,12 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <AuthFrame>
       <View style={styles.card}>
         <Text style={styles.kicker}>SEGURANÇA DA CONTA</Text>
         <Text style={styles.title}>Recuperar acesso</Text>
         <Text style={styles.subtitle}>
-          A resposta da solicitação é deliberadamente genérica para não revelar se uma conta existe.
+          Informe seu e-mail para solicitar as orientações de recuperação.
         </Text>
 
         <TextInput
@@ -88,9 +88,10 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="E-mail"
-          placeholderTextColor="#64748b"
+          placeholderTextColor="#9fb0c5"
         />
         <TouchableOpacity
+              accessibilityRole="button"
           testID="recovery-request"
           style={[styles.primary, (!email.trim() || loading) && styles.disabled]}
           disabled={!email.trim() || loading}
@@ -101,15 +102,15 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
 
         {requested ? (
           <View style={styles.confirm}>
-            <Text style={styles.sectionTitle}>Já recebeu o token?</Text>
+            <Text style={styles.sectionTitle}>Já recebeu o código?</Text>
             <TextInput
               testID="recovery-token"
               style={styles.input}
               value={token}
               onChangeText={setToken}
               autoCapitalize="none"
-              placeholder="Token one-time"
-              placeholderTextColor="#64748b"
+              placeholder="Código de recuperação"
+              placeholderTextColor="#9fb0c5"
             />
             <TextInput
               testID="recovery-new-password"
@@ -118,10 +119,11 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
               onChangeText={setNewPassword}
               secureTextEntry
               placeholder="Nova senha"
-              placeholderTextColor="#64748b"
+              placeholderTextColor="#9fb0c5"
             />
             <Text style={styles.policy}>{PASSWORD_POLICY_TEXT}</Text>
             <TouchableOpacity
+              accessibilityRole="button"
               testID="recovery-confirm"
               style={[
                 styles.primary,
@@ -138,40 +140,33 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
 
         {notice ? <Text testID="recovery-notice" style={styles.notice}>{notice}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <TouchableOpacity style={styles.back} onPress={onBack} disabled={loading}>
+        <TouchableOpacity accessibilityRole="button" style={styles.back} onPress={onBack} disabled={loading}>
           <Text style={styles.backText}>Voltar ao login</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </AuthFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: '#080c17',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
   card: {
     width: '100%',
     maxWidth: 560,
-    backgroundColor: '#121a2b',
+    backgroundColor: '#071528',
     borderWidth: 1,
-    borderColor: '#273248',
+    borderColor: '#203b55',
     borderRadius: 20,
     padding: 28,
   },
-  kicker: { color: '#8b5cf6', fontWeight: '800', fontSize: 11, letterSpacing: 1.5 },
-  title: { color: '#f8fafc', fontSize: 30, fontWeight: '900', marginTop: 8 },
-  subtitle: { color: '#94a3b8', fontSize: 14, lineHeight: 21, marginTop: 7, marginBottom: 20 },
-  sectionTitle: { color: '#f1f5f9', fontWeight: '800', marginBottom: 10 },
+  kicker: { color: '#2f91ff', fontWeight: '800', fontSize: 11, letterSpacing: 1.5 },
+  title: { color: '#eef7ff', fontSize: 30, fontWeight: '900', marginTop: 8 },
+  subtitle: { color: '#9fb0c5', fontSize: 14, lineHeight: 21, marginTop: 7, marginBottom: 20 },
+  sectionTitle: { color: '#eef7ff', fontWeight: '800', marginBottom: 10 },
   input: {
-    color: '#f8fafc',
-    backgroundColor: '#0b1120',
+    color: '#eef7ff',
+    backgroundColor: '#050b14',
     borderWidth: 1,
-    borderColor: '#2a3650',
+    borderColor: '#243247',
     borderRadius: 11,
     paddingHorizontal: 13,
     paddingVertical: 13,
@@ -179,7 +174,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   primary: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#176bc1',
     borderRadius: 11,
     minHeight: 48,
     alignItems: 'center',
@@ -187,10 +182,10 @@ const styles = StyleSheet.create({
   },
   primaryText: { color: '#fff', fontWeight: '800' },
   disabled: { opacity: 0.5 },
-  confirm: { marginTop: 22, paddingTop: 18, borderTopWidth: 1, borderTopColor: '#273248' },
-  policy: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginBottom: 10 },
+  confirm: { marginTop: 22, paddingTop: 18, borderTopWidth: 1, borderTopColor: '#203b55' },
+  policy: { color: '#9fb0c5', fontSize: 11, lineHeight: 16, marginBottom: 10 },
   notice: { color: '#86efac', marginTop: 14, lineHeight: 18 },
   error: { color: '#fca5a5', marginTop: 12 },
   back: { alignItems: 'center', paddingVertical: 14, marginTop: 4 },
-  backText: { color: '#c4b5fd', fontWeight: '700' },
+  backText: { color: '#93c5fd', fontWeight: '700' },
 });
