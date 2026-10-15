@@ -115,7 +115,7 @@ export function CreatorNetworkWorkspace({
     <View testID="creator-network-workspace">
       <View style={styles.hero}>
         <View style={styles.heroCopy}>
-          <Text style={styles.eyebrow}>CREATOR NETWORK</Text>
+          <Text style={styles.eyebrow}>REDE DE CRIADORES</Text>
           <Text style={styles.heroTitle}>Conteúdo e utilização</Text>
           <Text style={styles.muted}>
             Conteúdo, utilização e desempenho da rede de criadores vinculada à sua academia, sem expor consoles internos de governança.
