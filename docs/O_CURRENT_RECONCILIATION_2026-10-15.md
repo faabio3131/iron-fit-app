@@ -27,3 +27,8 @@ Este adiamento **não libera GO-LIVE sem provas reais** e não autoriza POST fin
 - Registrar a cada WP: branch/HEAD/PR/CI/testes/deploy/ambiente/bloqueios; nunca substituir evidência pela documentação histórica.
 
 Estado final deste checkpoint: **CURRENT técnico reconciliado; não é certificação final de Macro O nem homologação financeira.**
+
+## CI após checkpoint — gate vermelho identificado
+- Run `38820927189`, HEAD `d4b6eaa744d6b2cc33e51b758f97ace82be25020`: **FAILURE**, etapa `Release readiness` (`expo-doctor`), após Typecheck, Lint e Test PASS (**173 PASS, 1 SKIP**). Build/exports/HTTP foram SKIP, portanto não certificados nesse SHA.
+- Causa comprovada: versões Expo SDK desatualizadas no package + lock: `@expo/metro-runtime` 57.0.16 vs ~57.0.17, `expo` 57.0.27 vs ~57.0.30, `expo-splash-screen` 57.0.9 vs ~57.0.10, `jest-expo` 57.0.5 vs ~57.0.6.
+- Próxima correção técnica: executar `npx expo install --fix` em runner autorizado com acesso ao npm, gerar **package.json + package-lock.json consistentes**, retestar e só então avançar. Não contornar `expo-doctor` com exclusões nem declarar verde antes de CI completa. O dispositivo Desktop Commander autorizado estava offline e o ambiente executor desta sessão não conseguiu resolver github.com; atualização do lock ainda **não realizada**.
