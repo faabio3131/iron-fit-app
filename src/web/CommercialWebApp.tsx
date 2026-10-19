@@ -732,6 +732,7 @@ export function CommercialWebApp() {
               <Text style={styles.muted}>{item.muscleGroup || 'Grupo não informado'}{item.level ? ` · ${item.level}` : ''}</Text>
               {item.movement ? <Text style={styles.muted}>Movimento: {item.movement}</Text> : null}
               <Text style={styles.helper}>{item.videoUrl ? 'Conteúdo em vídeo disponível' : 'Sem conteúdo em vídeo'}</Text>
+              {typeof item._count?.workoutExercises === 'number' ? <Text style={styles.helper}>Utilizado em {item._count.workoutExercises} exercícios de treinos</Text> : null}
             </TouchableOpacity>) : <Text style={styles.muted}>Nenhum exercício encontrado.</Text>}
           </View>
         </Section></View>
@@ -859,6 +860,7 @@ export function CommercialWebApp() {
           <Text style={styles.muted}>{measurementSummary(item.measurements)}</Text>
           <Text style={styles.muted}>Restrições: {restrictionsSummary(item.restrictions)}</Text>
           {item.notes ? <Text style={styles.helper}>Observações: {item.notes}</Text> : null}
+          {typeof item.workoutCount === 'number' ? <Text style={styles.helper}>Treinos vinculados: {item.workoutCount}</Text> : null}
         </View>) : <Text style={styles.muted}>Nenhuma avaliação registrada.</Text>}
       </Section> : <Section compact title="Histórico de avaliações"><Text style={styles.muted}>Selecione um aluno para visualizar o histórico.</Text></Section>}
     </>;
