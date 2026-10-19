@@ -32,16 +32,6 @@ function featureArea(feature: any): string {
   return 'Recursos do plano';
 }
 
-const domainLabels: Record<string, string> = {
-  CORE: 'Recursos principais',
-  CONTENT: 'Conteúdo',
-  EQUIPMENT: 'Equipamentos',
-  AGGREGATOR: 'Agregadores',
-  ANALYTICS: 'Indicadores e análises',
-  AI: 'IRON Intelligence',
-  INTEGRATION: 'Integrações',
-};
-
 const featureLabels: Record<string, string> = {
   'equipment.catalog': 'Catálogo de equipamentos',
   'equipment.inventory': 'Inventário de equipamentos',
