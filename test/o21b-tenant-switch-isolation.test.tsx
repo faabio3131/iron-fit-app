@@ -3,14 +3,14 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 
-let activeTenantId = 'gym-a';
+let mockActiveTenantId = 'gym-a';
 const mockLogout = jest.fn(async () => undefined);
 const mockApi = jest.fn();
 
 jest.mock('../src/context/AuthContext', () => ({
   useAuth: () => ({
     profile: { id: 'owner-1', name: 'Proprietário', email: 'owner@example.test', roles: ['OWNER'], permissions: [] },
-    activeTenantId,
+    activeTenantId: mockActiveTenantId,
     logout: mockLogout,
   }),
 }));
@@ -21,13 +21,13 @@ jest.mock('../src/services/api', () => ({
 import { CommercialWebApp } from '../src/web/CommercialWebApp';
 
 beforeEach(() => {
-  activeTenantId = 'gym-a';
+  mockActiveTenantId = 'gym-a';
   mockApi.mockReset();
   mockLogout.mockClear();
   mockApi.mockImplementation(async (path: string) => {
     if (path === '/product-entitlements/tenant/features') return [];
     if (path === '/product-entitlements/tenant/current')
-      return activeTenantId === 'gym-a' ? { id: 'sub-a', status: 'ACTIVE' } : null;
+      return mockActiveTenantId === 'gym-a' ? { id: 'sub-a', status: 'ACTIVE' } : null;
     if (path === '/commercial/trial/status') return { status: 'TRIALING' };
     if (path === '/commercial/onboarding') return { status: 'COMPLETED' };
     if (path === '/auth/step-up/status') return { active: false, expiresAt: null };
@@ -42,7 +42,7 @@ test('O21B ao trocar academia revoga o shell anterior, dados da equipe e licenç
   fireEvent.press(view.getByTestId('nav-team'));
   await waitFor(() => expect(view.getByText('Professor da academia A')).toBeTruthy());
 
-  activeTenantId = 'gym-b';
+  mockActiveTenantId = 'gym-b';
   view.rerender(<CommercialWebApp />);
 
   await waitFor(() => expect(view.getByTestId('subscription-blocked')).toBeTruthy());
@@ -55,7 +55,7 @@ test('O21B resposta atrasada do tenant antigo não reabre acesso após a troca',
   let resolveOld: ((value: unknown) => void) | undefined;
   const original = mockApi.getMockImplementation();
   mockApi.mockImplementation((path: string, ...args: unknown[]) => {
-    if (path === '/product-entitlements/tenant/features' && activeTenantId === 'gym-a') {
+    if (path === '/product-entitlements/tenant/features' && mockActiveTenantId === 'gym-a') {
       return new Promise((resolve) => { resolveOld = resolve; });
     }
     return original?.(path, ...args);
@@ -63,7 +63,7 @@ test('O21B resposta atrasada do tenant antigo não reabre acesso após a troca',
   const view = render(<CommercialWebApp />);
   await waitFor(() => expect(resolveOld).toBeDefined());
 
-  activeTenantId = 'gym-b';
+  mockActiveTenantId = 'gym-b';
   view.rerender(<CommercialWebApp />);
   await waitFor(() => expect(view.getByTestId('subscription-blocked')).toBeTruthy());
 
