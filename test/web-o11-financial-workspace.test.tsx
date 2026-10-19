@@ -133,4 +133,65 @@ describe('O11 FinancialWorkspace', () => {
       paymentMethod: 'PIX',
     }));
   });
+  test('starts academy checkout only on user action via canonical callback and shows hosted link', async () => {
+    const priorCrypto = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+    Object.defineProperty(globalThis, 'crypto', {
+      configurable: true,
+      value: { randomUUID: () => 'abcddcba-1234-4abc-8def-0123456789ab' },
+    });
+    try {
+      const onCreatePaymentSession = jest.fn().mockResolvedValue({
+        chargeId: 'charge-overdue',
+        checkoutUrl: 'https://payments.example.test/checkout/1',
+        pixQrCode: null,
+        idempotent: false,
+      });
+      const view = render(<FinancialWorkspace
+        students={students} accounts={accounts} subscriptions={subscriptions}
+        charges={charges} overdueCharges={charges} transactions={transactions}
+        saving={false} onCreateAccount={jest.fn()} onCreateSubscription={jest.fn()}
+        onCreateCharge={jest.fn()} onPayCharge={jest.fn()}
+        onCreatePaymentSession={onCreatePaymentSession}
+      />);
+      expect(onCreatePaymentSession).not.toHaveBeenCalled();
+      fireEvent.press(view.getByTestId('financial-tab-charges'));
+      fireEvent.press(view.getByTestId('financial-checkout-charge-overdue'));
+      await waitFor(() => expect(onCreatePaymentSession).toHaveBeenCalledWith(
+        'charge-overdue', 'abcddcba-1234-4abc-8def-0123456789ab',
+      ));
+      await waitFor(() => expect(view.getByTestId('financial-checkout-result')).toBeTruthy());
+      expect(view.getByText('Abrir link seguro de pagamento')).toBeTruthy();
+    } finally {
+      if (priorCrypto) Object.defineProperty(globalThis, 'crypto', priorCrypto);
+      else Reflect.deleteProperty(globalThis, 'crypto');
+    }
+  });
+
+  test('provider failure is fail-closed and never marks charge as paid', async () => {
+    const priorCrypto = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+    Object.defineProperty(globalThis, 'crypto', {
+      configurable: true,
+      value: { randomUUID: () => 'abcddcba-1234-4abc-8def-0123456789ab' },
+    });
+    try {
+      const onCreatePaymentSession = jest.fn().mockRejectedValue(new Error('Nenhuma conexão de gateway ativa'));
+      const onPayCharge = jest.fn();
+      const view = render(<FinancialWorkspace
+        students={students} accounts={accounts} subscriptions={subscriptions}
+        charges={charges} overdueCharges={charges} transactions={transactions}
+        saving={false} onCreateAccount={jest.fn()} onCreateSubscription={jest.fn()}
+        onCreateCharge={jest.fn()} onPayCharge={onPayCharge}
+        onCreatePaymentSession={onCreatePaymentSession}
+      />);
+      fireEvent.press(view.getByTestId('financial-tab-charges'));
+      fireEvent.press(view.getByTestId('financial-checkout-charge-overdue'));
+      await waitFor(() => expect(view.getByText('Nenhuma conexão de gateway ativa')).toBeTruthy());
+      expect(view.queryByTestId('financial-checkout-result')).toBeNull();
+      expect(onPayCharge).not.toHaveBeenCalled();
+    } finally {
+      if (priorCrypto) Object.defineProperty(globalThis, 'crypto', priorCrypto);
+      else Reflect.deleteProperty(globalThis, 'crypto');
+    }
+  });
+
 });
