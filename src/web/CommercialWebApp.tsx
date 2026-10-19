@@ -501,7 +501,7 @@ export function CommercialWebApp() {
         <Text style={styles.label}>Função</Text>
         <Chips rows={teamRoleOptions} selected={member.roleName} onSelect={(roleName) => setMember((v) => ({ ...v, roleName }))} />
         <Text style={styles.helper}>O convite usa o fluxo seguro de definição de senha do IRON. Para cadastro direto, a senha inicial deve respeitar: {PASSWORD_POLICY_TEXT}</Text>
-        {inviteIssue ? <Text style={styles.helper}>Antes de continuar: {inviteIssue}</Text> : null}
+        {inviteIssue ? <Text style={styles.helper}>{inviteIssue}</Text> : null}
         {passwordIssue ? <Text style={styles.helper}>Senha inicial: {passwordIssue}</Text> : null}
         <View style={styles.actions}>
           <Button
