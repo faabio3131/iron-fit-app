@@ -55,6 +55,24 @@ const features = [
     },
   },
   {
+    featureKey: 'ai.workout_generation',
+    kind: 'FEATURE',
+    value: true,
+    planValue: true,
+    source: 'PLAN_ENTITLEMENT',
+    reason: null,
+    definition: { domain: 'AI', description: 'Sugestões assistidas de treino.', allowedPolicyValues: null },
+  },
+  {
+    featureKey: 'integration.google',
+    kind: 'FEATURE',
+    value: true,
+    planValue: true,
+    source: 'PLAN_ENTITLEMENT',
+    reason: null,
+    definition: { domain: 'INTEGRATION', description: 'Integração opcional da academia.', allowedPolicyValues: null },
+  },
+  {
     featureKey: 'aggregator.wellhub',
     kind: 'FEATURE',
     value: false,
@@ -90,41 +108,29 @@ describe('O15 EntitlementsWorkspace', () => {
     expect(view.getByText('Este recurso não faz parte do plano atual.')).toBeTruthy();
   });
 
-  test('FEATURE can only be narrowed, LIMIT is capped by plan and reset inherits plan', async () => {
+  test('commercial limits and integration grants are read-only while operational preferences may be narrowed', async () => {
     const setConfig = jest.fn().mockResolvedValue(undefined);
     const resetConfig = jest.fn().mockResolvedValue(undefined);
-    const view = render(
-      <EntitlementsWorkspace
-        subscription={subscription}
-        features={features}
-        saving={false}
-        onSetConfiguration={setConfig}
-        onResetConfiguration={resetConfig}
-      />,
-    );
+    const view = render(<EntitlementsWorkspace
+      subscription={subscription} features={features} saving={false}
+      onSetConfiguration={setConfig} onResetConfiguration={resetConfig}
+    />);
 
-    fireEvent.press(view.getByTestId('entitlement-disable-equipment.catalog'));
-    await waitFor(() =>
-      expect(setConfig).toHaveBeenCalledWith('equipment.catalog', {
-        featureEnabled: false,
-      }),
-    );
-
-    const limit = view.getByLabelText('Limite de Limite de conteúdo privado');
-    fireEvent.changeText(limit, '60');
-    fireEvent.press(view.getByTestId('entitlement-limit-apply-content.private_items_max'));
-    expect(setConfig).not.toHaveBeenCalledWith(
-      'content.private_items_max',
-      expect.anything(),
-    );
-
-    fireEvent.changeText(limit, '30');
-    fireEvent.press(view.getByTestId('entitlement-limit-apply-content.private_items_max'));
-    await waitFor(() =>
-      expect(setConfig).toHaveBeenCalledWith('content.private_items_max', {
-        limitValue: 30,
-      }),
-    );
+    expect(view.getByText('Limites contratados')).toBeTruthy();
+    expect(view.getByText('Integrações autorizadas')).toBeTruthy();
+    expect(view.getByText('Preferências da academia')).toBeTruthy();
+    expect(view.getByText('Recursos do plano')).toBeTruthy();
+    expect(view.getByText(/Limite comercial definido pela FM Tecnologia/)).toBeTruthy();
+    expect(view.getByText(/Recurso permitido no plano não significa serviço conectado/)).toBeTruthy();
+    expect(view.queryByLabelText('Limite de Limite de conteúdo privado')).toBeNull();
+    expect(view.queryByTestId('entitlement-limit-apply-content.private_items_max')).toBeNull();
+    expect(view.queryByTestId('entitlement-disable-equipment.catalog')).toBeNull();
+    expect(view.queryByTestId('entitlement-disable-integration.google')).toBeNull();
+    expect(view.queryByTestId('entitlement-disable-ai.workout_generation')).toBeTruthy();
+    fireEvent.press(view.getByTestId('entitlement-disable-ai.workout_generation'));
+    await waitFor(() => expect(setConfig).toHaveBeenCalledWith('ai.workout_generation', { featureEnabled: false }));
+    expect(setConfig).toHaveBeenCalledTimes(1);
+    expect(resetConfig).not.toHaveBeenCalled();
   });
 
   test('POLICY choices come only from the plan subset', async () => {
