@@ -498,8 +498,8 @@ export function FinancialWorkspace({
               />
               <Text style={styles.helper}>Exige um provedor de pagamentos configurado pela academia. Não confirma recebimento automaticamente.</Text>
             </> : null}
-            {checkoutError?.chargeId === charge.id ? <Text testID="financial-checkout-error" style={styles.badgeAlert}>{checkoutError.message}</Text> : null}
-            {checkoutResult?.chargeId === charge.id ? <View testID="financial-checkout-result">
+            {checkoutError && checkoutError.chargeId === charge.id ? <Text testID="financial-checkout-error" style={styles.badgeAlert}>{checkoutError.message}</Text> : null}
+            {checkoutResult && checkoutResult.chargeId === charge.id ? <View testID="financial-checkout-result">
               <Text style={styles.rowMeta}>Sessão de pagamento criada no provedor. Aguarde a confirmação financeira canônica.</Text>
               {checkoutResult.checkoutUrl ? <TouchableOpacity
                 testID="financial-checkout-open"
