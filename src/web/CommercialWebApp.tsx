@@ -115,6 +115,7 @@ export function CommercialWebApp() {
   const [onboarding, setOnboarding] = useState<any>(null);
   const [data, setData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
+  const [loadedModule, setLoadedModule] = useState<ModuleKey | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [shellReady, setShellReady] = useState(false);
@@ -166,6 +167,7 @@ export function CommercialWebApp() {
     const revision = ++shellRequestRevision.current;
     moduleRequestRevision.current += 1;
     setShellReady(false);
+    setLoadedModule(null);
     setData({});
     setEntitlements([]);
     setSubscription(null);
@@ -201,6 +203,7 @@ export function CommercialWebApp() {
 
   const loadModule = useCallback(async (key: ModuleKey) => {
     const revision = ++moduleRequestRevision.current;
+    setLoadedModule(null);
     setLoading(true); setError('');
     try {
       const next: Record<string, any> = {};
@@ -300,8 +303,9 @@ export function CommercialWebApp() {
       setData((current) => key === 'workouts'
         ? { ...next, workoutCompatibleEquipment: current.workoutCompatibleEquipment ?? [] }
         : next);
+      setLoadedModule(key);
     } catch (reason) {
-      if (revision === moduleRequestRevision.current) { setError(message(reason)); setData({}); }
+      if (revision === moduleRequestRevision.current) { setError(message(reason)); setData({}); setLoadedModule(key); }
     } finally {
       if (revision === moduleRequestRevision.current) setLoading(false);
     }
@@ -320,6 +324,7 @@ export function CommercialWebApp() {
     if (isRestrictedAdminModule(active) && !adminStepUpActive) {
       const timer = setTimeout(() => {
         setLoading(false);
+        setLoadedModule(null);
         setData({});
       }, 0);
       return () => clearTimeout(timer);
@@ -1321,7 +1326,7 @@ export function CommercialWebApp() {
   const topBar = <View style={[styles.top, narrow && styles.topNarrow]}><IronBrand compact mobile={narrow} /><View style={[styles.actions, narrow && styles.actionsNarrow]}><Text numberOfLines={1} style={[styles.muted, narrow && styles.userNameNarrow]}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
   if (!shellReady) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={styles.contentInner}>{error ? <Text style={styles.error}>{error}</Text> : <View style={styles.loading}><ActivityIndicator color="#2f91ff" /><Text style={styles.muted}>Preparando sua academia…</Text></View>}</View></View>;
   if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <React.Fragment key={item.key}>{!compact && item.key === 'financial' ? <Text style={styles.navSection}>ADMINISTRAÇÃO RESTRITA</Text> : null}<TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#dbeafe' : '#9fb0c5'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity></React.Fragment>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Seu acesso operacional está limitado. Consulte sua assinatura para regularizar o acesso. A segurança da conta continua disponível.</Text></View><Section title="Estado comercial"><Data value={[{ trialStatus: trial?.status ?? null, subscriptionStatus: subscription?.status ?? null, subscriptionId: subscription?.id ?? null }]} /></Section>{active === 'security' ? <AccountSecurityPanel /> : active === 'privacy' ? <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} /> : <SaasBillingPanel onCommercialStateChanged={loadShell} canAdministerBilling={can('SUPER_ADMIN')} />}</ScrollView></View></View>;
-  return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <React.Fragment key={item.key}>{!compact && item.key === 'financial' ? <Text style={styles.navSection}>ADMINISTRAÇÃO RESTRITA</Text> : null}<TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#dbeafe' : '#9fb0c5'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity></React.Fragment>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>{active === 'financial' ? 'Área restrita · Proprietário / Administrador' : (data.gym?.name ?? 'Gestão da academia')}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading ? <View style={styles.loading}><ActivityIndicator color="#2f91ff" /><Text style={styles.muted}>Carregando informações…</Text></View> : content()}</ScrollView></View></View>;
+  return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <React.Fragment key={item.key}>{!compact && item.key === 'financial' ? <Text style={styles.navSection}>ADMINISTRAÇÃO RESTRITA</Text> : null}<TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#dbeafe' : '#9fb0c5'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity></React.Fragment>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>{active === 'financial' ? 'Área restrita · Proprietário / Administrador' : (data.gym?.name ?? 'Gestão da academia')}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading || (loadedModule !== active && (!isRestrictedAdminModule(active) || adminStepUpActive)) ? <View style={styles.loading}><ActivityIndicator color="#2f91ff" /><Text style={styles.muted}>Carregando informações…</Text></View> : content()}</ScrollView></View></View>;
 }
 
 const styles = StyleSheet.create({
