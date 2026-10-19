@@ -482,6 +482,7 @@ export function CommercialWebApp() {
           ? 'Selecione uma função permitida.'
           : '';
     const passwordIssue = member.password && !strongPassword(member.password) ? PASSWORD_POLICY_TEXT : '';
+    const directIssue = inviteIssue || (!member.password ? 'Informe a senha inicial ou use Enviar convite.' : passwordIssue);
     const roleLabel = (value: string) => ownerTeamRoleOptions.find((option) => option.id === value)?.name ?? value;
     const permissionLabel = (value: string) => value
       .replace(/[._-]+/g, ' ')
@@ -500,13 +501,12 @@ export function CommercialWebApp() {
         <Text style={styles.label}>Função</Text>
         <Chips rows={teamRoleOptions} selected={member.roleName} onSelect={(roleName) => setMember((v) => ({ ...v, roleName }))} />
         <Text style={styles.helper}>O convite usa o fluxo seguro de definição de senha do IRON. Para cadastro direto, a senha inicial deve respeitar: {PASSWORD_POLICY_TEXT}</Text>
-        {inviteIssue ? <Text style={styles.helper}>Antes de continuar: {inviteIssue}</Text> : null}
-        {passwordIssue ? <Text style={styles.helper}>Senha inicial: {passwordIssue}</Text> : null}
         <View style={styles.actions}>
           <Button
             testID={teamLoaded ? "team-invite" : undefined}
             label={saving ? 'Enviando…' : 'Enviar convite'}
-            disabled={saving || !teamLoaded}
+            disabled={saving || !teamLoaded || !!inviteIssue}
+            disabledReason={!teamLoaded ? 'Aguarde carregar a equipe.' : inviteIssue}
             onPress={() => {
               if (inviteIssue) { setError(inviteIssue); return; }
               void mutate(
@@ -527,9 +527,9 @@ export function CommercialWebApp() {
             testID={teamLoaded ? "team-add" : undefined}
             secondary
             label={saving ? 'Adicionando…' : 'Cadastrar com senha inicial'}
-            disabled={saving || !teamLoaded}
+            disabled={saving || !teamLoaded || !!directIssue}
+            disabledReason={!teamLoaded ? 'Aguarde carregar a equipe.' : directIssue}
             onPress={() => {
-              const directIssue = inviteIssue || (!member.password ? 'Informe a senha inicial ou use Enviar convite.' : passwordIssue);
               if (directIssue) { setError(directIssue); return; }
               void mutate(
                 () => api('/users', undefined, {
