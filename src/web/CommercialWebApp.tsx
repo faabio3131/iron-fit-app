@@ -501,12 +501,14 @@ export function CommercialWebApp() {
         <Text style={styles.label}>Função</Text>
         <Chips rows={teamRoleOptions} selected={member.roleName} onSelect={(roleName) => setMember((v) => ({ ...v, roleName }))} />
         <Text style={styles.helper}>O convite usa o fluxo seguro de definição de senha do IRON. Para cadastro direto, a senha inicial deve respeitar: {PASSWORD_POLICY_TEXT}</Text>
+        {inviteIssue ? <Text style={styles.helper}>Antes de continuar: {inviteIssue}</Text> : null}
+        {passwordIssue ? <Text style={styles.helper}>Senha inicial: {passwordIssue}</Text> : null}
         <View style={styles.actions}>
           <Button
             testID={teamLoaded ? "team-invite" : undefined}
             label={saving ? 'Enviando…' : 'Enviar convite'}
             disabled={saving || !teamLoaded || !!inviteIssue}
-            disabledReason={!teamLoaded ? 'Aguarde carregar a equipe.' : inviteIssue}
+            disabledReason={!teamLoaded ? 'Aguarde carregar a equipe.' : inviteIssue ? 'Revise nome, e-mail e função antes de enviar o convite.' : undefined}
             onPress={() => {
               if (inviteIssue) { setError(inviteIssue); return; }
               void mutate(
@@ -528,7 +530,7 @@ export function CommercialWebApp() {
             secondary
             label={saving ? 'Adicionando…' : 'Cadastrar com senha inicial'}
             disabled={saving || !teamLoaded || !!directIssue}
-            disabledReason={!teamLoaded ? 'Aguarde carregar a equipe.' : directIssue}
+            disabledReason={!teamLoaded ? 'Aguarde carregar a equipe.' : directIssue ? 'Complete o cadastro com uma senha inicial válida.' : undefined}
             onPress={() => {
               if (directIssue) { setError(directIssue); return; }
               void mutate(
