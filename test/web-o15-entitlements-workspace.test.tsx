@@ -121,7 +121,7 @@ describe('O15 EntitlementsWorkspace', () => {
     expect(view.getByText('Preferências da academia')).toBeTruthy();
     expect(view.getByText('Recursos do plano')).toBeTruthy();
     expect(view.getByText(/Limite comercial definido pela FM Tecnologia/)).toBeTruthy();
-    expect(view.getByText(/Recurso permitido no plano não significa serviço conectado/)).toBeTruthy();
+    expect(view.getAllByText(/Recurso permitido no plano não significa serviço conectado/).length).toBe(2);
     expect(view.queryByLabelText('Limite de Limite de conteúdo privado')).toBeNull();
     expect(view.queryByTestId('entitlement-limit-apply-content.private_items_max')).toBeNull();
     expect(view.queryByTestId('entitlement-disable-equipment.catalog')).toBeNull();
