@@ -312,6 +312,34 @@ test('área administrativa exige reautenticação antes de carregar Financeiro',
   });
 });
 
+test('senha administrativa é compacta, oculta por padrão e pode ser exibida ou ocultada sem alterar autoridade', async () => {
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-financial')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-financial'));
+  await waitFor(() => expect(view.getByTestId('admin-password-input')).toBeTruthy());
+
+  const passwordInput = view.getByTestId('admin-password-input');
+  expect(passwordInput.props.secureTextEntry).toBe(true);
+  expect(view.getByText(/Para criar ou alterar uma senha: Use 12–128 caracteres/)).toBeTruthy();
+  expect(view.getByLabelText('Mostrar senha atual')).toBeTruthy();
+
+  fireEvent.changeText(passwordInput, 'Senha-Forte-2026!');
+  expect(mockApi.mock.calls.some(([path]) => path === '/auth/step-up')).toBe(false);
+  fireEvent.press(view.getByTestId('admin-password-visibility-toggle'));
+  expect(view.getByTestId('admin-password-input').props.secureTextEntry).toBe(false);
+  expect(view.getByLabelText('Ocultar senha atual')).toBeTruthy();
+
+  fireEvent.press(view.getByTestId('admin-password-visibility-toggle'));
+  expect(view.getByTestId('admin-password-input').props.secureTextEntry).toBe(true);
+  expect(mockApi.mock.calls.some(([path]) => path === '/financial/accounts')).toBe(false);
+
+  fireEvent.press(view.getByTestId('admin-step-up-submit'));
+  await waitFor(() => expect(mockApi.mock.calls.some(([path]) => path === '/financial/accounts')).toBe(true));
+  const calls = mockApi.mock.calls.filter(([path, _query, options]) => path === '/auth/step-up' && options?.method === 'POST');
+  expect(calls).toHaveLength(1);
+  expect(JSON.parse(calls[0][2].body)).toEqual({ currentPassword: 'Senha-Forte-2026!' });
+});
+
 test('step-up administrativo exige MFA quando habilitado e protege todos os módulos restritos', async () => {
   mockProfile = {
     id: 'owner-mfa-1',
