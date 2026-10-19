@@ -147,6 +147,7 @@ export function CommercialWebApp() {
   const [adminStepUpActive, setAdminStepUpActive] = useState(false);
   const [adminStepUpExpiresAt, setAdminStepUpExpiresAt] = useState<string | null>(null);
   const [adminPassword, setAdminPassword] = useState('');
+  const [adminPasswordVisible, setAdminPasswordVisible] = useState(false);
   const [adminSecondFactor, setAdminSecondFactor] = useState('');
   const [adminGateLoading, setAdminGateLoading] = useState(false);
   const [adminGateError, setAdminGateError] = useState('');
@@ -334,6 +335,7 @@ export function CommercialWebApp() {
       setAdminStepUpActive(state?.active === true);
       setAdminStepUpExpiresAt(state?.expiresAt ? String(state.expiresAt) : null);
       setAdminPassword('');
+      setAdminPasswordVisible(false);
       setAdminSecondFactor('');
       if (state?.active === true) await loadModule(active);
     } catch (reason) {
@@ -345,7 +347,62 @@ export function CommercialWebApp() {
   }
 
   function adminGateView() {
-    return <Section compact title="Acesso administrativo protegido" subtitle="Confirme sua identidade para entrar nesta área restrita. A autorização é temporária e vinculada à sua sessão atual."><View style={styles.adminGateIdentity}><Ionicons name="lock-closed-outline" size={24} color="#60a5fa" /><View><Text style={styles.rowTitle}>{profile?.name ?? 'Proprietário'}</Text><Text style={styles.muted}>{profile?.email ?? 'Conta administrativa'}</Text></View></View><View style={styles.adminGateForm}><Field label="Senha atual" value={adminPassword} secureTextEntry onChangeText={setAdminPassword} />{profile?.mfaEnabled ? <Field label="Código MFA ou código de recuperação" value={adminSecondFactor} onChangeText={setAdminSecondFactor} /> : null}</View>{adminGateError ? <Text style={styles.error}>{adminGateError}</Text> : null}<Button testID="admin-step-up-submit" label={adminGateLoading ? 'Validando…' : 'Entrar na área administrativa'} disabled={adminGateLoading || !adminPassword.trim()} onPress={() => { void unlockAdministrativeArea(); }} /><Text style={styles.helper}>Por segurança, o acesso administrativo expira automaticamente após 15 minutos.</Text></Section>;
+    return <Section
+      compact
+      title="Acesso administrativo protegido"
+      subtitle="Confirme sua identidade para entrar nesta área restrita. A autorização é temporária e vinculada à sua sessão atual."
+    >
+      <View style={styles.adminGateIdentity}>
+        <Ionicons name="lock-closed-outline" size={24} color="#60a5fa" />
+        <View>
+          <Text style={styles.rowTitle}>{profile?.name ?? 'Proprietário'}</Text>
+          <Text style={styles.muted}>{profile?.email ?? 'Conta administrativa'}</Text>
+        </View>
+      </View>
+      <View style={styles.adminGateForm}>
+        <View style={styles.adminPasswordField}>
+          <Text style={styles.label}>Senha atual</Text>
+          <View style={styles.adminPasswordInputRow}>
+            <TextInput
+              accessibilityLabel="Senha atual"
+              testID="admin-password-input"
+              style={styles.adminPasswordInput}
+              value={adminPassword}
+              onChangeText={setAdminPassword}
+              secureTextEntry={!adminPasswordVisible}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="Digite sua senha atual"
+              placeholderTextColor="#71879e"
+            />
+            <TouchableOpacity
+              testID="admin-password-visibility-toggle"
+              accessibilityRole="button"
+              accessibilityLabel={adminPasswordVisible ? 'Ocultar senha atual' : 'Mostrar senha atual'}
+              accessibilityHint="Alterna a visibilidade da senha nesta tela"
+              style={styles.adminPasswordToggle}
+              onPress={() => setAdminPasswordVisible((visible) => !visible)}
+            >
+              <Ionicons name={adminPasswordVisible ? 'eye-off-outline' : 'eye-outline'} size={21} color="#bfdbfe" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.adminPasswordHelp}>
+            Use sua senha atual. Para criar ou alterar uma senha: {PASSWORD_POLICY_TEXT}
+          </Text>
+        </View>
+        {profile?.mfaEnabled ? <View style={styles.adminGateMfaField}>
+          <Field label="Código MFA ou código de recuperação" value={adminSecondFactor} onChangeText={setAdminSecondFactor} />
+        </View> : null}
+      </View>
+      {adminGateError ? <Text style={styles.error}>{adminGateError}</Text> : null}
+      <Button
+        testID="admin-step-up-submit"
+        label={adminGateLoading ? 'Validando…' : 'Entrar na área administrativa'}
+        disabled={adminGateLoading || !adminPassword.trim()}
+        onPress={() => { void unlockAdministrativeArea(); }}
+      />
+      <Text style={styles.helper}>Por segurança, o acesso administrativo expira automaticamente após 15 minutos.</Text>
+    </Section>;
   }
 
   async function mutate(operation: () => Promise<unknown>, reset?: () => void) {
@@ -1273,7 +1330,13 @@ const styles = StyleSheet.create({
   navSection: { color: '#6fa8dc', fontSize: 10, fontWeight: '800', letterSpacing: 0.7, marginTop: 10, marginBottom: 4, marginHorizontal: 12 },
   restrictedNote: { color: '#bfdbfe', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, fontSize: 11, fontWeight: '700', marginBottom: 8 },
   adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
-  adminGateForm: { width: '100%', maxWidth: 760, flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
+  adminGateForm: { width: '100%', maxWidth: 560, flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
+  adminPasswordField: { width: '100%', minWidth: 0 },
+  adminPasswordInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 44, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#284765', borderRadius: 10, overflow: 'hidden' },
+  adminPasswordInput: { flex: 1, minWidth: 0, minHeight: 44, color: '#eef7ff', paddingHorizontal: 11, paddingVertical: 8 },
+  adminPasswordToggle: { minWidth: 48, minHeight: 44, justifyContent: 'center', alignItems: 'center', borderLeftWidth: 1, borderLeftColor: '#284765' },
+  adminPasswordHelp: { color: '#9fb0c5', fontSize: 11, lineHeight: 16, marginTop: 6 },
+  adminGateMfaField: { width: '100%', minWidth: 0 },
   row: { backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 14, marginBottom: 9 },
   rowTitle: { color: '#eef7ff', fontWeight: '700', marginBottom: 5 },
   rowText: { flex: 1, minWidth: 0 },
