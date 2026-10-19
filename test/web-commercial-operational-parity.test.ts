@@ -20,3 +20,10 @@ test('commercial Web exposes canonical mutation paths for remaining operational 
 test('mutation refreshes both commercial shell and the active module', () => {
   expect(web).toMatch(/await loadShell\(\); await loadModule\(active\)/);
 });
+
+test('O7 Web consumes linked workout counts only when present in canonical API read models', () => {
+  expect(web).toContain("typeof item._count?.workoutExercises === 'number'");
+  expect(web).toContain('Utilizado em {item._count.workoutExercises} exercícios de treinos');
+  expect(web).toContain("typeof item.workoutCount === 'number'");
+  expect(web).toContain('Treinos vinculados: {item.workoutCount}');
+});
