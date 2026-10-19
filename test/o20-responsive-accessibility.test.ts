@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const read = (path: string) => fs.readFileSync(path, 'utf8');
 
 const webShell = read('src/web/CommercialWebApp.tsx');
+const brand = read('src/components/IronBrand.tsx');
 const schedule = read('src/web/ScheduleWorkspace.tsx');
 const creator = read('src/web/CreatorNetworkWorkspace.tsx');
 const entitlements = read('src/web/EntitlementsWorkspace.tsx');
@@ -28,7 +29,7 @@ function touchableOpenings(source: string) {
 }
 
 test('O20 Web has a compact breakpoint and no rigid 300+px minimum on flexible workspaces', () => {
-  expect(webShell).toContain('useWindowDimensions().width < 980');
+  expect(webShell).toContain('const compact = viewportWidth < 980;');
   expect(webShell).toContain("navCompact: { width: '100%', maxWidth: '100%', minWidth: 0");
   expect(webShell).toContain('compactPane: { flexGrow: 1, flexBasis: 330, minWidth: 0');
   expect(webShell).toContain('compactPaneWide: { flexGrow: 1, flexBasis: 480, minWidth: 0');
@@ -73,4 +74,16 @@ test('O20 critical forms expose accessible labels and selected/disabled states',
   expect(fiscal).toContain('accessibilityState={{ disabled: !!disabled }}');
   expect(schedule).toContain('accessibilityState={{ selected: mode ===');
   expect(schedule).toContain('accessibilityState={{ disabled:');
+});
+
+
+test('O20 narrow Web header keeps brand and logout on one row and explains horizontal modules', () => {
+  expect(webShell).toContain('const narrow = viewportWidth < 560;');
+  expect(webShell).toContain('narrow && styles.topNarrow');
+  expect(webShell).toContain('narrow && styles.actionsNarrow');
+  expect(webShell).toContain('numberOfLines={1}');
+  expect(webShell).toContain('Deslize horizontalmente para visualizar mais módulos');
+  expect(webShell).toContain('testID="commercial-logout"');
+  expect(brand).toContain('mobile && styles.mobile');
+  expect(brand).toContain('mobile: { width: 118, maxWidth: 118');
 });
