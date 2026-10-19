@@ -1183,6 +1183,14 @@ export function CommercialWebApp() {
           body: JSON.stringify(payload),
         }));
       }}
+      onCreatePaymentSession={async (chargeId, requestId) => {
+        // Academy -> student checkout uses the existing tenant-scoped API.
+        // Provider configuration and payment confirmation remain server-side.
+        return api(`/financial/charges/${chargeId}/payment-session`, undefined, {
+          method: 'POST',
+          body: JSON.stringify({ requestId }),
+        });
+      }}
     />;
   }
   function entitlementsView() {
