@@ -1330,7 +1330,7 @@ const styles = StyleSheet.create({
   navSection: { color: '#6fa8dc', fontSize: 10, fontWeight: '800', letterSpacing: 0.7, marginTop: 10, marginBottom: 4, marginHorizontal: 12 },
   restrictedNote: { color: '#bfdbfe', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, fontSize: 11, fontWeight: '700', marginBottom: 8 },
   adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
-  adminGateForm: { width: '100%', maxWidth: 560, flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
+  adminGateForm: { width: '100%', maxWidth: 400, flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
   adminPasswordField: { width: '100%', minWidth: 0 },
   adminPasswordInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 44, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#284765', borderRadius: 10, overflow: 'hidden' },
   adminPasswordInput: { flex: 1, minWidth: 0, minHeight: 44, color: '#eef7ff', paddingHorizontal: 11, paddingVertical: 8 },
