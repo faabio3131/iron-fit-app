@@ -194,4 +194,36 @@ describe('O11 FinancialWorkspace', () => {
     }
   });
 
+
+  test('rejects checkout session from another charge without displaying Pix or marking paid', async () => {
+    const priorCrypto = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+    Object.defineProperty(globalThis, 'crypto', {
+      configurable: true,
+      value: { randomUUID: () => 'abcddcba-1234-4abc-8def-0123456789ab' },
+    });
+    try {
+      const onCreatePaymentSession = jest.fn().mockResolvedValue({
+        chargeId: 'charge-from-another-student',
+        checkoutUrl: 'https://payments.example.test/wrong-charge',
+        pixQrCode: '00020101021226840014wrong-charge',
+      });
+      const onPayCharge = jest.fn();
+      const view = render(<FinancialWorkspace
+        students={students} accounts={accounts} subscriptions={subscriptions}
+        charges={charges} overdueCharges={charges} transactions={transactions}
+        saving={false} onCreateAccount={jest.fn()} onCreateSubscription={jest.fn()}
+        onCreateCharge={jest.fn()} onPayCharge={onPayCharge}
+        onCreatePaymentSession={onCreatePaymentSession}
+      />);
+      fireEvent.press(view.getByTestId('financial-tab-charges'));
+      fireEvent.press(view.getByTestId('financial-checkout-charge-overdue'));
+      await waitFor(() => expect(view.getByText('A sessão de pagamento não corresponde à cobrança selecionada.')).toBeTruthy());
+      expect(view.queryByTestId('financial-checkout-result')).toBeNull();
+      expect(onPayCharge).not.toHaveBeenCalled();
+    } finally {
+      if (priorCrypto) Object.defineProperty(globalThis, 'crypto', priorCrypto);
+      else Reflect.deleteProperty(globalThis, 'crypto');
+    }
+  });
+
 });
