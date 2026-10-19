@@ -247,6 +247,9 @@ export function FinancialWorkspace({
     setCheckoutResult(null);
     try {
       const session = await onCreatePaymentSession(chargeId, requestId);
+      if (session?.chargeId !== chargeId) {
+        throw new Error('A sessão de pagamento não corresponde à cobrança selecionada.');
+      }
       const checkoutUrl = typeof session?.checkoutUrl === 'string' && /^https:\/\//i.test(session.checkoutUrl)
         ? session.checkoutUrl : null;
       const pixQrCode = typeof session?.pixQrCode === 'string' && session.pixQrCode.trim()
