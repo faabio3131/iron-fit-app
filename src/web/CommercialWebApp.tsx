@@ -11,7 +11,7 @@ import { PrivacyCenter } from './PrivacyCenter';
 import { CommunicationCenter } from './CommunicationCenter';
 import { FiscalCenter } from './FiscalCenter';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { AccountSecurityPanel } from '../components/AccountSecurityPanel';
 import { SaasBillingPanel } from '../components/SaasBillingPanel';
@@ -151,6 +151,8 @@ export function CommercialWebApp() {
   const [adminSecondFactor, setAdminSecondFactor] = useState('');
   const [adminGateLoading, setAdminGateLoading] = useState(false);
   const [adminGateError, setAdminGateError] = useState('');
+  const shellRequestRevision = useRef(0);
+  const moduleRequestRevision = useRef(0);
 
   const entitlementMap = useMemo(() => new Map(entitlements.map((item) => [item.featureKey, item])), [entitlements]);
   const enabled = useCallback((key: string) => entitlementMap.get(key)?.value === true, [entitlementMap]);
@@ -161,25 +163,44 @@ export function CommercialWebApp() {
   const visible = useMemo(() => modules.filter((item) => allowed(item) && (!blocked || item.key === 'saasBilling' || item.key === 'security' || item.key === 'privacy')), [allowed, blocked]);
 
   const loadShell = useCallback(async () => {
+    const revision = ++shellRequestRevision.current;
+    moduleRequestRevision.current += 1;
     setShellReady(false);
+    setData({});
+    setEntitlements([]);
+    setSubscription(null);
+    setTrial(null);
+    setOnboarding(null);
+    setAdminStepUpActive(false);
+    setAdminStepUpExpiresAt(null);
+    setLoading(true);
     setError('');
-    const [features, current, trialState, onboardingState, stepUpState] = await Promise.all([
-      api('/product-entitlements/tenant/features'),
-      api('/product-entitlements/tenant/current'),
-      api('/commercial/trial/status'),
-      can('OWNER', 'MANAGER') ? api('/commercial/onboarding') : Promise.resolve(null),
-      can('SUPER_ADMIN', 'OWNER') ? api('/auth/step-up/status') : Promise.resolve({ active: false, expiresAt: null }),
-    ]);
-    setEntitlements(Array.isArray(features) ? features : []);
-    setSubscription(current);
-    setTrial(trialState);
-    setOnboarding(onboardingState);
-    setAdminStepUpActive(stepUpState?.active === true);
-    setAdminStepUpExpiresAt(stepUpState?.expiresAt ? String(stepUpState.expiresAt) : null);
-    setShellReady(true);
-  }, [can]);
+    try {
+      const [features, current, trialState, onboardingState, stepUpState] = await Promise.all([
+        api('/product-entitlements/tenant/features'),
+        api('/product-entitlements/tenant/current'),
+        api('/commercial/trial/status'),
+        can('OWNER', 'MANAGER') ? api('/commercial/onboarding') : Promise.resolve(null),
+        can('SUPER_ADMIN', 'OWNER') ? api('/auth/step-up/status') : Promise.resolve({ active: false, expiresAt: null }),
+      ]);
+      if (revision !== shellRequestRevision.current) return;
+      setEntitlements(Array.isArray(features) ? features : []);
+      setSubscription(current);
+      setTrial(trialState);
+      setOnboarding(onboardingState);
+      setAdminStepUpActive(stepUpState?.active === true);
+      setAdminStepUpExpiresAt(stepUpState?.expiresAt ? String(stepUpState.expiresAt) : null);
+      setShellReady(true);
+    } catch (reason) {
+      if (revision === shellRequestRevision.current) {
+        setError(message(reason));
+        setLoading(false);
+      }
+    }
+  }, [activeTenantId, can, profile?.id]);
 
   const loadModule = useCallback(async (key: ModuleKey) => {
+    const revision = ++moduleRequestRevision.current;
     setLoading(true); setError('');
     try {
       const next: Record<string, any> = {};
@@ -275,17 +296,24 @@ export function CommercialWebApp() {
       }
       if (key === 'entitlements') { [next.features, next.configurations] = await Promise.all([api('/product-entitlements/tenant/features'), api('/product-entitlements/tenant/configurations')]); next.subscription = subscription; }
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
+      if (revision !== moduleRequestRevision.current) return;
       setData((current) => key === 'workouts'
         ? { ...next, workoutCompatibleEquipment: current.workoutCompatibleEquipment ?? [] }
         : next);
-    } catch (reason) { setError(message(reason)); setData({}); } finally { setLoading(false); }
+    } catch (reason) {
+      if (revision === moduleRequestRevision.current) { setError(message(reason)); setData({}); }
+    } finally {
+      if (revision === moduleRequestRevision.current) setLoading(false);
+    }
   }, [activeTenantId, adminStepUpActive, can, enabled, equipmentCategory, equipmentSearch, selectedStudent, subscription]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void loadShell().catch((reason) => { setError(message(reason)); setLoading(false); });
-    }, 0);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => { void loadShell(); }, 0);
+    return () => {
+      shellRequestRevision.current += 1;
+      moduleRequestRevision.current += 1;
+      clearTimeout(timer);
+    };
   }, [loadShell]);
   useEffect(() => {
     if (!shellReady || blocked) return undefined;
@@ -299,7 +327,10 @@ export function CommercialWebApp() {
     const timer = setTimeout(() => {
       void loadModule(active);
     }, 0);
-    return () => clearTimeout(timer);
+    return () => {
+      moduleRequestRevision.current += 1;
+      clearTimeout(timer);
+    };
   }, [active, adminStepUpActive, blocked, isRestrictedAdminModule, loadModule, shellReady]);
 
   useEffect(() => {
