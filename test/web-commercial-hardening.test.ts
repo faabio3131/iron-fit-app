@@ -44,3 +44,11 @@ test('restricted administration is owner-only and requires session step-up', () 
   expect(web).toContain('admin-step-up-submit');
   expect(web).toContain("can('SUPER_ADMIN', 'OWNER') && adminStepUpActive");
 });
+
+test('protected admin password field stays compact and responsive without changing security controls', () => {
+  expect(web).toContain("adminGateForm: { width: '100%', maxWidth: 400,");
+  expect(web).toContain("adminPasswordField: { width: '100%', minWidth: 0 }");
+  expect(web).toContain('admin-password-visibility-toggle');
+  expect(web).toContain('secureTextEntry={!adminPasswordVisible}');
+  expect(web).toContain('Por segurança, o acesso administrativo expira automaticamente após 15 minutos.');
+});
