@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { IronInput as TextInput } from '../components/IronInput';
 
 type EntitlementWorkspaceProps = {
   subscription: any;
@@ -9,6 +8,29 @@ type EntitlementWorkspaceProps = {
   onSetConfiguration: (featureKey: string, payload: Record<string, unknown>) => Promise<void>;
   onResetConfiguration: (featureKey: string) => Promise<void>;
 };
+
+// The academy may narrow only operational preferences; commercial plan grants are read-only.
+const tenantPreferenceKeys = new Set([
+  'ai.workout_generation',
+  'ai.content_recommendation',
+  'content.external_youtube',
+  'content.iron_managed',
+  'content.tenant_private',
+  'content.delivery_mode',
+]);
+
+function isTenantPreference(feature: any): boolean {
+  return tenantPreferenceKeys.has(String(feature?.featureKey ?? ''))
+    && (feature?.kind === 'FEATURE' || feature?.kind === 'POLICY');
+}
+
+function featureArea(feature: any): string {
+  const key = String(feature?.featureKey ?? '');
+  if (feature?.kind === 'LIMIT') return 'Limites contratados';
+  if (isTenantPreference(feature)) return 'Preferências da academia';
+  if (key.startsWith('integration.') || key.startsWith('aggregator.')) return 'Integrações autorizadas';
+  return 'Recursos do plano';
+}
 
 const domainLabels: Record<string, string> = {
   CORE: 'Recursos principais',
@@ -174,13 +196,6 @@ function EntitlementCard({
 }) {
   const planValue = feature?.planValue;
   const effectiveValue = feature?.value;
-  const [limitDraft, setLimitDraft] = useState(
-    typeof effectiveValue === 'number'
-      ? String(effectiveValue)
-      : typeof planValue === 'number'
-        ? String(planValue)
-        : '',
-  );
   const [policyDraft, setPolicyDraft] = useState<string[]>(
     Array.isArray(effectiveValue)
       ? effectiveValue.map(String)
@@ -193,6 +208,7 @@ function EntitlementCard({
   const inherited = source === 'PLAN_ENTITLEMENT';
   const blocked = source === 'FAIL_CLOSED_DEFAULT';
   const planAllowsFeature = feature?.kind !== 'FEATURE' || planValue === true;
+  const canEditPreference = isTenantPreference(feature) && !blocked;
   const description = String(feature?.definition?.description ?? '').trim();
 
   function togglePolicy(value: string) {
@@ -204,16 +220,6 @@ function EntitlementCard({
   }
 
   const planPolicyValues = Array.isArray(planValue) ? planValue.map(String) : [];
-  const parsedLimit = Number(limitDraft);
-  const validLimit =
-    feature?.kind !== 'LIMIT'
-    || (
-      limitDraft.trim() !== ''
-      && Number.isInteger(parsedLimit)
-      && parsedLimit >= 0
-      && typeof planValue === 'number'
-      && parsedLimit <= planValue
-    );
 
   return (
     <View style={[styles.featureCard, blocked && styles.featureCardBlocked]}>
@@ -244,7 +250,7 @@ function EntitlementCard({
         </Text>
       ) : null}
 
-      {feature?.kind === 'FEATURE' && planAllowsFeature ? (
+      {canEditPreference && feature?.kind === 'FEATURE' && planAllowsFeature ? (
         <View style={styles.actions}>
           {effectiveValue === true ? (
             <ActionButton
@@ -268,45 +274,20 @@ function EntitlementCard({
         </View>
       ) : null}
 
-      {feature?.kind === 'LIMIT' && typeof planValue === 'number' && !blocked ? (
-        <View style={styles.configurationBox}>
-          <Text style={styles.configurationTitle}>Limite da academia</Text>
-          <Text style={styles.configurationHelp}>
-            Defina um valor entre 0 e {planValue}. A academia não pode ultrapassar o limite contratado.
-          </Text>
-          <TextInput
-            accessibilityLabel={`Limite de ${featureName(feature)}`}
-            style={styles.input}
-            value={limitDraft}
-            onChangeText={(value) => setLimitDraft(value.replace(/\D/g, ''))}
-            keyboardType="numeric"
-            placeholder={String(planValue)}
-            placeholderTextColor="#71879e"
-          />
-          {!validLimit ? <Text style={styles.warningText}>Informe um limite inteiro entre 0 e {planValue}.</Text> : null}
-          <View style={styles.actions}>
-            <ActionButton
-              testID={`entitlement-limit-apply-${feature.featureKey}`}
-              label="Aplicar limite"
-              disabled={saving || !validLimit}
-              onPress={() => {
-                if (!validLimit) return;
-                void onSetConfiguration(feature.featureKey, { limitValue: parsedLimit });
-              }}
-            />
-            <ActionButton
-              secondary
-              label="Usar limite do plano"
-              disabled={saving || inherited}
-              onPress={() => {
-                void onResetConfiguration(feature.featureKey);
-              }}
-            />
-          </View>
-        </View>
+      {feature?.kind === 'LIMIT' ? (
+        <Text style={styles.configurationHelp}>
+          Limite comercial definido pela FM Tecnologia. A academia pode consultar o valor, mas não editá-lo.
+          {source === 'TENANT_CONFIGURATION' ? ' Existe uma restrição anterior registrada; alterações exigem reconciliação governada.' : ''}
+        </Text>
+      ) : null}
+      {(String(feature?.featureKey ?? '').startsWith('integration.') || String(feature?.featureKey ?? '').startsWith('aggregator.')) ? (
+        <Text style={styles.configurationHelp}>Recurso permitido no plano não significa serviço conectado ou homologado. Configure contas próprias na área Integrações quando disponível.</Text>
+      ) : null}
+      {feature?.featureKey === 'equipment.catalog' || feature?.featureKey === 'equipment.inventory' ? (
+        <Text style={styles.configurationHelp}>O catálogo e o inventário são utilizados na área Equipamentos. A licença é definida pela FM Tecnologia.</Text>
       ) : null}
 
-      {feature?.kind === 'POLICY' && !blocked ? (
+      {canEditPreference && feature?.kind === 'POLICY' ? (
         <View style={styles.configurationBox}>
           <Text style={styles.configurationTitle}>Preferência da academia</Text>
           <Text style={styles.configurationHelp}>
@@ -355,21 +336,21 @@ export function EntitlementsWorkspace({
   onResetConfiguration,
 }: EntitlementWorkspaceProps) {
   const grouped = useMemo(() => {
-    const map = new Map<string, any[]>();
-    for (const feature of features) {
-      const domain = String(feature?.definition?.domain ?? 'CORE');
-      const current = map.get(domain) ?? [];
-      current.push(feature);
-      map.set(domain, current);
-    }
-    return [...map.entries()];
+    const groups = [
+      'Preferências da academia',
+      'Limites contratados',
+      'Integrações autorizadas',
+      'Recursos do plano',
+    ];
+    return groups.map((group) => [group, features.filter((feature) => featureArea(feature) === group)] as const)
+      .filter(([, items]) => items.length > 0);
   }, [features]);
 
   const activeCount = features.filter((feature) =>
     feature?.kind === 'FEATURE' ? feature?.value === true : feature?.value != null,
   ).length;
   const customizedCount = features.filter(
-    (feature) => feature?.source === 'TENANT_CONFIGURATION',
+    (feature) => isTenantPreference(feature) && feature?.source === 'TENANT_CONFIGURATION',
   ).length;
   const blockedCount = features.filter(
     (feature) => feature?.source === 'FAIL_CLOSED_DEFAULT',
@@ -379,10 +360,10 @@ export function EntitlementsWorkspace({
     <View testID="entitlements-workspace">
       <View style={styles.hero}>
         <View style={styles.heroCopy}>
-          <Text style={styles.eyebrow}>PLANO E CONFIGURAÇÕES</Text>
+          <Text style={styles.eyebrow}>MEU PLANO E PREFERÊNCIAS</Text>
           <Text style={styles.heroTitle}>{planName(subscription)}</Text>
           <Text style={styles.heroDescription}>
-            Veja o que seu plano inclui e personalize somente o que pode ser restringido pela academia.
+            Consulte os direitos e limites contratados. Personalize apenas as preferências operacionais permitidas.
           </Text>
         </View>
         <View style={styles.planStatus}>
@@ -398,35 +379,42 @@ export function EntitlementsWorkspace({
 
       <View style={styles.summaryGrid}>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Recursos disponíveis</Text>
+          <Text style={styles.summaryLabel}>Direitos disponíveis</Text>
           <Text style={styles.summaryValue}>{activeCount}</Text>
           <Text style={styles.summaryMeta}>Recursos, limites e políticas efetivamente disponíveis</Text>
         </View>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Personalizações</Text>
+          <Text style={styles.summaryLabel}>Preferências personalizadas</Text>
           <Text style={styles.summaryValue}>{customizedCount}</Text>
           <Text style={styles.summaryMeta}>Configurações específicas desta academia</Text>
         </View>
         <View style={[styles.summaryCard, blockedCount > 0 && styles.summaryAlert]}>
-          <Text style={styles.summaryLabel}>Bloqueios seguros</Text>
+          <Text style={styles.summaryLabel}>Itens indisponíveis</Text>
           <Text style={styles.summaryValue}>{blockedCount}</Text>
-          <Text style={styles.summaryMeta}>Itens indisponíveis ou inconsistentes permanecem fail-closed</Text>
+          <Text style={styles.summaryMeta}>Recursos sem autorização ou dados válidos ficam indisponíveis</Text>
         </View>
       </View>
 
       <View style={styles.infoCard}>
         <Text style={styles.infoTitle}>Hierarquia de autoridade</Text>
         <Text style={styles.infoText}>
-          O plano define o máximo contratado. A academia pode apenas restringir recursos, limites e políticas.
-          Preferências pessoais dos alunos podem restringir ainda mais a experiência, nunca ampliá-la.
+          A FM Tecnologia define preços, planos, direitos e limites comerciais pelo Command.
+          O proprietário pode consultar esses valores e alterar somente preferências operacionais autorizadas.
+          As permissões são aplicadas pelo backend do IRON; preferências dos alunos nunca ampliam direitos.
         </Text>
       </View>
 
       {grouped.length ? grouped.map(([domain, rows]) => (
         <View key={domain} style={styles.section}>
-          <Text style={styles.sectionTitle}>{domainLabels[domain] ?? humanize(domain)}</Text>
+          <Text style={styles.sectionTitle}>{domain}</Text>
           <Text style={styles.sectionSubtitle}>
-            {rows.length} {rows.length === 1 ? 'configuração disponível' : 'configurações disponíveis'}
+            {domain === 'Preferências da academia'
+              ? 'Controles opcionais da sua academia, sempre dentro do plano autorizado.'
+              : domain === 'Limites contratados'
+                ? 'Consulta apenas. Para modificar limites comerciais, solicite alteração de plano à FM Tecnologia.'
+                : domain === 'Integrações autorizadas'
+                  ? 'Consulte a disponibilidade comercial. Conexões e credenciais da academia ficam na central de Integrações.'
+                  : 'Recursos disponíveis ou bloqueados no contrato, sem edição de licença nesta área.'}
           </Text>
           <View style={styles.featureGrid}>
             {rows.map((feature: any) => (
