@@ -1,6 +1,14 @@
-import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { IronInput as TextInput } from '../components/IronInput';
+
+type CheckoutSession = {
+  chargeId: string;
+  checkoutUrl?: string | null;
+  pixQrCode?: string | null;
+  expiresAt?: string | null;
+  idempotent?: boolean;
+};
 
 type FinancialWorkspaceProps = {
   students: any[];
@@ -31,6 +39,7 @@ type FinancialWorkspaceProps = {
     accountId: string;
     paymentMethod?: string;
   }) => Promise<void>;
+  onCreatePaymentSession?: (chargeId: string, requestId: string) => Promise<CheckoutSession>;
 };
 
 type FinancialTab = 'overview' | 'charges' | 'subscriptions' | 'history' | 'accounts';
@@ -209,6 +218,7 @@ export function FinancialWorkspace({
   onCreateSubscription,
   onCreateCharge,
   onPayCharge,
+  onCreatePaymentSession,
 }: FinancialWorkspaceProps) {
   const [tab, setTab] = useState<FinancialTab>('overview');
   const [studentFilter, setStudentFilter] = useState('');
@@ -218,6 +228,39 @@ export function FinancialWorkspace({
   const [historySearch, setHistorySearch] = useState('');
   const [selectedPaymentAccount, setSelectedPaymentAccount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('PIX');
+  const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
+  const [checkoutResult, setCheckoutResult] = useState<CheckoutSession | null>(null);
+  const [checkoutError, setCheckoutError] = useState<{ chargeId: string; message: string } | null>(null);
+  const checkoutRequestIds = useRef(new Map<string, string>());
+
+  async function createCheckout(chargeId: string) {
+    if (!onCreatePaymentSession || checkoutBusy) return;
+    const runtimeCrypto = (globalThis as typeof globalThis & { crypto?: { randomUUID?: () => string } }).crypto;
+    const requestId = checkoutRequestIds.current.get(chargeId) ?? runtimeCrypto?.randomUUID?.();
+    if (!requestId) {
+      setCheckoutError({ chargeId, message: 'Este navegador não permite criar uma solicitação segura de pagamento.' });
+      return;
+    }
+    checkoutRequestIds.current.set(chargeId, requestId);
+    setCheckoutBusy(chargeId);
+    setCheckoutError(null);
+    setCheckoutResult(null);
+    try {
+      const session = await onCreatePaymentSession(chargeId, requestId);
+      const checkoutUrl = typeof session?.checkoutUrl === 'string' && /^https:\/\//i.test(session.checkoutUrl)
+        ? session.checkoutUrl : null;
+      const pixQrCode = typeof session?.pixQrCode === 'string' && session.pixQrCode.trim()
+        ? session.pixQrCode : null;
+      if (!checkoutUrl && !pixQrCode) {
+        throw new Error('O provedor não disponibilizou um link ou código Pix válido.');
+      }
+      setCheckoutResult({ ...session, chargeId, checkoutUrl, pixQrCode });
+    } catch (error) {
+      setCheckoutError({ chargeId, message: error instanceof Error ? error.message : 'Não foi possível iniciar o checkout.' });
+    } finally {
+      setCheckoutBusy(null);
+    }
+  }
   const [accountDraft, setAccountDraft] = useState({
     name: '',
     type: 'BANK',
@@ -446,6 +489,29 @@ export function FinancialWorkspace({
                 });
               }}
             /> : null}
+            {(charge.status === 'PENDING' || charge.status === 'FAILED') && onCreatePaymentSession ? <>
+              <PrimaryButton
+                testID={`financial-checkout-${charge.id}`}
+                label={checkoutBusy === charge.id ? 'Gerando checkout…' : 'Gerar link ou Pix'}
+                disabled={saving || checkoutBusy !== null}
+                onPress={() => { void createCheckout(charge.id); }}
+              />
+              <Text style={styles.helper}>Exige um provedor de pagamentos configurado pela academia. Não confirma recebimento automaticamente.</Text>
+            </> : null}
+            {checkoutError?.chargeId === charge.id ? <Text testID="financial-checkout-error" style={styles.badgeAlert}>{checkoutError.message}</Text> : null}
+            {checkoutResult?.chargeId === charge.id ? <View testID="financial-checkout-result">
+              <Text style={styles.rowMeta}>Sessão de pagamento criada no provedor. Aguarde a confirmação financeira canônica.</Text>
+              {checkoutResult.checkoutUrl ? <TouchableOpacity
+                testID="financial-checkout-open"
+                accessibilityRole="button"
+                onPress={() => {
+                  const url = checkoutResult.checkoutUrl;
+                  if (url) void Linking.openURL(url).catch(() => setCheckoutError({ chargeId: charge.id, message: 'Não foi possível abrir o link do checkout.' }));
+                }}
+              ><Text style={styles.link}>Abrir link seguro de pagamento</Text></TouchableOpacity> : null}
+              {checkoutResult.pixQrCode ? <Text selectable style={styles.rowMeta}>Pix copia e cola: {checkoutResult.pixQrCode}</Text> : null}
+              {checkoutResult.expiresAt ? <Text style={styles.rowMeta}>Validade: {dateLabel(checkoutResult.expiresAt)}</Text> : null}
+            </View> : null}
           </View>;
         }) : <Text style={styles.empty}>Nenhuma cobrança encontrada.</Text>}
       </View>
