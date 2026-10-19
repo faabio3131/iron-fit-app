@@ -8,7 +8,7 @@ test('O15 removes technical entitlement editor and uses the dedicated product wo
   expect(web).toContain('<EntitlementsWorkspace');
   expect(web).not.toContain('configDraft');
   expect(web).not.toContain('Regras separadas por vírgula');
-  expect(workspace).toContain('PLANO E CONFIGURAÇÕES');
+  expect(workspace).toContain('MEU PLANO E PREFERÊNCIAS');
   expect(workspace).toContain('Hierarquia de autoridade');
   expect(workspace).toContain('Seu plano permite');
   expect(workspace).toContain('Configuração efetiva');
@@ -28,6 +28,8 @@ test('O15 browser mutations preserve server tenant authority and only send confi
 test('O15 UI never offers direct feature enablement beyond the plan', () => {
   expect(workspace).toContain("featureEnabled: false");
   expect(workspace).not.toContain("featureEnabled: true");
-  expect(workspace).toContain('parsedLimit <= planValue');
+  expect(workspace).not.toContain('limitValue: parsedLimit');
+  expect(workspace).toContain("feature?.kind === 'LIMIT'");
+  expect(workspace).toContain('isTenantPreference(feature)');
   expect(workspace).toContain('planPolicyValues');
 });
