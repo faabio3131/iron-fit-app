@@ -71,3 +71,16 @@ test('O21B resposta atrasada do tenant antigo não reabre acesso após a troca',
   await waitFor(() => expect(view.queryByTestId('nav-creator')).toBeNull());
   expect(view.queryByTestId('nav-team')).toBeNull();
 });
+
+test('O21B billing bloqueado exige navegação e step-up, sem consulta antes da autorização', async () => {
+  mockActiveTenantId = 'gym-b';
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('subscription-blocked')).toBeTruthy());
+  expect(view.queryByTestId('saas-billing-panel')).toBeNull();
+  expect(view.getByText('Assinatura indisponível')).toBeTruthy();
+  expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/saas-billing/'))).toBe(false);
+  fireEvent.press(view.getByTestId('nav-saasBilling'));
+  await waitFor(() => expect(view.getByText('Acesso administrativo protegido')).toBeTruthy());
+  expect(view.queryByTestId('saas-billing-panel')).toBeNull();
+  expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/saas-billing/'))).toBe(false);
+});
