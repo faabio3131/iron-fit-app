@@ -209,7 +209,7 @@ export function PrivacyCenter({ canOperatePrivacy = false }: PrivacyCenterProps)
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator color="#2f91ff" />
+        <ActivityIndicator color="#2BF47A" />
         <Text style={styles.muted}>Carregando privacidade e documentos…</Text>
       </View>
     );
@@ -433,7 +433,7 @@ export function PrivacyCenter({ canOperatePrivacy = false }: PrivacyCenterProps)
                     value={resolutionCode}
                     onChangeText={setResolutionCode}
                     placeholder="Ex.: IDENTITY_NOT_VERIFIED"
-                    placeholderTextColor="#71879e"
+                    placeholderTextColor="#828A91"
                     autoCapitalize="characters"
                   />
                   <View style={styles.actions}>
@@ -466,40 +466,40 @@ export function PrivacyCenter({ canOperatePrivacy = false }: PrivacyCenterProps)
 
 const styles = StyleSheet.create({
   loading: { minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 14, marginBottom: 8 },
+  hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 14, marginBottom: 8 },
   heroCopy: { flex: 1, minWidth: 260 },
-  eyebrow: { color: '#60a5fa', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
-  heroTitle: { color: '#eef7ff', fontSize: 22, fontWeight: '900', marginTop: 3, marginBottom: 4 },
-  heroCard: { minWidth: 170, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 10 },
-  muted: { color: '#9fb0c5', fontSize: 11, lineHeight: 16 },
-  kicker: { color: '#71879e', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
-  bigValue: { color: '#eef7ff', fontSize: 20, fontWeight: '900', marginTop: 4 },
-  meta: { color: '#8296ab', fontSize: 9, lineHeight: 13, marginTop: 3 },
-  section: { backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 13, marginBottom: 8 },
-  adminSection: { backgroundColor: '#10131c', borderWidth: 1, borderColor: '#5a3340', borderRadius: 14, padding: 13, marginBottom: 8 },
+  eyebrow: { color: '#56EC95', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
+  heroTitle: { color: '#EEF1F5', fontSize: 22, fontWeight: '900', marginTop: 3, marginBottom: 4 },
+  heroCard: { minWidth: 170, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
+  muted: { color: '#A1A6AE', fontSize: 11, lineHeight: 16 },
+  kicker: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
+  bigValue: { color: '#EEF1F5', fontSize: 20, fontWeight: '900', marginTop: 4 },
+  meta: { color: '#9299A1', fontSize: 9, lineHeight: 13, marginTop: 3 },
+  section: { backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 13, marginBottom: 8 },
+  adminSection: { backgroundColor: '#101113', borderWidth: 1, borderColor: '#5a3340', borderRadius: 14, padding: 13, marginBottom: 8 },
   adminEyebrow: { color: '#fca5a5', fontSize: 9, fontWeight: '900', letterSpacing: 0.7, marginBottom: 3 },
-  sectionTitle: { color: '#eef7ff', fontSize: 16, fontWeight: '900', marginBottom: 4 },
+  sectionTitle: { color: '#EEF1F5', fontSize: 16, fontWeight: '900', marginBottom: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginVertical: 8 },
-  chip: { minHeight: 36, justifyContent: 'center', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#2a3b52', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  chipActive: { backgroundColor: '#102b4d', borderColor: '#2f91ff' },
-  chipText: { color: '#dce9f6', fontSize: 10, fontWeight: '800' },
-  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 10, marginTop: 7 },
+  chip: { minHeight: 36, justifyContent: 'center', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  chipActive: { backgroundColor: '#12271B', borderColor: '#2BF47A' },
+  chipText: { color: '#DDE3E4', fontSize: 10, fontWeight: '800' },
+  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10, marginTop: 7 },
   rowCopy: { flex: 1, minWidth: 240 },
-  rowTitle: { color: '#eef7ff', fontSize: 12, fontWeight: '900' },
+  rowTitle: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
-  button: { minHeight: 44, justifyContent: 'center', backgroundColor: '#176bc1', borderRadius: 9, paddingHorizontal: 11, paddingVertical: 8 },
-  secondaryButton: { backgroundColor: '#08172a', borderWidth: 1, borderColor: '#2a3b52' },
+  button: { minHeight: 44, justifyContent: 'center', backgroundColor: '#19B95D', borderRadius: 9, paddingHorizontal: 11, paddingVertical: 8 },
+  secondaryButton: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31' },
   dangerButton: { backgroundColor: '#7f1d1d' },
   buttonText: { color: '#fff', fontSize: 10, fontWeight: '900' },
   disabled: { opacity: 0.45 },
-  acceptedBadge: { alignSelf: 'flex-start', color: '#bfdbfe', backgroundColor: '#0b2340', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800', marginTop: 5 },
+  acceptedBadge: { alignSelf: 'flex-start', color: '#7DFFB1', backgroundColor: '#142018', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800', marginTop: 5 },
   pendingBadge: { alignSelf: 'flex-start', color: '#fde68a', backgroundColor: '#2a210d', borderWidth: 1, borderColor: '#785e13', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800', marginTop: 5 },
   summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  summaryCard: { flexGrow: 1, flexBasis: 180, minWidth: 160, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 9 },
-  summaryText: { color: '#eef7ff', fontSize: 12, fontWeight: '900', marginTop: 4 },
+  summaryCard: { flexGrow: 1, flexBasis: 180, minWidth: 160, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 9 },
+  summaryText: { color: '#EEF1F5', fontSize: 12, fontWeight: '900', marginTop: 4 },
   rejectBox: { width: '100%', backgroundColor: '#160d12', borderWidth: 1, borderColor: '#5a3340', borderRadius: 9, padding: 9 },
-  input: { color: '#eef7ff', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#2a3b52', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 7, marginVertical: 6 },
-  empty: { color: '#71879e', fontSize: 10, paddingVertical: 9 },
+  input: { color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#292C31', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 7, marginVertical: 6 },
+  empty: { color: '#828A91', fontSize: 10, paddingVertical: 9 },
   error: { color: '#fca5a5', backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', padding: 9, borderRadius: 9, marginBottom: 8 },
-  notice: { color: '#bfdbfe', backgroundColor: '#071a31', borderWidth: 1, borderColor: '#1e4d7a', padding: 9, borderRadius: 9, marginBottom: 8 },
+  notice: { color: '#7DFFB1', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 9, borderRadius: 9, marginBottom: 8 },
 });
