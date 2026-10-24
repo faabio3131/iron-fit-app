@@ -321,7 +321,7 @@ export function ScheduleWorkspace({
           value={studentSearch}
           onChangeText={setStudentSearch}
           placeholder="Buscar aluno"
-          placeholderTextColor="#71879e"
+          placeholderTextColor="#828A91"
         />
         <View style={styles.studentPicker}>
           {filteredStudents.slice(0, 12).map((student) => <TouchableOpacity
@@ -377,15 +377,15 @@ export function ScheduleWorkspace({
         <View style={styles.inlineFields}>
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>Início</Text>
-            <TextInput accessibilityLabel="Início do horário" style={styles.input} value={slotDraft.startTime} onChangeText={(startTime) => setSlotDraft((current) => ({ ...current, startTime }))} placeholderTextColor="#71879e" />
+            <TextInput accessibilityLabel="Início do horário" style={styles.input} value={slotDraft.startTime} onChangeText={(startTime) => setSlotDraft((current) => ({ ...current, startTime }))} placeholderTextColor="#828A91" />
           </View>
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>Fim</Text>
-            <TextInput accessibilityLabel="Fim do horário" style={styles.input} value={slotDraft.endTime} onChangeText={(endTime) => setSlotDraft((current) => ({ ...current, endTime }))} placeholderTextColor="#71879e" />
+            <TextInput accessibilityLabel="Fim do horário" style={styles.input} value={slotDraft.endTime} onChangeText={(endTime) => setSlotDraft((current) => ({ ...current, endTime }))} placeholderTextColor="#828A91" />
           </View>
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>Capacidade</Text>
-            <TextInput accessibilityLabel="Capacidade do horário" style={styles.input} value={slotDraft.capacity} onChangeText={(capacity) => setSlotDraft((current) => ({ ...current, capacity }))} keyboardType="numeric" placeholderTextColor="#71879e" />
+            <TextInput accessibilityLabel="Capacidade do horário" style={styles.input} value={slotDraft.capacity} onChangeText={(capacity) => setSlotDraft((current) => ({ ...current, capacity }))} keyboardType="numeric" placeholderTextColor="#828A91" />
           </View>
         </View>
         {!slotDraftValid ? <Text style={styles.validationText}>Use horários válidos, com início anterior ao fim e capacidade maior que zero.</Text> : null}
@@ -413,66 +413,66 @@ export function ScheduleWorkspace({
 
 const styles = StyleSheet.create({
   toolbar: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 },
-  segmented: { flexDirection: 'row', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 10, padding: 3 },
+  segmented: { flexDirection: 'row', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 10, padding: 3 },
   segment: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  segmentActive: { backgroundColor: '#176bc1' },
-  segmentText: { color: '#9aadc1', fontSize: 12, fontWeight: '800' },
+  segmentActive: { backgroundColor: '#19B95D' },
+  segmentText: { color: '#A1A6AE', fontSize: 12, fontWeight: '800' },
   segmentTextActive: { color: '#ffffff' },
   toolbarActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  controlButton: { minHeight: 40, justifyContent: 'center', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#2a3b52', borderRadius: 9, paddingHorizontal: 11, paddingVertical: 8 },
-  controlButtonText: { color: '#dce9f6', fontSize: 11, fontWeight: '800' },
-  filters: { backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 8, marginBottom: 8, gap: 6 },
+  controlButton: { minHeight: 40, justifyContent: 'center', backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31', borderRadius: 9, paddingHorizontal: 11, paddingVertical: 8 },
+  controlButtonText: { color: '#DDE3E4', fontSize: 11, fontWeight: '800' },
+  filters: { backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, padding: 8, marginBottom: 8, gap: 6 },
   statusFilters: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   studentFilterRow: { flexDirection: 'row', gap: 6 },
-  filterChip: { minHeight: 36, justifyContent: 'center', borderWidth: 1, borderColor: '#2a3b52', backgroundColor: '#050b14', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  filterChipActive: { borderColor: '#2f91ff', backgroundColor: '#102b4d' },
-  filterChipText: { color: '#dce9f6', fontSize: 11, fontWeight: '700' },
+  filterChip: { minHeight: 36, justifyContent: 'center', borderWidth: 1, borderColor: '#292C31', backgroundColor: '#08080A', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  filterChipActive: { borderColor: '#2BF47A', backgroundColor: '#12271B' },
+  filterChipText: { color: '#DDE3E4', fontSize: 11, fontWeight: '700' },
   calendar: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, minWidth: '100%', paddingBottom: 6 },
-  dayColumn: { width: 184, minWidth: 184, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, overflow: 'hidden' },
+  dayColumn: { width: 184, minWidth: 184, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, overflow: 'hidden' },
   dayColumnSingle: { flex: 1, width: '100%', minWidth: 0 },
-  dayHeader: { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#08172a', borderBottomWidth: 1, borderBottomColor: '#203b55' },
-  dayHeaderToday: { backgroundColor: '#0b2340', borderBottomColor: '#2f91ff' },
-  dayName: { color: '#eef6ff', fontSize: 12, fontWeight: '900' },
+  dayHeader: { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#101416', borderBottomWidth: 1, borderBottomColor: '#24262B' },
+  dayHeaderToday: { backgroundColor: '#142018', borderBottomColor: '#2BF47A' },
+  dayName: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
   dayDate: { color: '#b3c3d5', fontSize: 11, marginTop: 2 },
-  dayMeta: { color: '#71879e', fontSize: 10, marginTop: 3 },
+  dayMeta: { color: '#828A91', fontSize: 10, marginTop: 3 },
   dayBody: { padding: 6, gap: 6 },
-  slotCard: { backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 10, padding: 8 },
-  slotCardSelected: { borderColor: '#2f91ff', backgroundColor: '#071a31' },
+  slotCard: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 10, padding: 8 },
+  slotCardSelected: { borderColor: '#2BF47A', backgroundColor: '#121719' },
   slotHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 },
-  slotTime: { color: '#eef6ff', fontSize: 12, fontWeight: '900' },
-  slotCapacity: { color: '#9aadc1', fontSize: 10, marginTop: 2 },
-  slotBadge: { color: '#bfdbfe', backgroundColor: '#0b2340', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 999, paddingHorizontal: 6, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
+  slotTime: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
+  slotCapacity: { color: '#A1A6AE', fontSize: 10, marginTop: 2 },
+  slotBadge: { color: '#7DFFB1', backgroundColor: '#142018', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 999, paddingHorizontal: 6, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
   bookingList: { marginTop: 7, gap: 5 },
-  bookingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, borderTopWidth: 1, borderTopColor: '#17263a', paddingTop: 5 },
+  bookingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, borderTopWidth: 1, borderTopColor: '#1B2420', paddingTop: 5 },
   bookingText: { flex: 1, minWidth: 0 },
-  bookingName: { color: '#dce9f6', fontSize: 10, fontWeight: '800' },
-  bookingStatus: { color: '#9aadc1', fontSize: 9, marginTop: 1 },
-  checkInButton: { minHeight: 40, justifyContent: 'center', backgroundColor: '#176bc1', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
+  bookingName: { color: '#DDE3E4', fontSize: 10, fontWeight: '800' },
+  bookingStatus: { color: '#A1A6AE', fontSize: 9, marginTop: 1 },
+  checkInButton: { minHeight: 40, justifyContent: 'center', backgroundColor: '#19B95D', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
   checkInButtonText: { color: '#ffffff', fontSize: 9, fontWeight: '900' },
-  emptySlot: { color: '#71879e', fontSize: 9, marginTop: 7 },
+  emptySlot: { color: '#828A91', fontSize: 9, marginTop: 7 },
   emptyDay: { minHeight: 70, alignItems: 'center', justifyContent: 'center', padding: 8 },
-  emptyDayText: { color: '#71879e', fontSize: 10, textAlign: 'center' },
+  emptyDayText: { color: '#828A91', fontSize: 10, textAlign: 'center' },
   operationGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  operationCard: { flexGrow: 1, flexBasis: 380, minWidth: 0, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 11 },
-  cardTitle: { color: '#eef6ff', fontSize: 15, fontWeight: '900' },
-  cardSubtitle: { color: '#9aadc1', fontSize: 11, lineHeight: 16, marginTop: 2, marginBottom: 8 },
-  fieldLabel: { color: '#9aadc1', fontSize: 10, fontWeight: '800', marginBottom: 4, marginTop: 5 },
-  input: { color: '#eef6ff', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#243247', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
+  operationCard: { flexGrow: 1, flexBasis: 380, minWidth: 0, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, padding: 11 },
+  cardTitle: { color: '#EEF1F5', fontSize: 15, fontWeight: '900' },
+  cardSubtitle: { color: '#A1A6AE', fontSize: 11, lineHeight: 16, marginTop: 2, marginBottom: 8 },
+  fieldLabel: { color: '#A1A6AE', fontSize: 10, fontWeight: '800', marginBottom: 4, marginTop: 5 },
+  input: { color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   studentPicker: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 6 },
-  studentChip: { minHeight: 36, justifyContent: 'center', borderWidth: 1, borderColor: '#2a3b52', backgroundColor: '#050b14', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5 },
-  studentChipActive: { borderColor: '#2f91ff', backgroundColor: '#102b4d' },
-  studentChipText: { color: '#dce9f6', fontSize: 10, fontWeight: '700' },
-  selectionSummary: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginVertical: 8, backgroundColor: '#050b14', borderRadius: 9, padding: 8 },
-  selectionLabel: { color: '#71879e', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
-  selectionValue: { color: '#eef6ff', fontSize: 11, fontWeight: '800', marginRight: 8 },
+  studentChip: { minHeight: 36, justifyContent: 'center', borderWidth: 1, borderColor: '#292C31', backgroundColor: '#08080A', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5 },
+  studentChipActive: { borderColor: '#2BF47A', backgroundColor: '#12271B' },
+  studentChipText: { color: '#DDE3E4', fontSize: 10, fontWeight: '700' },
+  selectionSummary: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginVertical: 8, backgroundColor: '#08080A', borderRadius: 9, padding: 8 },
+  selectionLabel: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
+  selectionValue: { color: '#EEF1F5', fontSize: 11, fontWeight: '800', marginRight: 8 },
   weekdayPicker: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginBottom: 6 },
-  weekdayChip: { minHeight: 36, justifyContent: 'center', borderWidth: 1, borderColor: '#2a3b52', backgroundColor: '#050b14', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 6 },
-  weekdayChipActive: { borderColor: '#2f91ff', backgroundColor: '#102b4d' },
-  weekdayChipText: { color: '#dce9f6', fontSize: 10, fontWeight: '800' },
+  weekdayChip: { minHeight: 36, justifyContent: 'center', borderWidth: 1, borderColor: '#292C31', backgroundColor: '#08080A', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 6 },
+  weekdayChipActive: { borderColor: '#2BF47A', backgroundColor: '#12271B' },
+  weekdayChipText: { color: '#DDE3E4', fontSize: 10, fontWeight: '800' },
   inlineFields: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   field: { flexGrow: 1, flexBasis: 110, minWidth: 90 },
   validationText: { color: '#fca5a5', fontSize: 10, lineHeight: 14, marginTop: 6 },
-  primaryButton: { minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center', backgroundColor: '#176bc1', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 9, marginTop: 7 },
+  primaryButton: { minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center', backgroundColor: '#19B95D', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 9, marginTop: 7 },
   primaryButtonText: { color: '#ffffff', fontSize: 11, fontWeight: '900' },
   disabled: { opacity: 0.42 },
 });
