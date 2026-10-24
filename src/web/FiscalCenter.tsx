@@ -262,7 +262,7 @@ export function FiscalCenter() {
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator color="#2f91ff" />
+        <ActivityIndicator color="#2BF47A" />
         <Text style={styles.muted}>Carregando operação fiscal…</Text>
       </View>
     );
@@ -328,7 +328,7 @@ export function FiscalCenter() {
               onChangeText={setExternalTenantId}
               autoCapitalize="none"
               placeholder="ID fornecido pelo FM Fiscal"
-              placeholderTextColor="#71879e"
+              placeholderTextColor="#828A91"
             />
           </View>
           <View style={styles.field}>
@@ -340,7 +340,7 @@ export function FiscalCenter() {
               onChangeText={setExternalUnitId}
               autoCapitalize="none"
               placeholder="Unidade fiscal autorizada"
-              placeholderTextColor="#71879e"
+              placeholderTextColor="#828A91"
             />
           </View>
         </View>
@@ -364,7 +364,7 @@ export function FiscalCenter() {
               value={bindingFactor}
               onChangeText={setBindingFactor}
               autoCapitalize="characters"
-              placeholderTextColor="#71879e"
+              placeholderTextColor="#828A91"
             />
           </View>
         </View>
@@ -533,58 +533,58 @@ export function FiscalCenter() {
 
 const styles = StyleSheet.create({
   loading: { minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 14, marginBottom: 8 },
+  hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 14, marginBottom: 8 },
   heroCopy: { flex: 1, minWidth: 280 },
-  eyebrow: { color: '#60a5fa', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
-  heroTitle: { color: '#eef7ff', fontSize: 22, fontWeight: '900', marginTop: 3, marginBottom: 4 },
-  muted: { color: '#9fb0c5', fontSize: 11, lineHeight: 16 },
+  eyebrow: { color: '#56EC95', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
+  heroTitle: { color: '#EEF1F5', fontSize: 22, fontWeight: '900', marginTop: 3, marginBottom: 4 },
+  muted: { color: '#A1A6AE', fontSize: 11, lineHeight: 16 },
   externalStatus: { minWidth: 230, flexBasis: 280, backgroundColor: '#1a1410', borderWidth: 1, borderColor: '#7a5b20', borderRadius: 11, padding: 10 },
   externalKicker: { color: '#c9a85b', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' },
-  externalTitle: { color: '#eef7ff', fontSize: 13, fontWeight: '900', marginTop: 3 },
+  externalTitle: { color: '#EEF1F5', fontSize: 13, fontWeight: '900', marginTop: 3 },
   externalWarning: { color: '#fde68a', fontSize: 10, fontWeight: '900', marginTop: 2 },
-  meta: { color: '#8296ab', fontSize: 9, lineHeight: 13, marginTop: 3 },
+  meta: { color: '#9299A1', fontSize: 9, lineHeight: 13, marginTop: 3 },
   summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  summaryCard: { flexGrow: 1, flexBasis: 190, minWidth: 170, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 9 },
+  summaryCard: { flexGrow: 1, flexBasis: 190, minWidth: 170, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 9 },
   alertCard: { backgroundColor: '#1a1018', borderColor: '#7f2d3a' },
-  kicker: { color: '#71879e', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
-  bigValue: { color: '#eef7ff', fontSize: 20, fontWeight: '900', marginTop: 4 },
-  section: { backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 13, marginBottom: 8 },
+  kicker: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
+  bigValue: { color: '#EEF1F5', fontSize: 20, fontWeight: '900', marginTop: 4 },
+  section: { backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 13, marginBottom: 8 },
   sectionHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
   sectionHeadCopy: { flex: 1, minWidth: 240 },
-  sectionTitle: { color: '#eef7ff', fontSize: 16, fontWeight: '900', marginBottom: 4 },
-  bindingStatus: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 10, padding: 9, marginTop: 7 },
-  bindingValue: { color: '#eef7ff', fontSize: 11, fontWeight: '900' },
-  activeBadge: { color: '#bfdbfe', backgroundColor: '#0b2340', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
+  sectionTitle: { color: '#EEF1F5', fontSize: 16, fontWeight: '900', marginBottom: 4 },
+  bindingStatus: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 10, padding: 9, marginTop: 7 },
+  bindingValue: { color: '#EEF1F5', fontSize: 11, fontWeight: '900' },
+  activeBadge: { color: '#7DFFB1', backgroundColor: '#142018', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
   pendingBadge: { color: '#fde68a', backgroundColor: '#2a210d', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
   formGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
   field: { flexGrow: 1, flexBasis: 260, minWidth: 220 },
-  label: { color: '#9fb0c5', fontSize: 10, fontWeight: '800', marginTop: 7, marginBottom: 4 },
-  input: { color: '#eef7ff', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#243247', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
+  label: { color: '#A1A6AE', fontSize: 10, fontWeight: '800', marginTop: 7, marginBottom: 4 },
+  input: { color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   textArea: { minHeight: 82, textAlignVertical: 'top' },
-  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#176bc1', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 8 },
-  secondaryButton: { backgroundColor: '#08172a', borderWidth: 1, borderColor: '#2a3b52' },
+  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#19B95D', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 8 },
+  secondaryButton: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31' },
   dangerButton: { borderColor: '#7f2d3a' },
   buttonText: { color: '#fff', fontSize: 10, fontWeight: '900' },
   disabled: { opacity: 0.45 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 7, marginBottom: 4 },
-  chip: { minHeight: 36, justifyContent: 'center', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#2a3b52', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  chipActive: { backgroundColor: '#102b4d', borderColor: '#2f91ff' },
-  chipText: { color: '#dce9f6', fontSize: 10, fontWeight: '800' },
-  handoff: { backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 10, marginTop: 7 },
+  chip: { minHeight: 36, justifyContent: 'center', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  chipActive: { backgroundColor: '#12271B', borderColor: '#2BF47A' },
+  chipText: { color: '#DDE3E4', fontSize: 10, fontWeight: '800' },
+  handoff: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10, marginTop: 7 },
   handoffHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
   handoffCopy: { flex: 1, minWidth: 220 },
-  rowTitle: { color: '#eef7ff', fontSize: 12, fontWeight: '900' },
-  statusBadge: { alignSelf: 'flex-start', color: '#bfdbfe', backgroundColor: '#0b2340', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
+  rowTitle: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
+  statusBadge: { alignSelf: 'flex-start', color: '#7DFFB1', backgroundColor: '#142018', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
   failedBadge: { alignSelf: 'flex-start', color: '#fecaca', backgroundColor: '#301215', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
-  cancelledBadge: { alignSelf: 'flex-start', color: '#cbd5e1', backgroundColor: '#18202b', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
+  cancelledBadge: { alignSelf: 'flex-start', color: '#CDD4D6', backgroundColor: '#181C1B', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  fact: { flexGrow: 1, flexBasis: 160, minWidth: 140, backgroundColor: '#071528', borderRadius: 8, padding: 7 },
-  factValue: { color: '#dce9f6', fontSize: 10, fontWeight: '800', marginTop: 2 },
+  fact: { flexGrow: 1, flexBasis: 160, minWidth: 140, backgroundColor: '#0F0F12', borderRadius: 8, padding: 7 },
+  factValue: { color: '#DDE3E4', fontSize: 10, fontWeight: '800', marginTop: 2 },
   failureText: { color: '#fca5a5', fontSize: 9, lineHeight: 13, marginTop: 7 },
   cancelBox: { backgroundColor: '#160d12', borderWidth: 1, borderColor: '#5a3340', borderRadius: 9, padding: 9, marginTop: 8 },
   cancelTitle: { color: '#fecaca', fontSize: 12, fontWeight: '900' },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  empty: { color: '#71879e', fontSize: 10, paddingVertical: 9 },
+  empty: { color: '#828A91', fontSize: 10, paddingVertical: 9 },
   error: { color: '#fca5a5', backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', padding: 9, borderRadius: 9, marginBottom: 8 },
-  notice: { color: '#bfdbfe', backgroundColor: '#071a31', borderWidth: 1, borderColor: '#1e4d7a', padding: 9, borderRadius: 9, marginBottom: 8 },
+  notice: { color: '#7DFFB1', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 9, borderRadius: 9, marginBottom: 8 },
 });
