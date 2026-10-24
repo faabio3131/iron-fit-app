@@ -483,3 +483,16 @@ test('Creator Network usa descrições em português e superfície compacta', as
   expect(view.queryByText('Analytics')).toBeNull();
   expect(view.getByText(/Conteúdo, utilização e desempenho/)).toBeTruthy();
 });
+
+test('RBAC: recepcao nao consulta financeiro do aluno mesmo ao abrir a ficha 360', async () => {
+  mockProfile = { id: 'reception-audit', name: 'Recepcao Auditoria', email: 'reception@example.com', roles: ['RECEPTION'], permissions: [] };
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-students')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-students'));
+  await waitFor(() => expect(view.getByText('Aluno 360')).toBeTruthy());
+  fireEvent.press(view.getByText('Aluno 360'));
+  await waitFor(() => expect(mockApi.mock.calls.some(([path]) => path === '/students/student-1')).toBe(true));
+  expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/financial/'))).toBe(false);
+  expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/saas-billing/'))).toBe(false);
+  expect(mockApi.mock.calls.some(([path]) => path === '/auth/step-up' )).toBe(false);
+});
