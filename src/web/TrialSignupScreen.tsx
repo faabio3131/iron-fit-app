@@ -80,10 +80,10 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
         <Text style={styles.title}>Crie sua academia</Text>
         <Text style={styles.subtitle}>Comece seu teste grátis e reúna a rotina da sua academia em um só lugar.</Text>
 
-        <TextInput testID="trial-name" style={styles.input} value={name} onChangeText={setName} placeholder="Seu nome" placeholderTextColor="#9fb0c5" />
-        <TextInput testID="trial-gym-name" style={styles.input} value={gymName} onChangeText={setGymName} placeholder="Nome da academia" placeholderTextColor="#9fb0c5" />
-        <TextInput testID="trial-email" style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="E-mail" placeholderTextColor="#9fb0c5" />
-        <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Telefone (opcional)" placeholderTextColor="#9fb0c5" />
+        <TextInput testID="trial-name" style={styles.input} value={name} onChangeText={setName} placeholder="Seu nome" placeholderTextColor="#A1A6AE" />
+        <TextInput testID="trial-gym-name" style={styles.input} value={gymName} onChangeText={setGymName} placeholder="Nome da academia" placeholderTextColor="#A1A6AE" />
+        <TextInput testID="trial-email" style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="E-mail" placeholderTextColor="#A1A6AE" />
+        <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Telefone (opcional)" placeholderTextColor="#A1A6AE" />
         <Text style={styles.passwordLabel}>Senha</Text>
         <Text style={styles.policy}>De 12 a 128 caracteres, incluindo pelo menos uma letra maiúscula, uma minúscula, um número e um símbolo (por exemplo, ! ou @).</Text>
         <View style={styles.passwordInputGroup}>
@@ -96,7 +96,7 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
             autoCapitalize="none"
             autoCorrect={false}
             placeholder="Crie sua senha"
-            placeholderTextColor="#9fb0c5"
+            placeholderTextColor="#A1A6AE"
           />
           <TouchableOpacity
             testID="trial-password-toggle"
@@ -110,11 +110,11 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
             <Ionicons
               name={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
               size={22}
-              color="#9fb0c5"
+              color="#A1A6AE"
             />
           </TouchableOpacity>
         </View>
-        <TextInput style={styles.input} value={timezone} onChangeText={setTimezone} autoCapitalize="none" placeholder="Fuso horário (ex.: America/Sao_Paulo)" placeholderTextColor="#9fb0c5" />
+        <TextInput style={styles.input} value={timezone} onChangeText={setTimezone} autoCapitalize="none" placeholder="Fuso horário (ex.: America/Sao_Paulo)" placeholderTextColor="#A1A6AE" />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <TouchableOpacity accessibilityRole="button" testID="trial-submit" style={[styles.primary, loading && styles.disabled]} onPress={submit} disabled={loading}>
@@ -130,21 +130,21 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
 }
 
 const styles = StyleSheet.create({
-  card: { width: '100%', maxWidth: 560, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 20, padding: 28 },
-  kicker: { color: '#2f91ff', fontWeight: '800', fontSize: 11, letterSpacing: 1.5 },
-  title: { color: '#eef7ff', fontSize: 30, fontWeight: '900', marginTop: 8 },
-  subtitle: { color: '#9fb0c5', fontSize: 14, lineHeight: 21, marginTop: 7, marginBottom: 20 },
-  input: { color: '#eef7ff', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#243247', borderRadius: 11, paddingHorizontal: 13, paddingVertical: 13, fontSize: 15, marginBottom: 10 },
-  passwordLabel: { color: '#eef7ff', fontSize: 14, fontWeight: '700', marginBottom: 5 },
+  card: { width: '100%', maxWidth: 560, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 20, padding: 28 },
+  kicker: { color: '#2BF47A', fontWeight: '800', fontSize: 11, letterSpacing: 1.5 },
+  title: { color: '#EEF1F5', fontSize: 30, fontWeight: '900', marginTop: 8 },
+  subtitle: { color: '#A1A6AE', fontSize: 14, lineHeight: 21, marginTop: 7, marginBottom: 20 },
+  input: { color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 11, paddingHorizontal: 13, paddingVertical: 13, fontSize: 15, marginBottom: 10 },
+  passwordLabel: { color: '#EEF1F5', fontSize: 14, fontWeight: '700', marginBottom: 5 },
   policy: { color: '#b3c3d5', fontSize: 13, lineHeight: 19, marginBottom: 9 },
-  passwordInputGroup: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#243247', borderRadius: 11, marginBottom: 10 },
-  passwordInput: { flex: 1, color: '#eef7ff', paddingLeft: 13, paddingRight: 8, paddingVertical: 13, fontSize: 15 },
+  passwordInputGroup: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 11, marginBottom: 10 },
+  passwordInput: { flex: 1, color: '#EEF1F5', paddingLeft: 13, paddingRight: 8, paddingVertical: 13, fontSize: 15 },
   passwordToggle: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   error: { color: '#fca5a5', fontSize: 13, marginBottom: 10 },
-  primary: { backgroundColor: '#176bc1', borderRadius: 11, minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  primary: { backgroundColor: '#19B95D', borderRadius: 11, minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   primaryText: { color: '#fff', fontWeight: '800', fontSize: 15 },
   secondary: { alignItems: 'center', paddingVertical: 13 },
-  secondaryText: { color: '#93c5fd', fontWeight: '700' },
+  secondaryText: { color: '#9BFFC4', fontWeight: '700' },
   disabled: { opacity: 0.5 },
-  finePrint: { color: '#9fb0c5', fontSize: 11, lineHeight: 16, textAlign: 'center', marginTop: 4 },
+  finePrint: { color: '#A1A6AE', fontSize: 11, lineHeight: 16, textAlign: 'center', marginTop: 4 },
 });
