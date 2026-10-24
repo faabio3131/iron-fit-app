@@ -85,7 +85,7 @@ function message(error: unknown) {
   return 'Não foi possível concluir a operação.';
 }
 function Field({ label, value, onChangeText, secureTextEntry, numeric }: { label: string; value: string; onChangeText: (value: string) => void; secureTextEntry?: boolean; numeric?: boolean }) {
-  return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} style={styles.input} value={value} onChangeText={onChangeText} secureTextEntry={secureTextEntry} keyboardType={numeric ? 'numeric' : 'default'} placeholderTextColor="#9fb0c5" /></View>;
+  return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} style={styles.input} value={value} onChangeText={onChangeText} secureTextEntry={secureTextEntry} keyboardType={numeric ? 'numeric' : 'default'} placeholderTextColor="#A1A6AE" /></View>;
 }
 function Button({ label, onPress, disabled, secondary, testID, disabledReason }: { label: string; onPress: () => void; disabled?: boolean; secondary?: boolean; testID?: string; disabledReason?: string }) {
   const hint = disabled ? (disabledReason ?? 'Preencha ou selecione os dados obrigatórios para continuar.') : '';
@@ -389,7 +389,7 @@ export function CommercialWebApp() {
       subtitle="Confirme sua identidade para entrar nesta área restrita. A autorização é temporária e vinculada à sua sessão atual."
     >
       <View style={styles.adminGateIdentity}>
-        <Ionicons name="lock-closed-outline" size={24} color="#60a5fa" />
+        <Ionicons name="lock-closed-outline" size={24} color="#56EC95" />
         <View>
           <Text style={styles.rowTitle}>{profile?.name ?? 'Proprietário'}</Text>
           <Text style={styles.muted}>{profile?.email ?? 'Conta administrativa'}</Text>
@@ -409,7 +409,7 @@ export function CommercialWebApp() {
               autoCapitalize="none"
               autoCorrect={false}
               placeholder="Digite sua senha atual"
-              placeholderTextColor="#71879e"
+              placeholderTextColor="#828A91"
             />
             <TouchableOpacity
               testID="admin-password-visibility-toggle"
@@ -419,7 +419,7 @@ export function CommercialWebApp() {
               style={styles.adminPasswordToggle}
               onPress={() => setAdminPasswordVisible((visible) => !visible)}
             >
-              <Ionicons name={adminPasswordVisible ? 'eye-off-outline' : 'eye-outline'} size={21} color="#bfdbfe" />
+              <Ionicons name={adminPasswordVisible ? 'eye-off-outline' : 'eye-outline'} size={21} color="#7DFFB1" />
             </TouchableOpacity>
           </View>
           <Text style={styles.adminPasswordHelp}>
@@ -1324,84 +1324,84 @@ export function CommercialWebApp() {
   }
 
   const topBar = <View style={[styles.top, narrow && styles.topNarrow]}><IronBrand compact mobile={narrow} /><View style={[styles.actions, narrow && styles.actionsNarrow]}><Text numberOfLines={1} style={[styles.muted, narrow && styles.userNameNarrow]}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
-  if (!shellReady) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={styles.contentInner}>{error ? <Text style={styles.error}>{error}</Text> : <View style={styles.loading}><ActivityIndicator color="#2f91ff" /><Text style={styles.muted}>Preparando sua academia…</Text></View>}</View></View>;
-  if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <React.Fragment key={item.key}>{!compact && item.key === 'financial' ? <Text style={styles.navSection}>ADMINISTRAÇÃO RESTRITA</Text> : null}<TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#dbeafe' : '#9fb0c5'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity></React.Fragment>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Seu acesso operacional está limitado. Consulte sua assinatura para regularizar o acesso. A segurança da conta continua disponível.</Text></View><Section title="Estado comercial"><Data value={[{ trialStatus: trial?.status ?? null, subscriptionStatus: subscription?.status ?? null, subscriptionId: subscription?.id ?? null }]} /></Section>{active === 'security' ? <AccountSecurityPanel /> : active === 'privacy' ? <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} /> : <SaasBillingPanel onCommercialStateChanged={loadShell} canAdministerBilling={can('SUPER_ADMIN')} />}</ScrollView></View></View>;
-  return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <React.Fragment key={item.key}>{!compact && item.key === 'financial' ? <Text style={styles.navSection}>ADMINISTRAÇÃO RESTRITA</Text> : null}<TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#dbeafe' : '#9fb0c5'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity></React.Fragment>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>{active === 'financial' ? 'Área restrita · Proprietário / Administrador' : (data.gym?.name ?? 'Gestão da academia')}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading || (loadedModule !== active && (!isRestrictedAdminModule(active) || adminStepUpActive)) ? <View style={styles.loading}><ActivityIndicator color="#2f91ff" /><Text style={styles.muted}>Carregando informações…</Text></View> : content()}</ScrollView></View></View>;
+  if (!shellReady) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={styles.contentInner}>{error ? <Text style={styles.error}>{error}</Text> : <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Preparando sua academia…</Text></View>}</View></View>;
+  if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <React.Fragment key={item.key}>{!compact && item.key === 'financial' ? <Text style={styles.navSection}>ADMINISTRAÇÃO RESTRITA</Text> : null}<TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#D8FFE7' : '#A1A6AE'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity></React.Fragment>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Seu acesso operacional está limitado. Consulte sua assinatura para regularizar o acesso. A segurança da conta continua disponível.</Text></View><Section title="Estado comercial"><Data value={[{ trialStatus: trial?.status ?? null, subscriptionStatus: subscription?.status ?? null, subscriptionId: subscription?.id ?? null }]} /></Section>{active === 'security' ? <AccountSecurityPanel /> : active === 'privacy' ? <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} /> : <SaasBillingPanel onCommercialStateChanged={loadShell} canAdministerBilling={can('SUPER_ADMIN')} />}</ScrollView></View></View>;
+  return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <React.Fragment key={item.key}>{!compact && item.key === 'financial' ? <Text style={styles.navSection}>ADMINISTRAÇÃO RESTRITA</Text> : null}<TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#D8FFE7' : '#A1A6AE'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity></React.Fragment>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>{active === 'financial' ? 'Área restrita · Proprietário / Administrador' : (data.gym?.name ?? 'Gestão da academia')}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading || (loadedModule !== active && (!isRestrictedAdminModule(active) || adminStepUpActive)) ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando informações…</Text></View> : content()}</ScrollView></View></View>;
 }
 
 const styles = StyleSheet.create({
-  app: { flex: 1, backgroundColor: '#030811' },
-  top: { minHeight: 72, flexWrap: 'wrap', gap: 8, paddingHorizontal: 18, paddingVertical: 0, backgroundColor: '#050b14', borderBottomWidth: 1, borderBottomColor: '#203b55', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  app: { flex: 1, backgroundColor: '#000000' },
+  top: { minHeight: 72, flexWrap: 'wrap', gap: 8, paddingHorizontal: 18, paddingVertical: 0, backgroundColor: '#08080A', borderBottomWidth: 1, borderBottomColor: '#24262B', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   topNarrow: { minHeight: 68, flexWrap: 'nowrap', paddingHorizontal: 10, gap: 6 },
-  brand: { color: '#eef7ff', fontSize: 23, fontWeight: '900', letterSpacing: 4 },
+  brand: { color: '#EEF1F5', fontSize: 23, fontWeight: '900', letterSpacing: 4 },
   body: { flex: 1, flexDirection: 'row' }, bodyCompact: { flexDirection: 'column' },
-  nav: { width: 232, minWidth: 232, maxWidth: 232, flexGrow: 0, flexShrink: 0, backgroundColor: '#050b14', paddingVertical: 8, borderRightWidth: 1, borderRightColor: '#203b55' },
-  navCompact: { width: '100%', maxWidth: '100%', minWidth: 0, maxHeight: 74, borderRightWidth: 0, borderBottomWidth: 1, borderBottomColor: '#203b55' },
+  nav: { width: 232, minWidth: 232, maxWidth: 232, flexGrow: 0, flexShrink: 0, backgroundColor: '#08080A', paddingVertical: 8, borderRightWidth: 1, borderRightColor: '#24262B' },
+  navCompact: { width: '100%', maxWidth: '100%', minWidth: 0, maxHeight: 74, borderRightWidth: 0, borderBottomWidth: 1, borderBottomColor: '#24262B' },
   navHorizontal: { alignItems: 'center', paddingHorizontal: 8 },
   navItem: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8, marginHorizontal: 8, marginVertical: 1, borderRadius: 10, borderWidth: 1, borderColor: 'transparent' },
-  navActive: { backgroundColor: '#10203a', borderColor: '#1e4d7a' },
-  navText: { color: '#cbd5e1', fontWeight: '600', fontSize: 13 },
+  navActive: { backgroundColor: '#153320', borderColor: '#1E4F34' },
+  navText: { color: '#CDD4D6', fontWeight: '600', fontSize: 13 },
   content: { flex: 1 }, contentInner: { padding: 14, width: '100%', maxWidth: 1440, alignSelf: 'center' },
   pageHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 9 },
-  title: { color: '#eef7ff', fontSize: 26, fontWeight: '900', letterSpacing: -0.6 },
-  section: { backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 15, marginBottom: 9 },
+  title: { color: '#EEF1F5', fontSize: 26, fontWeight: '900', letterSpacing: -0.6 },
+  section: { backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 15, marginBottom: 9 },
   sectionCompact: { borderRadius: 13, padding: 11, marginBottom: 7 },
-  sectionTitle: { color: '#eef7ff', fontSize: 16, fontWeight: '800', marginBottom: 4, letterSpacing: -0.2 },
+  sectionTitle: { color: '#EEF1F5', fontSize: 16, fontWeight: '800', marginBottom: 4, letterSpacing: -0.2 },
   sectionBody: { marginTop: 8 },
   sectionBodyCompact: { marginTop: 5 },
   compactGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start' },
   compactPane: { flexGrow: 1, flexBasis: 330, minWidth: 0 },
   compactPaneWide: { flexGrow: 1, flexBasis: 480, minWidth: 0 },
   creatorWrap: { width: '100%', alignSelf: 'center' },
-  moduleIntro: { color: '#9fb0c5', fontSize: 12, lineHeight: 17, marginBottom: 7 },
+  moduleIntro: { color: '#A1A6AE', fontSize: 12, lineHeight: 17, marginBottom: 7 },
   creatorGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start' },
   creatorPane: { flexGrow: 1, flexBasis: 300, minWidth: 270 },
   equipmentCatalogGrid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  equipmentCard: { flexGrow: 1, flexBasis: 260, minWidth: 240, maxWidth: 420, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 11 },
-  exerciseCardSelected: { borderColor: '#2f91ff', backgroundColor: '#071a31' },
+  equipmentCard: { flexGrow: 1, flexBasis: 260, minWidth: 240, maxWidth: 420, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, padding: 11 },
+  exerciseCardSelected: { borderColor: '#2BF47A', backgroundColor: '#121719' },
   assessmentMetricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  assessmentMetric: { flexGrow: 1, flexBasis: 120, minWidth: 110, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 10, padding: 10 },
-  kpiValue: { color: '#eef7ff', fontSize: 22, fontWeight: '900' },
-  studioStep: { backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 11, marginBottom: 8 },
+  assessmentMetric: { flexGrow: 1, flexBasis: 120, minWidth: 110, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 10, padding: 10 },
+  kpiValue: { color: '#EEF1F5', fontSize: 22, fontWeight: '900' },
+  studioStep: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, padding: 11, marginBottom: 8 },
   studioList: { width: '100%', gap: 7, marginTop: 8 },
-  studioSessionCard: { flexGrow: 1, flexBasis: 260, minWidth: 240, backgroundColor: '#08172a', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 10 },
-  navSection: { color: '#6fa8dc', fontSize: 10, fontWeight: '800', letterSpacing: 0.7, marginTop: 10, marginBottom: 4, marginHorizontal: 12 },
-  restrictedNote: { color: '#bfdbfe', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, fontSize: 11, fontWeight: '700', marginBottom: 8 },
+  studioSessionCard: { flexGrow: 1, flexBasis: 260, minWidth: 240, backgroundColor: '#101416', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
+  navSection: { color: '#7DFFB1', fontSize: 10, fontWeight: '800', letterSpacing: 0.7, marginTop: 10, marginBottom: 4, marginHorizontal: 12 },
+  restrictedNote: { color: '#7DFFB1', backgroundColor: '#101416', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, fontSize: 11, fontWeight: '700', marginBottom: 8 },
   adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
   adminGateForm: { width: '100%', maxWidth: 400, flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
   adminPasswordField: { width: '100%', minWidth: 0 },
-  adminPasswordInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 44, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#284765', borderRadius: 10, overflow: 'hidden' },
-  adminPasswordInput: { flex: 1, minWidth: 0, minHeight: 44, color: '#eef7ff', paddingHorizontal: 11, paddingVertical: 8 },
-  adminPasswordToggle: { minWidth: 48, minHeight: 44, justifyContent: 'center', alignItems: 'center', borderLeftWidth: 1, borderLeftColor: '#284765' },
-  adminPasswordHelp: { color: '#9fb0c5', fontSize: 11, lineHeight: 16, marginTop: 6 },
+  adminPasswordInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 44, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#315140', borderRadius: 10, overflow: 'hidden' },
+  adminPasswordInput: { flex: 1, minWidth: 0, minHeight: 44, color: '#EEF1F5', paddingHorizontal: 11, paddingVertical: 8 },
+  adminPasswordToggle: { minWidth: 48, minHeight: 44, justifyContent: 'center', alignItems: 'center', borderLeftWidth: 1, borderLeftColor: '#315140' },
+  adminPasswordHelp: { color: '#A1A6AE', fontSize: 11, lineHeight: 16, marginTop: 6 },
   adminGateMfaField: { width: '100%', minWidth: 0 },
-  row: { backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 14, marginBottom: 9 },
-  rowTitle: { color: '#eef7ff', fontWeight: '700', marginBottom: 5 },
+  row: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 14, marginBottom: 9 },
+  rowTitle: { color: '#EEF1F5', fontWeight: '700', marginBottom: 5 },
   rowText: { flex: 1, minWidth: 0 },
   teamRowHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 },
   teamStatus: { fontSize: 11, fontWeight: '800', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5, borderWidth: 1 },
   teamStatusActive: { color: '#86efac', borderColor: '#166534', backgroundColor: '#08271c' },
   teamStatusInactive: { color: '#fca5a5', borderColor: '#7f1d1d', backgroundColor: '#2b1015' },
-  json: { color: '#9fb0c5', fontSize: 11, lineHeight: 17 },
-  muted: { color: '#9fb0c5', fontSize: 13, lineHeight: 19 },
+  json: { color: '#A1A6AE', fontSize: 11, lineHeight: 17 },
+  muted: { color: '#A1A6AE', fontSize: 13, lineHeight: 19 },
   form: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
   fieldWrap: { minWidth: 180, flexGrow: 1, flexBasis: 220 },
-  label: { color: '#9fb0c5', fontSize: 11, fontWeight: '700', marginBottom: 4 },
-  input: { minHeight: 44, color: '#eef7ff', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#243247', borderRadius: 10, paddingHorizontal: 11, paddingVertical: 8 },
+  label: { color: '#A1A6AE', fontSize: 11, fontWeight: '700', marginBottom: 4 },
+  input: { minHeight: 44, color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 10, paddingHorizontal: 11, paddingVertical: 8 },
   buttonWrap: { alignSelf: 'flex-start', maxWidth: '100%' },
-  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#176bc1', borderRadius: 11, paddingHorizontal: 15, paddingVertical: 11, marginTop: 4 },
-  secondary: { backgroundColor: '#111a29', borderWidth: 1, borderColor: '#2a3b52' },
+  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#19B95D', borderRadius: 11, paddingHorizontal: 15, paddingVertical: 11, marginTop: 4 },
+  secondary: { backgroundColor: '#161A19', borderWidth: 1, borderColor: '#292C31' },
   buttonText: { color: '#fff', fontWeight: '800', fontSize: 12 },
-  buttonHint: { color: '#9fb0c5', fontSize: 11, lineHeight: 16, marginTop: 5, maxWidth: 360 },
-  helper: { color: '#9fb0c5', fontSize: 11, lineHeight: 16, marginTop: 6 },
+  buttonHint: { color: '#A1A6AE', fontSize: 11, lineHeight: 16, marginTop: 5, maxWidth: 360 },
+  helper: { color: '#A1A6AE', fontSize: 11, lineHeight: 16, marginTop: 6 },
   disabled: { opacity: 0.42 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, alignItems: 'center' },
   actionsNarrow: { flexShrink: 1, minWidth: 0, flexWrap: 'nowrap', gap: 6 },
   userNameNarrow: { flexShrink: 1, minWidth: 0, maxWidth: 135, fontSize: 11 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 7 },
-  chip: { minHeight: 36, justifyContent: 'center', borderWidth: 1, borderColor: '#2a3b52', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#090f1a' },
-  chipActive: { backgroundColor: '#102b4d', borderColor: '#2f91ff' },
-  chipText: { color: '#d5deea', fontSize: 12 },
+  chip: { minHeight: 36, justifyContent: 'center', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#09090B' },
+  chipActive: { backgroundColor: '#12271B', borderColor: '#2BF47A' },
+  chipText: { color: '#D5DCD9', fontSize: 12 },
   invite: { backgroundColor: '#08271c', borderWidth: 1, borderColor: '#145c3c', borderRadius: 13, padding: 14, marginTop: 13 },
   warning: { margin: 12, padding: 14, borderRadius: 13, backgroundColor: '#241b08', borderWidth: 1, borderColor: '#76591b' },
   warningTitle: { color: '#fbbf24', fontWeight: '800' },
