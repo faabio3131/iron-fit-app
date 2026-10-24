@@ -39,11 +39,11 @@ export function SchedulesScreen() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View><Text style={styles.heading}>Agenda</Text><Text style={styles.sub}>Suas aulas e entradas 📅</Text></View>
-        <Ionicons name="calendar" size={24} color="#2f91ff" />
+        <Ionicons name="calendar" size={24} color="#2BF47A" />
       </View>
       <CheckInScreen />
       <Text style={styles.sectionTitle}>Horários reservados</Text>
-      {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : loadError ? (
+      {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? (
         <RequestErrorState message={loadError} onRetry={() => { void loadSchedules(); }} />
       ) : schedules.length === 0 ? (
         <EmptyState icon="calendar-outline" title="Nenhum horário reservado" subtitle="Quando sua academia abrir a agenda, suas reservas aparecem aqui." />
@@ -57,7 +57,7 @@ export function SchedulesScreen() {
               {schedule.status ? ` · ${schedule.status}` : ''}
             </Text>
           </View>
-          <Ionicons name="checkmark-circle" size={18} color="#67d6ff" />
+          <Ionicons name="checkmark-circle" size={18} color="#7DFFB1" />
         </View>
       ))}
     </ScrollView>
@@ -65,17 +65,17 @@ export function SchedulesScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#030811' },
+  scroll: { flex: 1, backgroundColor: '#000000' },
   content: { padding: 20, paddingBottom: 100 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  heading: { color: '#eef7ff', fontSize: 24, fontWeight: '800' },
-  sub: { color: '#9fb0c5', fontSize: 14, marginTop: 2 },
-  sectionTitle: { color: '#eef7ff', fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  heading: { color: '#EEF1F5', fontSize: 24, fontWeight: '800' },
+  sub: { color: '#A1A6AE', fontSize: 14, marginTop: 2 },
+  sectionTitle: { color: '#EEF1F5', fontSize: 18, fontWeight: '700', marginBottom: 12 },
   loading: { marginTop: 40 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#071528', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#203b55', gap: 12 },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F0F12', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#24262B', gap: 12 },
   dateBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#2f91ff20', alignItems: 'center', justifyContent: 'center' },
-  dateText: { color: '#2f91ff', fontWeight: '800', fontSize: 13 },
+  dateText: { color: '#2BF47A', fontWeight: '800', fontSize: 13 },
   cardContent: { flex: 1 },
-  cardTitle: { color: '#eef7ff', fontSize: 15, fontWeight: '700' },
-  meta: { color: '#9fb0c5', fontSize: 12, marginTop: 2 },
+  cardTitle: { color: '#EEF1F5', fontSize: 15, fontWeight: '700' },
+  meta: { color: '#A1A6AE', fontSize: 12, marginTop: 2 },
 });
