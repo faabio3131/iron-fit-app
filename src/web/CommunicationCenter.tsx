@@ -252,7 +252,7 @@ export function CommunicationCenter({
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator color="#2f91ff" />
+        <ActivityIndicator color="#2BF47A" />
         <Text style={styles.muted}>Carregando comunicação da academia…</Text>
       </View>
     );
@@ -376,7 +376,7 @@ export function CommunicationCenter({
             value={messageTitle}
             onChangeText={setMessageTitle}
             placeholder="Ex.: Lembrete"
-            placeholderTextColor="#71879e"
+            placeholderTextColor="#828A91"
           />
           <Text style={styles.label}>Mensagem</Text>
           <TextInput
@@ -386,7 +386,7 @@ export function CommunicationCenter({
             onChangeText={setMessageBody}
             multiline
             placeholder="Escreva a mensagem"
-            placeholderTextColor="#71879e"
+            placeholderTextColor="#828A91"
           />
           <ActionButton
             testID="communication-queue-message"
@@ -414,7 +414,7 @@ export function CommunicationCenter({
             value={templateName}
             onChangeText={setTemplateName}
             placeholder="Ex.: Lembrete de treino"
-            placeholderTextColor="#71879e"
+            placeholderTextColor="#828A91"
           />
           <Text style={styles.label}>Título opcional</Text>
           <TextInput
@@ -423,7 +423,7 @@ export function CommunicationCenter({
             value={templateTitle}
             onChangeText={setTemplateTitle}
             placeholder="Título interno"
-            placeholderTextColor="#71879e"
+            placeholderTextColor="#828A91"
           />
           <Text style={styles.label}>Conteúdo</Text>
           <TextInput
@@ -433,7 +433,7 @@ export function CommunicationCenter({
             onChangeText={setTemplateBody}
             multiline
             placeholder="Mensagem do modelo"
-            placeholderTextColor="#71879e"
+            placeholderTextColor="#828A91"
           />
           <ActionButton
             testID="communication-create-template"
@@ -505,46 +505,46 @@ export function CommunicationCenter({
 
 const styles = StyleSheet.create({
   loading: { minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 14, marginBottom: 8 },
+  hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 14, marginBottom: 8 },
   heroCopy: { flex: 1, minWidth: 260 },
-  eyebrow: { color: '#60a5fa', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
-  heroTitle: { color: '#eef7ff', fontSize: 22, fontWeight: '900', marginTop: 3, marginBottom: 4 },
-  providerCard: { minWidth: 190, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 10 },
-  providerValue: { color: '#eef7ff', fontSize: 13, fontWeight: '900', marginTop: 4 },
-  muted: { color: '#9fb0c5', fontSize: 11, lineHeight: 16 },
-  kicker: { color: '#71879e', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
-  meta: { color: '#8296ab', fontSize: 9, lineHeight: 13, marginTop: 3 },
+  eyebrow: { color: '#56EC95', fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
+  heroTitle: { color: '#EEF1F5', fontSize: 22, fontWeight: '900', marginTop: 3, marginBottom: 4 },
+  providerCard: { minWidth: 190, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
+  providerValue: { color: '#EEF1F5', fontSize: 13, fontWeight: '900', marginTop: 4 },
+  muted: { color: '#A1A6AE', fontSize: 11, lineHeight: 16 },
+  kicker: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
+  meta: { color: '#9299A1', fontSize: 9, lineHeight: 13, marginTop: 3 },
   summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  summaryCard: { flexGrow: 1, flexBasis: 160, minWidth: 140, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 9 },
+  summaryCard: { flexGrow: 1, flexBasis: 160, minWidth: 140, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 9 },
   alertCard: { borderColor: '#7f2d3a', backgroundColor: '#1a1018' },
-  bigValue: { color: '#eef7ff', fontSize: 20, fontWeight: '900', marginTop: 4 },
+  bigValue: { color: '#EEF1F5', fontSize: 20, fontWeight: '900', marginTop: 4 },
   columns: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start' },
-  column: { flexGrow: 1, flexBasis: 430, minWidth: 0, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 13, marginBottom: 8 },
-  section: { backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 13, marginBottom: 8 },
-  sectionTitle: { color: '#eef7ff', fontSize: 16, fontWeight: '900', marginBottom: 4 },
-  label: { color: '#9fb0c5', fontSize: 10, fontWeight: '800', marginTop: 8, marginBottom: 4 },
-  input: { color: '#eef7ff', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#243247', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
+  column: { flexGrow: 1, flexBasis: 430, minWidth: 0, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 13, marginBottom: 8 },
+  section: { backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 13, marginBottom: 8 },
+  sectionTitle: { color: '#EEF1F5', fontSize: 16, fontWeight: '900', marginBottom: 4 },
+  label: { color: '#A1A6AE', fontSize: 10, fontWeight: '800', marginTop: 8, marginBottom: 4 },
+  input: { color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   textArea: { minHeight: 88, textAlignVertical: 'top' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 },
-  chip: { minHeight: 36, justifyContent: 'center', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#2a3b52', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  chipActive: { backgroundColor: '#102b4d', borderColor: '#2f91ff' },
-  chipText: { color: '#dce9f6', fontSize: 10, fontWeight: '800' },
-  consentOk: { backgroundColor: '#071a31', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 9, padding: 8, marginBottom: 5 },
+  chip: { minHeight: 36, justifyContent: 'center', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  chipActive: { backgroundColor: '#12271B', borderColor: '#2BF47A' },
+  chipText: { color: '#DDE3E4', fontSize: 10, fontWeight: '800' },
+  consentOk: { backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 9, padding: 8, marginBottom: 5 },
   consentBlocked: { backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', borderRadius: 9, padding: 8, marginBottom: 5 },
-  consentTitle: { color: '#eef7ff', fontSize: 10, fontWeight: '900' },
-  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#176bc1', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 8 },
-  secondaryButton: { backgroundColor: '#08172a', borderWidth: 1, borderColor: '#2a3b52' },
+  consentTitle: { color: '#EEF1F5', fontSize: 10, fontWeight: '900' },
+  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#19B95D', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 8 },
+  secondaryButton: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31' },
   buttonText: { color: '#fff', fontSize: 10, fontWeight: '900' },
   disabled: { opacity: 0.45 },
-  messageRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 10, marginTop: 7 },
+  messageRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10, marginTop: 7 },
   messageCopy: { flex: 1, minWidth: 240 },
-  rowTitle: { color: '#eef7ff', fontSize: 12, fontWeight: '900' },
-  messageBody: { color: '#cbd5e1', fontSize: 10, lineHeight: 15, marginTop: 5 },
+  rowTitle: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
+  messageBody: { color: '#CDD4D6', fontSize: 10, lineHeight: 15, marginTop: 5 },
   failureText: { color: '#fca5a5', fontSize: 9, lineHeight: 13, marginTop: 5 },
-  statusBadge: { alignSelf: 'flex-start', color: '#bfdbfe', backgroundColor: '#0b2340', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
+  statusBadge: { alignSelf: 'flex-start', color: '#7DFFB1', backgroundColor: '#142018', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
   failedBadge: { alignSelf: 'flex-start', color: '#fecaca', backgroundColor: '#301215', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800' },
-  automationRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 10, padding: 9, marginTop: 6 },
-  empty: { color: '#71879e', fontSize: 10, paddingVertical: 9 },
+  automationRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 10, padding: 9, marginTop: 6 },
+  empty: { color: '#828A91', fontSize: 10, paddingVertical: 9 },
   error: { color: '#fca5a5', backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', padding: 9, borderRadius: 9, marginBottom: 8 },
-  notice: { color: '#bfdbfe', backgroundColor: '#071a31', borderWidth: 1, borderColor: '#1e4d7a', padding: 9, borderRadius: 9, marginBottom: 8 },
+  notice: { color: '#7DFFB1', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 9, borderRadius: 9, marginBottom: 8 },
 });
