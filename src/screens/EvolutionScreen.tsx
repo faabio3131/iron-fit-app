@@ -38,10 +38,10 @@ export function EvolutionScreen() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-      <View style={styles.header}><View><Text style={styles.heading}>Sua evolução</Text><Text style={styles.sub}>Acompanhe seu progresso 📈</Text></View><Ionicons name="trending-up" size={24} color="#2f91ff" /></View>
+      <View style={styles.header}><View><Text style={styles.heading}>Sua evolução</Text><Text style={styles.sub}>Acompanhe seu progresso 📈</Text></View><Ionicons name="trending-up" size={24} color="#2BF47A" /></View>
       {!loading && !loadError ? <AIProjectionCard assessmentCount={assessments.length} latestAssessmentDate={assessments[0]?.createdAt} /> : null}
       <Text style={styles.sectionTitle}>Avaliações Físicas</Text>
-      {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : loadError ? (
+      {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? (
         <RequestErrorState message={loadError} onRetry={() => { void loadAssessments(); }} />
       ) : assessments.length === 0 ? (
         <EmptyState icon="analytics-outline" title="Nenhuma avaliação" subtitle="Peça ao seu instrutor para fazer sua avaliação física." />
@@ -60,7 +60,7 @@ export function EvolutionScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#030811' }, content: { padding: 20, paddingBottom: 100 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }, heading: { color: '#eef7ff', fontSize: 24, fontWeight: '800' }, sub: { color: '#9fb0c5', fontSize: 14, marginTop: 2 }, sectionTitle: { color: '#eef7ff', fontSize: 18, fontWeight: '700', marginBottom: 12 }, loading: { marginTop: 40 },
-  card: { backgroundColor: '#071528', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#203b55' }, date: { color: '#9fb0c5', fontSize: 12, marginBottom: 12 }, grid: { flexDirection: 'row', gap: 8 },
+  scroll: { flex: 1, backgroundColor: '#000000' }, content: { padding: 20, paddingBottom: 100 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }, heading: { color: '#EEF1F5', fontSize: 24, fontWeight: '800' }, sub: { color: '#A1A6AE', fontSize: 14, marginTop: 2 }, sectionTitle: { color: '#EEF1F5', fontSize: 18, fontWeight: '700', marginBottom: 12 }, loading: { marginTop: 40 },
+  card: { backgroundColor: '#0F0F12', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#24262B' }, date: { color: '#A1A6AE', fontSize: 12, marginBottom: 12 }, grid: { flexDirection: 'row', gap: 8 },
 });
