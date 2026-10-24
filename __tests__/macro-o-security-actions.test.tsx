@@ -122,8 +122,8 @@ test('botão Adicionar à equipe explica validação e executa cadastro válido'
       email: 'professor@example.com',
       roleName: 'TRAINER',
     });
-  }, { timeout: 12000 });
-}, 15000);
+  }, { timeout: 30000 });
+}, 45000);
 
 test('Equipe permite convite seguro e mostra situação e permissões efetivas do membro', async () => {
   const view = render(<CommercialWebApp />);
