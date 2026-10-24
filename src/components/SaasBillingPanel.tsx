@@ -304,7 +304,7 @@ export function SaasBillingPanel({
         </View>
       </View>
 
-      {loading ? <View style={styles.loading}><ActivityIndicator color="#2f91ff" /><Text style={styles.muted}>Carregando sua assinatura…</Text></View> : null}
+      {loading ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando sua assinatura…</Text></View> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
       {commandAuthority ? (
@@ -483,7 +483,7 @@ export function SaasBillingPanel({
             onChangeText={setRefundAmount}
             keyboardType="numeric"
             placeholder="0,00"
-            placeholderTextColor="#71879e"
+            placeholderTextColor="#828A91"
           />
           <Text style={styles.fieldLabel}>Motivo</Text>
           <TextInput
@@ -492,7 +492,7 @@ export function SaasBillingPanel({
             value={refundReason}
             onChangeText={setRefundReason}
             placeholder="Descreva o motivo"
-            placeholderTextColor="#71879e"
+            placeholderTextColor="#828A91"
           />
           <View style={styles.actions}>
             <TouchableOpacity
@@ -555,52 +555,52 @@ export function SaasBillingPanel({
 }
 
 const styles = StyleSheet.create({
-  heroCard: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 15, marginBottom: 9 },
+  heroCard: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 15, marginBottom: 9 },
   heroCopy: { flex: 1, minWidth: 260 },
-  eyebrow: { color: '#60a5fa', fontSize: 10, fontWeight: '900', letterSpacing: 0.8, marginBottom: 3 },
-  heroTitle: { color: '#eef7ff', fontSize: 22, fontWeight: '900', letterSpacing: -0.4, marginBottom: 4 },
-  heroStatus: { minWidth: 150, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 11, padding: 10 },
-  heroStatusLabel: { color: '#71879e', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
-  heroStatusValue: { color: '#eef7ff', fontSize: 14, fontWeight: '900', marginTop: 4 },
+  eyebrow: { color: '#56EC95', fontSize: 10, fontWeight: '900', letterSpacing: 0.8, marginBottom: 3 },
+  heroTitle: { color: '#EEF1F5', fontSize: 22, fontWeight: '900', letterSpacing: -0.4, marginBottom: 4 },
+  heroStatus: { minWidth: 150, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
+  heroStatusLabel: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
+  heroStatusValue: { color: '#EEF1F5', fontSize: 14, fontWeight: '900', marginTop: 4 },
   loading: { flexDirection: 'row', gap: 8, alignItems: 'center', paddingVertical: 10 },
   error: { color: '#fca5a5', backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', padding: 10, borderRadius: 9, marginBottom: 8 },
-  notice: { color: '#bfdbfe', backgroundColor: '#071a31', borderWidth: 1, borderColor: '#1e4d7a', padding: 10, borderRadius: 9, marginBottom: 8 },
-  commandAuthority: { backgroundColor: '#08172a', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 11, padding: 11, marginBottom: 9 },
-  commandAuthorityTitle: { color: '#bfdbfe', fontSize: 12, fontWeight: '900' },
-  commandAuthorityText: { color: '#9fb0c5', fontSize: 10, lineHeight: 15, marginTop: 4 },
-  muted: { color: '#9fb0c5', fontSize: 11, lineHeight: 16 },
+  notice: { color: '#7DFFB1', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 10, borderRadius: 9, marginBottom: 8 },
+  commandAuthority: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 11, padding: 11, marginBottom: 9 },
+  commandAuthorityTitle: { color: '#7DFFB1', fontSize: 12, fontWeight: '900' },
+  commandAuthorityText: { color: '#A1A6AE', fontSize: 10, lineHeight: 15, marginTop: 4 },
+  muted: { color: '#A1A6AE', fontSize: 11, lineHeight: 16 },
   summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 9 },
-  summaryCard: { flexGrow: 1, flexBasis: 210, minWidth: 180, backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 11 },
+  summaryCard: { flexGrow: 1, flexBasis: 210, minWidth: 180, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, padding: 11 },
   summaryAlert: { borderColor: '#7f2d3a', backgroundColor: '#1a1018' },
-  summaryLabel: { color: '#71879e', fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
-  summaryValue: { color: '#eef7ff', fontSize: 17, fontWeight: '900', marginTop: 4 },
-  summaryMeta: { color: '#9aadc1', fontSize: 9, lineHeight: 13, marginTop: 3 },
+  summaryLabel: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
+  summaryValue: { color: '#EEF1F5', fontSize: 17, fontWeight: '900', marginTop: 4 },
+  summaryMeta: { color: '#A1A6AE', fontSize: 9, lineHeight: 13, marginTop: 3 },
   warningCard: { backgroundColor: '#1a1018', borderWidth: 1, borderColor: '#7f2d3a', borderRadius: 12, padding: 11, marginBottom: 9 },
   warningTitle: { color: '#fecaca', fontSize: 12, fontWeight: '900' },
   warningText: { color: '#d8b4b8', fontSize: 10, lineHeight: 15, marginTop: 3 },
-  card: { backgroundColor: '#071528', borderWidth: 1, borderColor: '#203b55', borderRadius: 14, padding: 13, marginBottom: 9 },
+  card: { backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 13, marginBottom: 9 },
   sectionHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  title: { color: '#eef7ff', fontSize: 16, fontWeight: '900', marginBottom: 3 },
-  empty: { color: '#71879e', fontSize: 10, paddingVertical: 10 },
+  title: { color: '#EEF1F5', fontSize: 16, fontWeight: '900', marginBottom: 3 },
+  empty: { color: '#828A91', fontSize: 10, paddingVertical: 10 },
   planRow: { flexDirection: 'row', gap: 8, paddingTop: 8, paddingBottom: 4 },
-  planCard: { width: 220, backgroundColor: '#050b14', borderWidth: 1, borderColor: '#203b55', borderRadius: 12, padding: 11 },
-  planCardCurrent: { borderColor: '#2f91ff', backgroundColor: '#071a31' },
-  planName: { color: '#eef7ff', fontSize: 13, fontWeight: '900' },
-  planPrice: { color: '#eef7ff', fontSize: 19, fontWeight: '900', marginTop: 8 },
-  planCycle: { color: '#9aadc1', fontSize: 10, marginTop: 2 },
-  currentBadge: { alignSelf: 'flex-start', color: '#bfdbfe', backgroundColor: '#0b2340', borderWidth: 1, borderColor: '#1e4d7a', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800', marginTop: 8 },
-  invoice: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: '#17263a', paddingVertical: 9 },
+  planCard: { width: 220, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, padding: 11 },
+  planCardCurrent: { borderColor: '#2BF47A', backgroundColor: '#121719' },
+  planName: { color: '#EEF1F5', fontSize: 13, fontWeight: '900' },
+  planPrice: { color: '#EEF1F5', fontSize: 19, fontWeight: '900', marginTop: 8 },
+  planCycle: { color: '#A1A6AE', fontSize: 10, marginTop: 2 },
+  currentBadge: { alignSelf: 'flex-start', color: '#7DFFB1', backgroundColor: '#142018', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800', marginTop: 8 },
+  invoice: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: '#1B2420', paddingVertical: 9 },
   invoiceMain: { flex: 1, minWidth: 0 },
   invoiceAmount: { alignItems: 'flex-end', gap: 6 },
-  rowTitle: { color: '#eef7ff', fontSize: 12, fontWeight: '900' },
-  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#176bc1', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
-  secondaryButton: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#08172a', borderWidth: 1, borderColor: '#2a3b52', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
+  rowTitle: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
+  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#19B95D', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
+  secondaryButton: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
   buttonText: { color: '#fff', fontSize: 11, fontWeight: '900' },
-  secondaryButtonText: { color: '#dce9f6', fontSize: 11, fontWeight: '900' },
-  inlineButton: { backgroundColor: '#08172a', borderWidth: 1, borderColor: '#2f91ff', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5 },
-  inlineButtonText: { color: '#bfdbfe', fontSize: 9, fontWeight: '900' },
+  secondaryButtonText: { color: '#DDE3E4', fontSize: 11, fontWeight: '900' },
+  inlineButton: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#2BF47A', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5 },
+  inlineButtonText: { color: '#7DFFB1', fontSize: 9, fontWeight: '900' },
   disabled: { opacity: 0.45 },
-  fieldLabel: { color: '#9aadc1', fontSize: 10, fontWeight: '800', marginTop: 8, marginBottom: 4 },
-  input: { color: '#eef6ff', backgroundColor: '#050b14', borderWidth: 1, borderColor: '#243247', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
+  fieldLabel: { color: '#A1A6AE', fontSize: 10, fontWeight: '800', marginTop: 8, marginBottom: 4 },
+  input: { color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
 });
