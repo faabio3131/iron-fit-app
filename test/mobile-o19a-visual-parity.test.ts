@@ -21,16 +21,12 @@ test('O19A removes legacy purple and obsolete exposed mobile version', () => {
   expect(profile).not.toContain('Iron Fit v0.2.0');
 });
 
-test('O19A aligns primary mobile accents with the official IRON blue system', () => {
-  expect(workout).toContain('color="#67d6ff"');
-  expect(schedule).toContain('color="#2f91ff"');
-  expect(evolution).toContain('color="#2f91ff"');
-  expect(profile).toContain("backgroundColor: '#176bc1'");
-  expect(plan).toContain('color="#2f91ff"');
-  expect(insight).toContain("backgroundColor: '#071528'");
-  expect(assistant).toContain("backgroundColor: '#176bc1'");
-  expect(projection).toContain("borderColor: '#203b55'");
-  expect(checkin).toContain("okText: { color: '#67d6ff'");
+test('O19A uses the canonical graphite and green palette on updated mobile screens', () => {
+  expect(schedule).toContain('color="#2BF47A"');
+  expect(evolution).toContain('color="#2BF47A"');
+  expect(plan).toContain('color="#2BF47A"');
+  expect(checkin).toContain("okText: { color: '#7DFFB1'");
+  expect(security).toContain("backgroundColor: '#08080A'");
 });
 
 test('O19B plan surface removes fake payment promise and uses real HTTPS paymentLink only', () => {
