@@ -496,3 +496,17 @@ test('RBAC: recepcao nao consulta financeiro do aluno mesmo ao abrir a ficha 360
   expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/saas-billing/'))).toBe(false);
   expect(mockApi.mock.calls.some(([path]) => path === '/auth/step-up' )).toBe(false);
 });
+
+test.each(['MANAGER', 'TRAINER'])('RBAC: %s nao solicita financeiro pela ficha do aluno', async (roleName) => {
+  mockProfile = { id: 'audit-role', name: 'Auditoria', email: 'audit@example.com', roles: [roleName], permissions: [] };
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-students')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-students'));
+  await waitFor(() => expect(view.getByText('Aluno 360')).toBeTruthy());
+  fireEvent.press(view.getByText('Aluno 360'));
+  await waitFor(() => expect(mockApi.mock.calls.some(([path]) => path === '/students/student-1')).toBe(true));
+  expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/financial/'))).toBe(false);
+  expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/saas-billing/'))).toBe(false);
+  expect(view.queryByTestId('nav-financial')).toBeNull();
+  expect(view.queryByTestId('nav-saasBilling')).toBeNull();
+});
