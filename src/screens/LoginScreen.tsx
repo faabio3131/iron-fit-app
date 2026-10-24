@@ -93,7 +93,7 @@ export function LoginScreen({
             <Ionicons
               name="mail-outline"
               size={20}
-              color="#9fb0c5"
+              color="#A1A6AE"
               style={styles.inputIcon}
             />
             <TextInput
@@ -105,7 +105,7 @@ export function LoginScreen({
               autoCapitalize="none"
               autoCorrect={false}
               placeholder="Email"
-              placeholderTextColor="#9fb0c5"
+              placeholderTextColor="#A1A6AE"
               keyboardType="email-address"
             />
           </View>
@@ -114,7 +114,7 @@ export function LoginScreen({
             <Ionicons
               name="lock-closed-outline"
               size={20}
-              color="#9fb0c5"
+              color="#A1A6AE"
               style={styles.inputIcon}
             />
             <TextInput
@@ -127,7 +127,7 @@ export function LoginScreen({
               autoCapitalize="none"
               autoCorrect={false}
               placeholder="Senha"
-              placeholderTextColor="#9fb0c5"
+              placeholderTextColor="#A1A6AE"
             />
             <TouchableOpacity
               testID="login-password-toggle"
@@ -142,7 +142,7 @@ export function LoginScreen({
               <Ionicons
                 name={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
                 size={22}
-                color="#9fb0c5"
+                color="#A1A6AE"
               />
             </TouchableOpacity>
           </View>
@@ -153,7 +153,7 @@ export function LoginScreen({
                 <Ionicons
                   name="shield-checkmark-outline"
                   size={20}
-                  color="#9fb0c5"
+                  color="#A1A6AE"
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -166,7 +166,7 @@ export function LoginScreen({
                   }}
                   keyboardType="number-pad"
                   placeholder="Código MFA de 6 dígitos"
-                  placeholderTextColor="#9fb0c5"
+                  placeholderTextColor="#A1A6AE"
                 />
               </View>
               <Text style={styles.or}>ou</Text>
@@ -174,7 +174,7 @@ export function LoginScreen({
                 <Ionicons
                   name="key-outline"
                   size={20}
-                  color="#9fb0c5"
+                  color="#A1A6AE"
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -188,7 +188,7 @@ export function LoginScreen({
                   autoCapitalize="characters"
                   autoCorrect={false}
                   placeholder="Recovery code"
-                  placeholderTextColor="#9fb0c5"
+                  placeholderTextColor="#A1A6AE"
                 />
               </View>
             </>
@@ -203,7 +203,7 @@ export function LoginScreen({
             disabled={disabled}
           >
             {loading ? (
-              <ActivityIndicator color="#eef7ff" />
+              <ActivityIndicator color="#EEF1F5" />
             ) : (
               <Text style={styles.buttonText}>
                 {requiresMfa ? 'Confirmar e entrar' : 'Entrar'}
@@ -256,16 +256,16 @@ export function LoginScreen({
 }
 
 const styles = StyleSheet.create({
-  fieldLabel: { color: '#eef7ff', fontSize: 13, fontWeight: '600', marginBottom: 7 },
+  fieldLabel: { color: '#EEF1F5', fontSize: 13, fontWeight: '600', marginBottom: 7 },
   card: {
-    backgroundColor: '#071528',
+    backgroundColor: '#0F0F12',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#203b55',
+    borderColor: '#24262B',
   },
-  welcome: { color: '#eef7ff', fontSize: 22, fontWeight: '700', marginBottom: 4 },
-  sub: { color: '#9fb0c5', fontSize: 14, marginBottom: 18 },
+  welcome: { color: '#EEF1F5', fontSize: 22, fontWeight: '700', marginBottom: 4 },
+  sub: { color: '#A1A6AE', fontSize: 14, marginBottom: 18 },
   notice: {
     color: '#86efac',
     backgroundColor: '#12301f',
@@ -279,34 +279,34 @@ const styles = StyleSheet.create({
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#050b14',
+    backgroundColor: '#08080A',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#203b55',
+    borderColor: '#24262B',
     paddingHorizontal: 14,
     marginBottom: 12,
   },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, color: '#eef7ff', paddingVertical: 14, fontSize: 15 },
+  input: { flex: 1, color: '#EEF1F5', paddingVertical: 14, fontSize: 15 },
   passwordToggle: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  or: { color: '#9fb0c5', textAlign: 'center', marginBottom: 10, fontSize: 12 },
+  or: { color: '#A1A6AE', textAlign: 'center', marginBottom: 10, fontSize: 12 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
   button: {
-    backgroundColor: '#176bc1',
+    backgroundColor: '#19B95D',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
   },
   disabled: { opacity: 0.6 },
-  buttonText: { color: '#eef7ff', fontSize: 16, fontWeight: '700' },
+  buttonText: { color: '#EEF1F5', fontSize: 16, fontWeight: '700' },
   linkButton: { paddingVertical: 12, alignItems: 'center' },
-  linkText: { color: '#9fb0c5', fontSize: 13, fontWeight: '600' },
+  linkText: { color: '#A1A6AE', fontSize: 13, fontWeight: '600' },
   trialButton: {
     borderWidth: 1,
-    borderColor: '#1e4d7a',
+    borderColor: '#1E4F34',
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: 'center',
   },
-  trialText: { color: '#93c5fd', fontSize: 14, fontWeight: '700' },
+  trialText: { color: '#9BFFC4', fontSize: 14, fontWeight: '700' },
 });
