@@ -27,10 +27,10 @@ function safePaymentUrl(value: unknown) {
 
 function chargeStatusInfo(status?: string) {
   const normalized = (status || '').toUpperCase();
-  if (normalized.includes('PAID') || normalized.includes('PAGO')) return { label: 'Pago', color: '#67d6ff' };
+  if (normalized.includes('PAID') || normalized.includes('PAGO')) return { label: 'Pago', color: '#7DFFB1' };
   if (normalized.includes('OVER') || normalized.includes('ATRAS')) return { label: 'Atrasado', color: '#ef4444' };
-  if (normalized.includes('PEND') || normalized.includes('OPEN')) return { label: 'Pendente', color: '#93c5fd' };
-  return { label: status || '—', color: '#9fb0c5' };
+  if (normalized.includes('PEND') || normalized.includes('OPEN')) return { label: 'Pendente', color: '#9BFFC4' };
+  return { label: status || '—', color: '#A1A6AE' };
 }
 
 export function FinancialScreen() {
@@ -58,9 +58,9 @@ export function FinancialScreen() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-      <View style={styles.header}><View><Text style={styles.heading}>Meu Plano</Text><Text style={styles.sub}>Mensalidades e pagamentos 💳</Text></View><Ionicons name="wallet" size={24} color="#2f91ff" /></View>
+      <View style={styles.header}><View><Text style={styles.heading}>Meu Plano</Text><Text style={styles.sub}>Mensalidades e pagamentos 💳</Text></View><Ionicons name="wallet" size={24} color="#2BF47A" /></View>
       <Text style={styles.sectionTitle}>Cobranças</Text>
-      {loading ? <ActivityIndicator size="large" color="#2f91ff" style={styles.loading} /> : loadError ? (
+      {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? (
         <RequestErrorState message={loadError} onRetry={() => { void loadCharges(); }} />
       ) : charges.length === 0 ? (
         <EmptyState icon="card-outline" title="Nenhuma cobrança" subtitle="Suas mensalidades aparecem aqui." />
@@ -96,9 +96,9 @@ export function FinancialScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#030811' }, content: { padding: 20, paddingBottom: 100 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }, heading: { color: '#eef7ff', fontSize: 24, fontWeight: '800' }, sub: { color: '#9fb0c5', fontSize: 14, marginTop: 2 }, sectionTitle: { color: '#eef7ff', fontSize: 18, fontWeight: '700', marginBottom: 12 }, loading: { marginTop: 40 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#071528', borderRadius: 14, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#203b55', gap: 12 }, cardContent: { flex: 1 }, cardTitle: { color: '#eef7ff', fontSize: 15, fontWeight: '700' }, meta: { color: '#9fb0c5', fontSize: 12, marginTop: 2 }, amountBox: { alignItems: 'flex-end' }, amount: { color: '#eef7ff', fontSize: 16, fontWeight: '800', marginBottom: 6 }, status: { fontSize: 11, fontWeight: '700' },
-  payButton: { marginTop: 9, backgroundColor: '#176bc1', borderWidth: 1, borderColor: '#2f91ff', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 7 },
-  payButtonText: { color: '#eef7ff', fontSize: 10, fontWeight: '800' },
+  scroll: { flex: 1, backgroundColor: '#000000' }, content: { padding: 20, paddingBottom: 100 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }, heading: { color: '#EEF1F5', fontSize: 24, fontWeight: '800' }, sub: { color: '#A1A6AE', fontSize: 14, marginTop: 2 }, sectionTitle: { color: '#EEF1F5', fontSize: 18, fontWeight: '700', marginBottom: 12 }, loading: { marginTop: 40 },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F0F12', borderRadius: 14, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#24262B', gap: 12 }, cardContent: { flex: 1 }, cardTitle: { color: '#EEF1F5', fontSize: 15, fontWeight: '700' }, meta: { color: '#A1A6AE', fontSize: 12, marginTop: 2 }, amountBox: { alignItems: 'flex-end' }, amount: { color: '#EEF1F5', fontSize: 16, fontWeight: '800', marginBottom: 6 }, status: { fontSize: 11, fontWeight: '700' },
+  payButton: { marginTop: 9, backgroundColor: '#19B95D', borderWidth: 1, borderColor: '#2BF47A', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 7 },
+  payButtonText: { color: '#EEF1F5', fontSize: 10, fontWeight: '800' },
 });
