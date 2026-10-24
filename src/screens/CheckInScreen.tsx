@@ -23,12 +23,12 @@ export function CheckInScreen() {
   return (
     <>
       <TouchableOpacity accessibilityRole="button" accessibilityLabel="Registrar check-in na academia" accessibilityState={{ disabled: checkingIn, busy: checkingIn }} testID="checkin-submit" style={styles.card} onPress={handleCheckIn} disabled={checkingIn} activeOpacity={0.8}>
-        <View style={styles.iconBox}><Ionicons name="qr-code" size={32} color="#eef7ff" /></View>
+        <View style={styles.iconBox}><Ionicons name="qr-code" size={32} color="#EEF1F5" /></View>
         <View style={styles.content}>
           <Text style={styles.title}>Check-in na academia</Text>
           <Text style={styles.sub}>Toque para registrar sua entrada</Text>
         </View>
-        {checkingIn ? <ActivityIndicator color="#eef7ff" /> : <Ionicons name="chevron-forward" size={20} color="#9fb0c5" />}
+        {checkingIn ? <ActivityIndicator color="#EEF1F5" /> : <Ionicons name="chevron-forward" size={20} color="#A1A6AE" />}
       </TouchableOpacity>
       {message ? (
         <View style={[styles.message, message.type === 'ok' ? styles.messageOk : styles.messageError]}>
@@ -40,14 +40,14 @@ export function CheckInScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2f91ff', borderRadius: 16, padding: 18, marginBottom: 16, gap: 14 },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2BF47A', borderRadius: 16, padding: 18, marginBottom: 16, gap: 14 },
   iconBox: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#ffffff25', alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1 },
-  title: { color: '#eef7ff', fontSize: 16, fontWeight: '800' },
+  title: { color: '#EEF1F5', fontSize: 16, fontWeight: '800' },
   sub: { color: '#ffffffcc', fontSize: 12, marginTop: 2 },
   message: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 16 },
-  messageOk: { backgroundColor: '#071a31', borderColor: '#1e4d7a' },
+  messageOk: { backgroundColor: '#121719', borderColor: '#1E4F34' },
   messageError: { backgroundColor: '#ef444420', borderColor: '#ef444450' },
-  okText: { color: '#67d6ff', fontWeight: '700' },
+  okText: { color: '#7DFFB1', fontWeight: '700' },
   errorText: { color: '#ef4444', fontWeight: '600' },
 });
