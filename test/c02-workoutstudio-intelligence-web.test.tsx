@@ -82,6 +82,7 @@ test('C02 Intelligence does not claim completion if API fails or provider is una
   });
   const view = render(<IronIntelligencePanel students={students} workouts={[]} onUpdated={mockUpdated} />);
   fireEvent.press(view.getByTestId('intelligence-student-student-a'));
+  await waitFor(() => expect(view.getByTestId('intelligence-generate').props.accessibilityState?.disabled).toBe(false));
   fireEvent.press(view.getByTestId('intelligence-generate'));
   await waitFor(() => expect(view.getByText(/serviço de IA está indisponível/)).toBeTruthy());
   expect(view.queryByTestId('intelligence-result')).toBeNull();
@@ -97,6 +98,7 @@ test('C02 Intelligence rejects claims of successful generation without confirmed
   });
   const view = render(<IronIntelligencePanel students={students} workouts={[]} onUpdated={mockUpdated} />);
   fireEvent.press(view.getByTestId('intelligence-student-student-a'));
+  await waitFor(() => expect(view.getByTestId('intelligence-generate').props.accessibilityState?.disabled).toBe(false));
   fireEvent.press(view.getByTestId('intelligence-generate'));
   await waitFor(() => expect(view.getByText(/não confirmou um candidato aguardando revisão/)).toBeTruthy());
   expect(view.queryByTestId('intelligence-result')).toBeNull();
