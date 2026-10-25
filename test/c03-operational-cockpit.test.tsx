@@ -54,7 +54,7 @@ test('C03 owner step-up displays only academy-to-student financial indicators', 
   expect(view.getByTestId('cockpit-financial-pending')).toBeTruthy();
   expect(view.getAllByText('Cobranças da academia').length).toBeGreaterThanOrEqual(1);
   expect(view.getByText('Vencimento: 10/10/2026')).toBeTruthy();
-  expect(view.getByText('Valor registrado: 500')).toBeTruthy();
+  expect(view.getByText(/Valor recebido: R\$\s*5,00/)).toBeTruthy();
   expect(view.getByText(/Financeiro academia/)).toBeTruthy();
 });
 

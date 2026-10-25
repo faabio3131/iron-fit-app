@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '../components/EmptyState';
 import { api } from '../services/api';
+import { brlFromMinor } from '../utils/academy-money';
 
 type StudentCharge = {
   id: string;
@@ -22,8 +23,8 @@ function fmtDate(value?: string | null) {
 }
 
 function fmtMoney(value: unknown) {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return 'Valor indisponível';
-  return 'R$ ' + value.toFixed(2).replace('.', ',');
+  const result = brlFromMinor(value);
+  return result === 'Valor não informado' ? 'Valor indisponível' : result;
 }
 
 function chargeStatusInfo(status?: string | null) {
