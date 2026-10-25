@@ -10,7 +10,7 @@ type Charge = {
 type Account = { id: string; name?: string; active?: boolean };
 type Props = {
   charges: Charge[]; accounts: Account[]; selectedAccountId: string;
-  saving: boolean; onPay: (chargeId: string, accountId: string) => void;
+  saving: boolean; onPay: (chargeId: string, accountId: string, paymentMethod: string) => void;
 };
 function date(value?: string | null) {
   if (!value) return 'Não informado';
@@ -34,11 +34,13 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'PAID'>('ALL');
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [confirmAccountId, setConfirmAccountId] = useState('');
+  const [receivedVia, setReceivedVia] = useState('');
   const account = accounts.find((item) => item.id === selectedAccountId && item.active !== false);
   const pendingCharge = charges.find((item) => item.id === confirmId && item.status === 'PENDING');
-  const approved = Boolean(account && pendingCharge && confirmAccountId === account?.id);
+  const accountApproved = Boolean(account && pendingCharge && confirmAccountId === account?.id);
+  const approved = accountApproved && !!receivedVia;
   const rows = useMemo(() => charges.filter((item) => filter === 'ALL' || item.status === filter), [charges, filter]);
-  function reset() { setConfirmId(null); setConfirmAccountId(''); }
+  function reset() { setConfirmId(null); setConfirmAccountId(''); setReceivedVia(''); }
 
   return <GlowCard style={styles.card}>
     <Text style={styles.title}>Cobranças da academia</Text>
@@ -57,6 +59,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
         disabled={saving || !account} onPress={() => {
           setConfirmId(item.id);
           setConfirmAccountId(account?.id ?? '');
+          setReceivedVia('');
         }} /> : null}
       {confirmId === item.id && item.status !== 'PENDING' ? <Text style={styles.notice}>A cobrança já não está pendente. Consulte o estado atualizado.</Text> : null}
       {confirmId === item.id && pendingCharge ? <View style={styles.confirm} testID="academy-charge-confirmation">
@@ -65,12 +68,23 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
         <Text style={styles.detail}>Aluno: {item.student?.user?.name ?? 'Aluno'}</Text>
         <Text style={styles.detail}>Valor registrado: {recordedAmount(item.amount)}</Text>
         <Text style={styles.detail}>Conta selecionada: {account?.name ?? 'Não selecionada'}</Text>
+        <Text style={styles.detail}>Meio pelo qual a academia recebeu o pagamento</Text>
+        <View style={styles.filters}>{[
+          { value: 'PIX', label: 'Pix' }, { value: 'DINHEIRO', label: 'Dinheiro' },
+          { value: 'CARTAO', label: 'Cartão' }, { value: 'TRANSFERENCIA', label: 'Transferência' },
+        ].map((method) => <Btn key={method.value} testID={'academy-payment-method-' + method.value}
+          label={method.label + (receivedVia === method.value ? ' ✓' : '')} disabled={saving}
+          onPress={() => setReceivedVia(method.value)} />)}</View>
+        {!receivedVia ? <Text testID="academy-payment-method-required" style={styles.notice}>Selecione o meio de recebimento para registrar a transação e eventual encaminhamento fiscal.</Text> : null}
         <Text style={styles.notice}>Esta ação altera o estado da cobrança e pode gerar um encaminhamento fiscal. Não é um comando de checkout.</Text>
-        {!approved ? <Text testID="academy-charge-account-changed" style={styles.notice}>A conta selecionada foi alterada ou está indisponível. Cancele e revise a operação.</Text> : null}
+        {!accountApproved ? <Text testID="academy-charge-account-changed" style={styles.notice}>A conta selecionada foi alterada ou está indisponível. Cancele e revise a operação.</Text> : null}
         <View style={styles.filters}>
           <Btn testID="academy-charge-confirm-pay" label={saving ? 'Registrando…' : 'Confirmar recebimento'} danger
             disabled={saving || !approved} onPress={() => {
-              if (approved && account && pendingCharge) onPay(pendingCharge.id, account.id);
+              if (approved && account && pendingCharge) {
+                const id = pendingCharge.id; const accountId = account.id; const method = receivedVia;
+                reset(); onPay(id, accountId, method);
+              }
             }} />
           <Btn testID="academy-charge-cancel-pay" label="Cancelar" disabled={saving} onPress={reset} />
         </View>
