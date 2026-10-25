@@ -52,7 +52,7 @@ test('C02 Workout Studio rejects empty sessions, invalid weekly frequency and le
   expect(mockApi.mock.calls.some(([p, , o]) => p === '/workouts' && o?.method === 'POST')).toBe(false);
   fireEvent.press(view.getByTestId('studio-exercise-exercise-a'));
   fireEvent.press(view.getByTestId('studio-exercise-add-1'));
-  fireEvent.changeText(view.getByDisplayValue('3'), '99');
+  fireEvent.changeText(view.getByTestId('studio-frequency'), '99');
   expect(view.getByTestId('studio-validation')).toBeTruthy();
   fireEvent.press(view.getByTestId('manual-workout-create'));
   expect(mockApi.mock.calls.some(([p, , o]) => p === '/workouts' && o?.method === 'POST')).toBe(false);
