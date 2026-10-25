@@ -1,9 +1,11 @@
 import React from 'react';
 import { Platform } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { RootNavigator } from '../src/navigation/RootNavigator';
 
 let mockAuth: any;
+const mockRefreshProfile = jest.fn(async () => undefined);
+const mockLogout = jest.fn(async () => undefined);
 const originalPlatform = Platform.OS;
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
@@ -33,10 +35,13 @@ jest.mock('../src/screens/ProfileScreen', () => ({ ProfileScreen: () => null }))
 jest.mock('../src/components/TabItem', () => ({ TabItem: () => null }));
 
 beforeEach(() => {
+  mockRefreshProfile.mockReset(); mockLogout.mockReset();
+  mockRefreshProfile.mockResolvedValue(undefined); mockLogout.mockResolvedValue(undefined);
   Object.defineProperty(Platform, 'OS', { configurable: true, value: 'android' });
   mockAuth = {
     sessionReady: true, session: { accessToken: 'test' }, pendingTenantSelection: false,
     profile: { id: 'staff-a', roles: ['RECEPTION'] },
+    refreshProfile: mockRefreshProfile, logout: mockLogout,
   };
 });
 afterAll(() => {
@@ -76,4 +81,41 @@ test('C03 pending or empty role profile fails closed on native, never guesses st
   mockAuth.profile = { roles: [] };
   view = render(<RootNavigator />);
   expect(view.getByTestId('profile-validation-pending')).toBeTruthy();
+});
+
+
+test('C05 absent profile gives real retry and logout actions without showing any privileged surface', async () => {
+  mockAuth.profile = null;
+  const view = render(<RootNavigator />);
+  expect(view.getByTestId('profile-validation-pending')).toBeTruthy();
+  expect(view.getByText(/módulos do IRON permanecem bloqueados/)).toBeTruthy();
+  expect(view.queryByTestId('canonical-staff-operations')).toBeNull();
+  expect(view.queryByTestId('student-workouts')).toBeNull();
+  fireEvent.press(view.getByTestId('profile-retry'));
+  await waitFor(() => expect(mockRefreshProfile).toHaveBeenCalledTimes(1));
+  expect(view.queryByTestId('canonical-staff-operations')).toBeNull();
+  fireEvent.press(view.getByTestId('profile-logout'));
+  await waitFor(() => expect(mockLogout).toHaveBeenCalledTimes(1));
+});
+
+test('C05 missing roles fail-closed also on Web while offering profile reload', async () => {
+  Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' });
+  mockAuth.profile = { roles: [] };
+  const view = render(<RootNavigator />);
+  expect(view.getByTestId('profile-validation-pending')).toBeTruthy();
+  expect(view.queryByTestId('canonical-staff-operations')).toBeNull();
+  expect(view.queryByTestId('student-workouts')).toBeNull();
+  fireEvent.press(view.getByTestId('profile-retry'));
+  await waitFor(() => expect(mockRefreshProfile).toHaveBeenCalledTimes(1));
+});
+
+test('C05 a failed profile refresh never grants tenant/module access', async () => {
+  mockAuth.profile = null;
+  mockRefreshProfile.mockRejectedValueOnce(new Error('Conexão indisponível'));
+  const view = render(<RootNavigator />);
+  fireEvent.press(view.getByTestId('profile-retry'));
+  await waitFor(() => expect(view.getByTestId('profile-retry-error')).toBeTruthy());
+  expect(view.queryByTestId('canonical-staff-operations')).toBeNull();
+  expect(view.queryByTestId('student-workouts')).toBeNull();
+  expect(view.getByTestId('profile-retry')).toBeTruthy();
 });
