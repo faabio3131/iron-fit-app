@@ -180,5 +180,6 @@ const styles = StyleSheet.create({
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: { fontSize: 11, color: '#dbeafe', backgroundColor: '#1e293b', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 4 },
   success: { fontSize: 12, color: '#2BF47A' },
+  error: { fontSize: 12, color: '#fca5a5' },
   warning: { fontSize: 12, color: '#fde68a' },
 });
