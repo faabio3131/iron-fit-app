@@ -41,6 +41,7 @@ export function CommunicationCenterPanel({ canManageAutomations }: { canManageAu
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [dataReady, setDataReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -62,24 +63,36 @@ export function CommunicationCenterPanel({ canManageAutomations }: { canManageAu
       canManageAutomations ? api('/communication/automations') : Promise.resolve([]),
     ]).then(([studentRows, templateRows, messageRows, automationRows]) => {
       if (!active) return;
-      setStudents(Array.isArray(studentRows) ? studentRows : []);
-      setTemplates(Array.isArray(templateRows) ? templateRows : []);
-      setMessages(Array.isArray(messageRows) ? messageRows : []);
-      setAutomations(Array.isArray(automationRows) ? automationRows : []);
+      if (![studentRows, templateRows, messageRows, automationRows].every(Array.isArray)) {
+        throw new Error('O servidor retornou dados inválidos de comunicação.');
+      }
+      setStudents(studentRows);
+      setTemplates(templateRows);
+      setMessages(messageRows);
+      setAutomations(automationRows);
+      setDataReady(true);
       setError('');
     }).catch((reason: unknown) => {
-      if (active) setError(reason instanceof Error ? reason.message : 'Falha ao consultar comunicação.');
+      if (active) {
+        setDataReady(false);
+        setStudents([]); setTemplates([]); setMessages([]); setAutomations([]);
+        setSelectedStudentId(''); setSelectedTemplateId(''); setConfirmQueue(false);
+        setError(reason instanceof Error ? reason.message : 'Falha ao consultar comunicação.');
+      }
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [canManageAutomations, refreshVersion]);
 
   function reload() {
     setLoading(true);
+    setDataReady(false);
+    setError('');
+    setConfirmQueue(false);
     setRefreshVersion((v) => v + 1);
   }
 
   async function createTemplate() {
-    if (!templateName.trim() || !templateBody.trim() || busy) return;
+    if (!dataReady || loading || !templateName.trim() || !templateBody.trim() || busy) return;
     setBusy(true); setError(''); setNotice('');
     try {
       await api('/communication/templates', undefined, {
@@ -100,7 +113,7 @@ export function CommunicationCenterPanel({ canManageAutomations }: { canManageAu
   }
 
   async function queueMessage() {
-    if (!selectedStudentId || !messageBody.trim() || busy || !confirmQueue) return;
+    if (!dataReady || loading || !selectedStudentId || !messageBody.trim() || busy || !confirmQueue) return;
     setBusy(true); setError(''); setNotice('');
     try {
       // The student's canonical consent comes from a tenant-scoped endpoint;
@@ -132,6 +145,15 @@ export function CommunicationCenterPanel({ canManageAutomations }: { canManageAu
       setBusy(false);
     }
   }
+
+  if (!dataReady) return <View testID="communication-read-gate">
+    <Section title="Comunicação indisponível" subtitle="Sem consulta confirmada do IRON, não é seguro apresentar listas vazias ou permitir novos envios.">
+      {loading ? <ActivityIndicator testID="communication-loading" color="#2BF47A" /> : <>
+        <Text testID="communication-read-error" style={styles.error}>{error || 'Não foi possível confirmar os dados da comunicação.'}</Text>
+        <Button testID="communication-retry" label="Tentar novamente" onPress={reload} />
+      </>}
+    </Section>
+  </View>;
 
   return <View>
     <Section title="Mensagens e entregas" subtitle="Status consultado no IRON: fila, processamento e confirmação de entrega são etapas distintas.">
