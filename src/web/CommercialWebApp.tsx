@@ -100,8 +100,8 @@ function formatFieldValue(value: unknown): string {
   if (typeof value === 'object') return Object.keys(value as object).length ? 'Ver detalhes' : '—';
   return String(value);
 }
-function Field({ label, value, onChangeText, secureTextEntry, numeric }: { label: string; value: string; onChangeText: (value: string) => void; secureTextEntry?: boolean; numeric?: boolean }) {
-  return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><TextInput style={styles.input} value={value} onChangeText={onChangeText} secureTextEntry={secureTextEntry} keyboardType={numeric ? 'numeric' : 'default'} placeholderTextColor="#64748b" /></View>;
+function Field({ label, value, onChangeText, secureTextEntry, numeric, testID }: { label: string; value: string; onChangeText: (value: string) => void; secureTextEntry?: boolean; numeric?: boolean; testID?: string }) {
+  return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><TextInput testID={testID} style={styles.input} value={value} onChangeText={onChangeText} secureTextEntry={secureTextEntry} keyboardType={numeric ? 'numeric' : 'default'} placeholderTextColor="#64748b" /></View>;
 }
 function Button({ label, onPress, disabled, secondary, testID }: { label: string; onPress: () => void; disabled?: boolean; secondary?: boolean; testID?: string }) {
   return <TouchableOpacity testID={testID} style={[styles.button, secondary && styles.secondary, disabled && styles.disabled]} onPress={onPress} disabled={disabled}><Text style={[styles.buttonText, !secondary && styles.buttonTextOnAccent]}>{label}</Text></TouchableOpacity>;
@@ -499,7 +499,7 @@ export function CommercialWebApp() {
             onChangeText={(name) => setAccount((current) => ({ ...current, name }))} />
           <Field label="Tipo de conta" value={account.type}
             onChangeText={(type) => setAccount((current) => ({ ...current, type }))} />
-          <Field label="Saldo inicial (R$)" value={account.initialBalance}
+          <Field testID="finance-account-balance" label="Saldo inicial (R$)" value={account.initialBalance}
             onChangeText={(initialBalance) => setAccount((current) => ({ ...current, initialBalance }))} />
         </View>
         {initialMinor === null ? <Text testID="finance-account-invalid" style={styles.error}>Informe o saldo inicial em reais (ex.: 0 ou 100,00), sem valor negativo.</Text> : null}
@@ -525,9 +525,9 @@ export function CommercialWebApp() {
         <View style={styles.form}>
           <Field label="Nome do plano" value={studentPlan.planName}
             onChangeText={(planName) => setStudentPlan((v) => ({ ...v, planName }))} />
-          <Field label="Mensalidade ou valor do plano (R$)" value={studentPlan.amount}
+          <Field testID="finance-subscription-amount" label="Mensalidade ou valor do plano (R$)" value={studentPlan.amount}
             onChangeText={(amount) => setStudentPlan((v) => ({ ...v, amount }))} />
-          <Field label="Próxima cobrança (AAAA-MM-DD, opcional)" value={studentPlan.nextBillingAt}
+          <Field testID="finance-subscription-date" label="Próxima cobrança (AAAA-MM-DD, opcional)" value={studentPlan.nextBillingAt}
             onChangeText={(nextBillingAt) => setStudentPlan((v) => ({ ...v, nextBillingAt }))} />
         </View>
         {studentPlan.amount.trim() && subscriptionMinor === null ?
@@ -547,9 +547,9 @@ export function CommercialWebApp() {
             }));
           }} />
         <View style={styles.form}>
-          <Field label="Valor da cobrança (R$)" value={charge.amount}
+          <Field testID="finance-charge-amount" label="Valor da cobrança (R$)" value={charge.amount}
             onChangeText={(amount) => setCharge((v) => ({ ...v, amount }))} />
-          <Field label="Vencimento (AAAA-MM-DD)" value={charge.dueDate}
+          <Field testID="finance-charge-due" label="Vencimento (AAAA-MM-DD)" value={charge.dueDate}
             onChangeText={(dueDateInput) => setCharge((v) => ({ ...v, dueDate: dueDateInput }))} />
           <Field label="Meio previsto (opcional)" value={charge.paymentMethod}
             onChangeText={(paymentMethod) => setCharge((v) => ({ ...v, paymentMethod }))} />
