@@ -10,6 +10,21 @@ const APPROVED = new Map([
     packageName: "node-forge",
     url: "https://github.com/advisories/GHSA-86w9-cpqp-85rv",
     expires: "2026-11-15T00:00:00Z"
+  }],
+  // Instalado: zod@3.25.76 (via eslint-config-expo/@expo/cli, transitivo,
+  // sem uso direto neste app). O advisory expressa o range afetado como
+  // "<4.6.6" sem limite inferior, então o npm audit casa com qualquer
+  // 3.x por acidente. A correção real (colinhacks/zod#6475) é uma flag
+  // opt-in `abortEarly`, exclusiva do código v4
+  // (packages/zod/src/v4/core/schemas.ts); zod v3 não compartilha esse
+  // caminho de código, então não está exposto ao DoS de memória descrito.
+  // Reavaliar antes de expirar: confirmar se @expo/cli migrou para
+  // zod v4 (nesse caso reavaliar exposição real) ou se a advisory foi
+  // corrigida/reclassificada upstream.
+  ["GHSA-mrhx-c7xc-m3w5", {
+    packageName: "zod",
+    url: "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+    expires: "2026-11-15T00:00:00Z"
   }]
 ]);
 

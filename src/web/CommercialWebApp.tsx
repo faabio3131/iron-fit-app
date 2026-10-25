@@ -4,6 +4,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOp
 import { AccountSecurityPanel } from '../components/AccountSecurityPanel';
 import { SaasBillingPanel } from '../components/SaasBillingPanel';
 import { IntegrationCredentialsPanel } from '../components/IntegrationCredentialsPanel';
+import { GlowCard } from '../components/GlowCard';
 import { useAuth } from '../context/AuthContext';
 import { strongPassword } from '../security/password-policy';
 import { api } from '../services/api';
@@ -49,22 +50,75 @@ function message(error: unknown) {
   }
   return 'Não foi possível concluir a operação.';
 }
+const HIDDEN_FIELD_KEYS = ['passwordHash', 'refreshTokenHash', 'id'];
+function humanizeFieldKey(key: string): string {
+  const spaced = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+function formatFieldValue(value: unknown): string {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) return parsed.toLocaleString('pt-BR');
+    }
+    return value;
+  }
+  if (Array.isArray(value)) {
+    if (!value.length) return '—';
+    if (value.every((item) => item === null || typeof item !== 'object')) return value.join(', ');
+    return `${value.length} registro(s)`;
+  }
+  if (typeof value === 'object') return Object.keys(value as object).length ? 'Ver detalhes' : '—';
+  return String(value);
+}
 function Field({ label, value, onChangeText, secureTextEntry, numeric }: { label: string; value: string; onChangeText: (value: string) => void; secureTextEntry?: boolean; numeric?: boolean }) {
   return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><TextInput style={styles.input} value={value} onChangeText={onChangeText} secureTextEntry={secureTextEntry} keyboardType={numeric ? 'numeric' : 'default'} placeholderTextColor="#64748b" /></View>;
 }
 function Button({ label, onPress, disabled, secondary, testID }: { label: string; onPress: () => void; disabled?: boolean; secondary?: boolean; testID?: string }) {
-  return <TouchableOpacity testID={testID} style={[styles.button, secondary && styles.secondary, disabled && styles.disabled]} onPress={onPress} disabled={disabled}><Text style={styles.buttonText}>{label}</Text></TouchableOpacity>;
+  return <TouchableOpacity testID={testID} style={[styles.button, secondary && styles.secondary, disabled && styles.disabled]} onPress={onPress} disabled={disabled}><Text style={[styles.buttonText, !secondary && styles.buttonTextOnAccent]}>{label}</Text></TouchableOpacity>;
 }
 function Section({ title, children, subtitle }: { title: string; children: React.ReactNode; subtitle?: string }) {
-  return <View style={styles.section}><Text style={styles.sectionTitle}>{title}</Text>{subtitle ? <Text style={styles.muted}>{subtitle}</Text> : null}<View style={styles.sectionBody}>{children}</View></View>;
+  return (
+    <GlowCard style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {subtitle ? <Text style={styles.muted}>{subtitle}</Text> : null}
+      <View style={styles.sectionBody}>{children}</View>
+    </GlowCard>
+  );
 }
 function Data({ value, empty = 'Nenhum registro encontrado.' }: { value: any; empty?: string }) {
   const rows = list(value);
   if (!rows.length) return <Text style={styles.muted}>{empty}</Text>;
-  return <View>{rows.map((row, index) => <View key={String(row?.id ?? index)} style={styles.row}><Text style={styles.rowTitle}>{row?.name ?? row?.email ?? row?.description ?? row?.id ?? `Registro ${index + 1}`}</Text><Text style={styles.json}>{JSON.stringify(row, (key, item) => ['passwordHash', 'refreshTokenHash'].includes(key) ? undefined : item, 2)}</Text></View>)}</View>;
+  return (
+    <View style={styles.rowList}>
+      {rows.map((row, index) => {
+        const titleKey = row?.name !== undefined ? 'name' : row?.email !== undefined ? 'email' : row?.description !== undefined ? 'description' : null;
+        const title = row?.[titleKey as string] ?? row?.id ?? `Registro ${index + 1}`;
+        const entries = Object.entries(row ?? {}).filter(([key]) => key !== titleKey && !HIDDEN_FIELD_KEYS.includes(key));
+        return (
+          <GlowCard key={String(row?.id ?? index)} style={styles.row}>
+            <Text style={styles.rowTitle}>{String(title)}</Text>
+            {entries.length ? (
+              <View style={styles.rowFields}>
+                {entries.map(([key, fieldValue]) => (
+                  <View key={key} style={styles.rowField}>
+                    <Text style={styles.rowFieldLabel}>{humanizeFieldKey(key)}</Text>
+                    <Text style={styles.rowFieldValue}>{formatFieldValue(fieldValue)}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </GlowCard>
+        );
+      })}
+    </View>
+  );
 }
 function Chips({ rows, selected, onSelect }: { rows: any[]; selected: string; onSelect: (id: string) => void }) {
-  return <View style={styles.chips}>{rows.map((row) => <TouchableOpacity key={row.id} style={[styles.chip, selected === row.id && styles.chipActive]} onPress={() => onSelect(row.id)}><Text style={styles.chipText}>{row.name ?? row.user?.name ?? row.id}</Text></TouchableOpacity>)}</View>;
+  return <View style={styles.chips}>{rows.map((row) => <TouchableOpacity key={row.id} style={[styles.chip, selected === row.id && styles.chipActive]} onPress={() => onSelect(row.id)}><Text style={[styles.chipText, selected === row.id && styles.chipTextActive]}>{row.name ?? row.user?.name ?? row.id}</Text></TouchableOpacity>)}</View>;
 }
 
 export function CommercialWebApp() {
@@ -333,12 +387,66 @@ export function CommercialWebApp() {
   }
 
   const topBar = <View style={styles.top}><View><Text style={styles.brand}>IRON</Text><Text style={styles.muted}>Gestão da academia</Text></View><View style={styles.actions}><Text style={styles.muted}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
-  if (!shellReady) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={styles.contentInner}>{error ? <Text style={styles.error}>{error}</Text> : <View style={styles.loading}><ActivityIndicator color="#8b5cf6" /><Text style={styles.muted}>Validando assinatura, trial e capabilities…</Text></View>}</View></View>;
-  if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#ddd6fe' : '#94a3b8'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Trial expirado, assinatura inativa/ausente ou suspensa. A superfície operacional permanece fail-closed. Assinatura IRON e Segurança continuam disponíveis para recuperação.</Text></View><Section title="Estado comercial"><Data value={[{ trialStatus: trial?.status ?? null, subscriptionStatus: subscription?.status ?? null, subscriptionId: subscription?.id ?? null }]} /></Section>{active === 'security' ? <AccountSecurityPanel /> : <SaasBillingPanel onCommercialStateChanged={loadShell} />}</ScrollView></View></View>;
-  return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#ddd6fe' : '#94a3b8'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>Tenant derivado da sessão autenticada · {activeTenantId ?? 'sem tenant ativo'}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading ? <View style={styles.loading}><ActivityIndicator color="#8b5cf6" /><Text style={styles.muted}>Carregando dados canônicos…</Text></View> : content()}</ScrollView></View></View>;
+  if (!shellReady) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={styles.contentInner}>{error ? <Text style={styles.error}>{error}</Text> : <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Validando assinatura, trial e capabilities…</Text></View>}</View></View>;
+  if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#2BF47A' : '#94a3b8'} /><Text style={[styles.navText, active === item.key && styles.navTextActive]}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Trial expirado, assinatura inativa/ausente ou suspensa. A superfície operacional permanece fail-closed. Assinatura IRON e Segurança continuam disponíveis para recuperação.</Text></View><Section title="Estado comercial"><Data value={[{ trialStatus: trial?.status ?? null, subscriptionStatus: subscription?.status ?? null, subscriptionId: subscription?.id ?? null }]} /></Section>{active === 'security' ? <AccountSecurityPanel /> : <SaasBillingPanel onCommercialStateChanged={loadShell} />}</ScrollView></View></View>;
+  return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#2BF47A' : '#94a3b8'} /><Text style={[styles.navText, active === item.key && styles.navTextActive]}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>Tenant derivado da sessão autenticada · {activeTenantId ?? 'sem tenant ativo'}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando dados canônicos…</Text></View> : content()}</ScrollView></View></View>;
 }
 
 const styles = StyleSheet.create({
   adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
-  app: { flex: 1, backgroundColor: '#080c17' }, top: { minHeight: 72, padding: 18, backgroundColor: '#101625', borderBottomWidth: 1, borderBottomColor: '#273248', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, brand: { color: '#f8fafc', fontSize: 22, fontWeight: '900', letterSpacing: 3 }, body: { flex: 1, flexDirection: 'row' }, bodyCompact: { flexDirection: 'column' }, nav: { width: 240, backgroundColor: '#0d1321', paddingVertical: 10 }, navCompact: { width: '100%', maxHeight: 72 }, navHorizontal: { alignItems: 'center' }, navItem: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, margin: 4, borderRadius: 9 }, navActive: { backgroundColor: '#251b46' }, navText: { color: '#cbd5e1', fontWeight: '600' }, content: { flex: 1 }, contentInner: { padding: 22, width: '100%', maxWidth: 1400, alignSelf: 'center' }, pageHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16 }, title: { color: '#f8fafc', fontSize: 26, fontWeight: '800' }, section: { backgroundColor: '#111827', borderWidth: 1, borderColor: '#273248', borderRadius: 14, padding: 16, marginBottom: 12 }, sectionTitle: { color: '#f8fafc', fontSize: 17, fontWeight: '800', marginBottom: 6 }, sectionBody: { marginTop: 8 }, row: { backgroundColor: '#0c1220', borderWidth: 1, borderColor: '#202a3e', borderRadius: 10, padding: 12, marginBottom: 8 }, rowTitle: { color: '#f1f5f9', fontWeight: '700', marginBottom: 4 }, json: { color: '#94a3b8', fontSize: 11, lineHeight: 16 }, muted: { color: '#94a3b8', fontSize: 13, lineHeight: 18 }, form: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginVertical: 10 }, fieldWrap: { minWidth: 180, flexGrow: 1, flexBasis: 210 }, label: { color: '#94a3b8', fontSize: 11, fontWeight: '700', marginBottom: 5 }, input: { color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 9, padding: 10 }, button: { alignSelf: 'flex-start', backgroundColor: '#7c3aed', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10, marginTop: 4 }, secondary: { backgroundColor: '#172033', borderWidth: 1, borderColor: '#334155' }, buttonText: { color: '#fff', fontWeight: '800', fontSize: 12 }, disabled: { opacity: 0.45 }, actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }, chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 10 }, chip: { borderWidth: 1, borderColor: '#334155', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 }, chipActive: { backgroundColor: '#2e1f52', borderColor: '#8b5cf6' }, chipText: { color: '#cbd5e1', fontSize: 12 }, invite: { backgroundColor: '#0b2a1e', borderWidth: 1, borderColor: '#14532d', borderRadius: 10, padding: 12, marginTop: 12 }, warning: { margin: 12, padding: 12, borderRadius: 10, backgroundColor: '#261c08', borderWidth: 1, borderColor: '#7c5b16' }, warningTitle: { color: '#fbbf24', fontWeight: '800' }, error: { color: '#fca5a5', backgroundColor: '#301215', padding: 10, borderRadius: 8, marginBottom: 10 }, success: { color: '#4ade80', fontWeight: '700' }, loading: { minHeight: 260, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  app: { flex: 1, backgroundColor: '#080c17' },
+  top: { minHeight: 72, padding: 18, backgroundColor: '#101625', borderBottomWidth: 1, borderBottomColor: '#273248', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  brand: { color: '#f8fafc', fontSize: 22, fontWeight: '900', letterSpacing: 3 },
+  body: { flex: 1, flexDirection: 'row' },
+  bodyCompact: { flexDirection: 'column' },
+  nav: { width: 240, backgroundColor: '#0d1321', paddingVertical: 10 },
+  navCompact: { width: '100%', maxHeight: 72 },
+  navHorizontal: { alignItems: 'center' },
+  navItem: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, margin: 4, borderRadius: 9 },
+  navActive: { backgroundColor: '#0f2a1c' },
+  navText: { color: '#cbd5e1', fontWeight: '600' },
+  navTextActive: { color: '#2BF47A' },
+  content: { flex: 1 },
+  contentInner: { padding: 22, width: '100%', maxWidth: 1400, alignSelf: 'center' },
+  pageHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16 },
+  title: { color: '#f8fafc', fontSize: 26, fontWeight: '800' },
+
+  // Blocos/seções: a borda e o brilho no hover vêm do GlowCard; aqui só
+  // o espaçamento interno e o título em verde (identidade do produto).
+  section: { padding: 16, marginBottom: 12 },
+  sectionTitle: { color: '#2BF47A', fontSize: 17, fontWeight: '800', marginBottom: 6 },
+  sectionBody: { marginTop: 8 },
+
+  // Linha de registro (era JSON cru; agora campo a campo, legível)
+  rowList: { gap: 8 },
+  row: { padding: 12, marginBottom: 0 },
+  rowTitle: { color: '#f1f5f9', fontWeight: '700', marginBottom: 4 },
+  rowFields: { marginTop: 6, gap: 4 },
+  rowField: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingVertical: 2 },
+  rowFieldLabel: { color: '#94a3b8', fontSize: 12 },
+  rowFieldValue: { color: '#e2e8f0', fontSize: 12, fontWeight: '600', textAlign: 'right', flexShrink: 1 },
+  json: { color: '#94a3b8', fontSize: 11, lineHeight: 16 },
+
+  muted: { color: '#94a3b8', fontSize: 13, lineHeight: 18 },
+  form: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginVertical: 10 },
+  fieldWrap: { minWidth: 180, flexGrow: 1, flexBasis: 210 },
+  label: { color: '#94a3b8', fontSize: 11, fontWeight: '700', marginBottom: 5 },
+  input: { color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 9, padding: 10 },
+  button: { alignSelf: 'flex-start', backgroundColor: '#2BF47A', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10, marginTop: 4 },
+  secondary: { backgroundColor: '#172033', borderWidth: 1, borderColor: '#334155' },
+  buttonText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+  buttonTextOnAccent: { color: '#04140b' },
+  disabled: { opacity: 0.45 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 10 },
+  chip: { borderWidth: 1, borderColor: '#334155', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
+  chipActive: { backgroundColor: '#123524', borderColor: '#2BF47A' },
+  chipText: { color: '#cbd5e1', fontSize: 12 },
+  chipTextActive: { color: '#2BF47A', fontWeight: '700' },
+  invite: { backgroundColor: '#0b2a1e', borderWidth: 1, borderColor: '#14532d', borderRadius: 10, padding: 12, marginTop: 12 },
+  warning: { margin: 12, padding: 12, borderRadius: 10, backgroundColor: '#261c08', borderWidth: 1, borderColor: '#7c5b16' },
+  warningTitle: { color: '#fbbf24', fontWeight: '800' },
+  error: { color: '#fca5a5', backgroundColor: '#301215', padding: 10, borderRadius: 8, marginBottom: 10 },
+  success: { color: '#4ade80', fontWeight: '700' },
+  loading: { minHeight: 260, alignItems: 'center', justifyContent: 'center', gap: 8 },
 });

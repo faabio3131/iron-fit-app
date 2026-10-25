@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 export function Metric({ label, value, icon }: { label: string; value: string; icon: any }) {
   return (
     <View style={styles.box}>
-      <Ionicons name={icon} size={20} color="#8b5cf6" />
+      <Ionicons name={icon} size={20} color="#2BF47A" />
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
     </View>

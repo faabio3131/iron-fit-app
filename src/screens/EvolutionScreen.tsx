@@ -30,7 +30,7 @@ export function EvolutionScreen() {
       <View style={styles.header}><View><Text style={styles.heading}>Sua evolução</Text><Text style={styles.sub}>Acompanhe seu progresso 📈</Text></View><Ionicons name="trending-up" size={24} color="#f59e0b" /></View>
       <AIProjectionCard assessmentCount={assessments.length} latestAssessmentDate={assessments[0]?.createdAt} />
       <Text style={styles.sectionTitle}>Avaliações Físicas</Text>
-      {loading ? <ActivityIndicator size="large" color="#8b5cf6" style={styles.loading} /> : assessments.length === 0 ? (
+      {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : assessments.length === 0 ? (
         <EmptyState icon="analytics-outline" title="Nenhuma avaliação" subtitle="Peça ao seu instrutor para fazer sua avaliação física." />
       ) : assessments.map((assessment) => (
         <View key={assessment.id} style={styles.card}>

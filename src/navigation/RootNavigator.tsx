@@ -25,7 +25,7 @@ export function RootNavigator() {
   const [recoveryMode, setRecoveryMode] = useState(false);
 
   if (!sessionReady) {
-    return <View style={styles.boot}><StatusBar barStyle="light-content" backgroundColor="#0a0e1a" /><ActivityIndicator size="large" color="#8b5cf6" /></View>;
+    return <View style={styles.boot}><StatusBar barStyle="light-content" backgroundColor="#0a0e1a" /><ActivityIndicator size="large" color="#2BF47A" /></View>;
   }
 
   if (!session && pendingTenantSelection) return <TenantSelectionScreen />;

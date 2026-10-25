@@ -36,15 +36,15 @@ export function WorkoutsScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <View><Text style={styles.heading}>Olá, {profile?.name?.split(' ')[0] || 'Atleta'}</Text><Text style={styles.sub}>Bora treinar hoje? 💪</Text></View>
-          <View style={styles.avatar}><Ionicons name="person" size={24} color="#8b5cf6" /></View>
+          <View style={styles.avatar}><Ionicons name="person" size={24} color="#2BF47A" /></View>
         </View>
         <View style={styles.stats}>
-          <StatCard icon="barbell" value={String(workouts.length)} label="Treinos" color="#8b5cf6" />
+          <StatCard icon="barbell" value={String(workouts.length)} label="Treinos" color="#2BF47A" />
           <StatCard icon="calendar" value={String(weeklyFrequency)} label="Dias/semana" color="#f59e0b" />
         </View>
         <AIInsightCard workoutCount={workouts.length} weeklyFrequency={weeklyFrequency} onOpenAssistant={() => setAssistantVisible(true)} />
         <Text style={styles.sectionTitle}>Seus Treinos</Text>
-        {loading ? <ActivityIndicator size="large" color="#8b5cf6" style={styles.loading} /> : workouts.length === 0 ? (
+        {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : workouts.length === 0 ? (
           <EmptyState icon="barbell-outline" title="Nenhum treino ainda" subtitle="Seu instrutor ainda não liberou treinos para você." />
         ) : workouts.map((workout) => (
           <View key={workout.id} style={styles.card}>
@@ -61,7 +61,7 @@ export function WorkoutsScreen() {
                       <Text style={styles.exerciseMeta}>{item.sets && item.reps ? `${item.sets}x${item.reps}` : ''}{item.restSeconds ? ` · ${item.restSeconds}s` : ''}{item.suggestedLoad ? ` · ${item.suggestedLoad}` : ''}</Text>
                       {item.exercise?.videoUrl ? (
                         <TouchableOpacity style={styles.videoButton} onPress={() => Linking.openURL(item.exercise.videoUrl)}>
-                          <Ionicons name="play-circle" size={16} color="#8b5cf6" /><Text style={styles.videoText}>Ver vídeo</Text>
+                          <Ionicons name="play-circle" size={16} color="#2BF47A" /><Text style={styles.videoText}>Ver vídeo</Text>
                         </TouchableOpacity>
                       ) : null}
                     </View>
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#1a2035', borderWidth: 1, borderColor: '#252d47', alignItems: 'center', justifyContent: 'center' },
   stats: { flexDirection: 'row', gap: 12, marginBottom: 24 }, sectionTitle: { color: '#f1f5f9', fontSize: 18, fontWeight: '700', marginBottom: 12 }, loading: { marginTop: 40 },
   card: { backgroundColor: '#1a2035', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#252d47' }, cardTitle: { color: '#f1f5f9', fontSize: 16, fontWeight: '700' }, meta: { color: '#94a3b8', fontSize: 12, marginTop: 2, marginBottom: 16 },
-  session: { marginBottom: 12 }, sessionTitle: { color: '#8b5cf6', fontSize: 14, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' }, exercise: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#252d47' },
-  number: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#131826', alignItems: 'center', justifyContent: 'center', marginRight: 12 }, numberText: { color: '#8b5cf6', fontWeight: '700', fontSize: 12 }, exerciseContent: { flex: 1 }, exerciseName: { color: '#f1f5f9', fontSize: 15, fontWeight: '600' }, exerciseMeta: { color: '#94a3b8', fontSize: 11, marginTop: 4 },
-  videoButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#8b5cf615', borderWidth: 1, borderColor: '#8b5cf640', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, alignSelf: 'flex-start', marginTop: 8, gap: 6 }, videoText: { color: '#8b5cf6', fontWeight: '600', fontSize: 13 },
+  session: { marginBottom: 12 }, sessionTitle: { color: '#2BF47A', fontSize: 14, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' }, exercise: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#252d47' },
+  number: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#131826', alignItems: 'center', justifyContent: 'center', marginRight: 12 }, numberText: { color: '#2BF47A', fontWeight: '700', fontSize: 12 }, exerciseContent: { flex: 1 }, exerciseName: { color: '#f1f5f9', fontSize: 15, fontWeight: '600' }, exerciseMeta: { color: '#94a3b8', fontSize: 11, marginTop: 4 },
+  videoButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2BF47A15', borderWidth: 1, borderColor: '#2BF47A40', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, alignSelf: 'flex-start', marginTop: 8, gap: 6 }, videoText: { color: '#2BF47A', fontWeight: '600', fontSize: 13 },
 });

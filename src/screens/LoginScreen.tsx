@@ -85,7 +85,7 @@ export function LoginScreen({
             <Ionicons
               name="barbell"
               size={28}
-              color="#8b5cf6"
+              color="#2BF47A"
               style={styles.logoBarbell}
             />
           </View>
@@ -201,7 +201,7 @@ export function LoginScreen({
             disabled={disabled}
           >
             {loading ? (
-              <ActivityIndicator color="#f1f5f9" />
+              <ActivityIndicator color="#04140b" />
             ) : (
               <Text style={styles.buttonText}>
                 {requiresMfa ? 'Confirmar e entrar' : 'Entrar'}
@@ -320,13 +320,13 @@ const styles = StyleSheet.create({
   or: { color: '#64748b', textAlign: 'center', marginBottom: 10, fontSize: 12 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
   button: {
-    backgroundColor: '#8b5cf6',
+    backgroundColor: '#2BF47A',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
   },
   disabled: { opacity: 0.6 },
-  buttonText: { color: '#f1f5f9', fontSize: 16, fontWeight: '700' },
+  buttonText: { color: '#04140b', fontSize: 16, fontWeight: '700' },
   linkButton: { paddingVertical: 12, alignItems: 'center' },
   linkText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
   trialButton: {
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     alignItems: 'center',
   },
-  trialText: { color: '#c4b5fd', fontSize: 14, fontWeight: '700' },
+  trialText: { color: '#2BF47A', fontSize: 14, fontWeight: '700' },
   footer: {
     color: '#64748b',
     textAlign: 'center',

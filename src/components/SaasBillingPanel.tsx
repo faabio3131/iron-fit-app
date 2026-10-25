@@ -157,7 +157,7 @@ export function SaasBillingPanel({
           Preços, estado financeiro e entitlement são autoridade do backend. O painel não calcula
           cobrança, proration ou acesso localmente.
         </Text>
-        {loading ? <ActivityIndicator color="#8b5cf6" style={styles.loading} /> : null}
+        {loading ? <ActivityIndicator color="#2BF47A" style={styles.loading} /> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {notice ? <Text style={styles.notice}>{notice}</Text> : null}
 
@@ -226,7 +226,7 @@ export function SaasBillingPanel({
                   disabled={saving}
                   onPress={() => void execute(action.run, 'Operação comercial registrada.')}
                 >
-                  <Text style={styles.buttonText}>{action.label}</Text>
+                  <Text style={[styles.buttonText, styles.buttonTextOnAccent]}>{action.label}</Text>
                 </TouchableOpacity>
               ) : (
                 <Text style={styles.current}>Atual</Text>
@@ -266,7 +266,7 @@ export function SaasBillingPanel({
               style={styles.button}
               onPress={() => void Linking.openURL(lastAction.checkoutUrl)}
             >
-              <Text style={styles.buttonText}>Abrir checkout seguro</Text>
+              <Text style={[styles.buttonText, styles.buttonTextOnAccent]}>Abrir checkout seguro</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   button: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#2BF47A',
     borderRadius: 9,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -343,6 +343,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   buttonText: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  buttonTextOnAccent: { color: '#04140b' },
   current: { color: '#86efac', fontSize: 12, fontWeight: '800' },
   disabled: { opacity: 0.45 },
   json: { color: '#cbd5e1', fontSize: 11, lineHeight: 16 },
