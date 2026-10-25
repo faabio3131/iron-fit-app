@@ -17,6 +17,7 @@ import { PrivacyCenterPanel } from '../components/PrivacyCenterPanel';
 import { IronIntelligencePanel } from '../components/IronIntelligencePanel';
 import { AggregatorHubPanel } from '../components/AggregatorHubPanel';
 import { GlowCard } from '../components/GlowCard';
+import { CreatorNetworkWorkspace } from '../components/CreatorNetworkWorkspace';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
@@ -47,7 +48,7 @@ const modules: ModuleDefinition[] = [
   { key: 'privacy', label: 'Privacidade', icon: 'document-text-outline' },
   { key: 'entitlements', label: 'Plano e configurações', icon: 'layers-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
   { key: 'integrations', label: 'Integrações', icon: 'git-network-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
-  { key: 'creator', label: 'Creator Network', icon: 'images-outline', roles: ['OWNER', 'MANAGER'], entitlement: ['content.external_youtube', 'content.iron_managed', 'content.tenant_private'] },
+  { key: 'creator', label: 'Rede de Criadores', icon: 'images-outline', roles: ['OWNER', 'MANAGER'], entitlement: ['content.external_youtube', 'content.iron_managed', 'content.tenant_private'] },
 ];
 const onboardingLabels: Record<string, string> = { ACADEMY_PROFILE: 'Perfil da academia', EQUIPMENT_INVENTORY: 'Inventário de equipamentos', TEAM_REVIEW: 'Revisão da equipe', FINISH: 'Finalizar onboarding' };
 
@@ -446,7 +447,9 @@ export function CommercialWebApp() {
   }
   function content() {
     if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
-    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'intelligence') return intelligenceView(); if (active === 'aggregator') return <AggregatorHubPanel key={activeTenantId ?? 'sem-academia'} canManage={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenterPanel canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'financial') return financialView(); if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenterPanel key={activeTenantId ?? 'sem-academia'} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel />; return <><Section title="Creator Network"><Data value={data.overview ? [data.overview] : []} /></Section><Section title="Conteúdo"><Data value={data.items} /></Section><Section title="Analytics"><Data value={data.analytics ? [data.analytics] : []} /></Section></>;
+    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'intelligence') return intelligenceView(); if (active === 'aggregator') return <AggregatorHubPanel key={activeTenantId ?? 'sem-academia'} canManage={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenterPanel canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'financial') return financialView(); if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenterPanel key={activeTenantId ?? 'sem-academia'} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel />; return <CreatorNetworkWorkspace key={activeTenantId ?? 'sem-academia'}
+      items={list(data.items)} overview={data.overview ?? null} analytics={data.analytics ?? null}
+      refreshing={loading} onRefresh={() => { void loadModule('creator'); }} />;
   }
 
   const topBar = <View style={styles.top}><View><Text style={styles.brand}>IRON</Text><Text style={styles.muted}>Gestão da academia</Text></View><View style={styles.actions}><Text style={styles.muted}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
