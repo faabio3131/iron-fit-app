@@ -36,7 +36,9 @@ test('B6 routing preserves one app architecture while splitting role-appropriate
   expect(navigator).toContain('<CommercialWebApp />');
   expect(navigator).toContain('<WebAuthEntry />');
   expect(navigator).toContain('<WorkoutsScreen />');
-  expect(navigator).toContain("profile.roles.includes('STUDENT')");
+  expect(navigator).toContain("roles.includes('STUDENT')");
+  expect(navigator).toContain("!isStudentProfile(profile)");
+  expect(navigator).not.toContain("Platform.OS === 'web' && profile && !isStudentProfile(profile)");
 });
 
 test('B6 commercial Web consumes canonical backend domains and entitlement resolution', () => {
