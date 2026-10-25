@@ -29,6 +29,7 @@ export function IronIntelligencePanel({ students, workouts, onUpdated }: {
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<CandidateResponse | null>(null);
+  const [refreshWarning, setRefreshWarning] = useState('');
   const candidates = workouts.filter((w) => w.createdByAI);
 
   useEffect(() => {
@@ -44,12 +45,12 @@ export function IronIntelligencePanel({ students, workouts, onUpdated }: {
 
   function chooseStudent(id: string) {
     setStudentId(id); setAssessmentId(''); setAssessments([]); setFetching(true);
-    setError(''); setResult(null);
+    setError(''); setResult(null); setRefreshWarning('');
   }
 
   async function generate() {
     if (!studentId || busy || fetching) return;
-    setBusy(true); setError(''); setResult(null);
+    setBusy(true); setError(''); setResult(null); setRefreshWarning('');
     try {
       const generated: CandidateResponse = await api('/ai/workout-candidates', undefined, {
         method: 'POST', body: JSON.stringify({
@@ -58,12 +59,16 @@ export function IronIntelligencePanel({ students, workouts, onUpdated }: {
           ...(instructions.trim() ? { instructions: instructions.trim() } : {}),
         }),
       });
-      if (generated?.workout?.status !== 'PENDING_REVIEW' ||
+      if (!generated?.workout?.id || generated?.workout?.status !== 'PENDING_REVIEW' ||
         generated.workout?.createdByAI !== true || generated.requiresHumanReview !== true) {
         throw new Error('O backend não confirmou um candidato aguardando revisão. Confira o histórico antes de repetir.');
       }
       setResult(generated);
-      await onUpdated();
+      try {
+        await onUpdated();
+      } catch {
+        setRefreshWarning('Candidato já registrado pelo backend, mas a lista não foi atualizada. Consulte os treinos antes de solicitar outra geração.');
+      }
     } catch (reason: unknown) {
       const status = reason && typeof reason === 'object' && 'status' in reason ? Number(reason.status) : 0;
       if (status === 403) setError('A geração de IA não está liberada para esta academia ou perfil.');
@@ -102,6 +107,7 @@ export function IronIntelligencePanel({ students, workouts, onUpdated }: {
         <Text style={styles.success}>Candidato criado — aguardando revisão humana</Text>
         <Text style={styles.muted}>Aprovação e ativação são realizadas no Workout Studio, com trilha de auditoria no backend.</Text>
         {result.provenance?.executionTraceId ? <Text style={styles.muted}>Rastreabilidade de execução registrada.</Text> : null}
+        {refreshWarning ? <Text testID="intelligence-refresh-warning" style={styles.error}>{refreshWarning}</Text> : null}
       </View> : null}
     </GlowCard>
     <GlowCard style={styles.card}>

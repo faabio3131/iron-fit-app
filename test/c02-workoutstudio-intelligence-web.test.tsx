@@ -103,3 +103,46 @@ test('C02 Intelligence rejects claims of successful generation without confirmed
   await waitFor(() => expect(view.getByText(/não confirmou um candidato aguardando revisão/)).toBeTruthy());
   expect(view.queryByTestId('intelligence-result')).toBeNull();
 });
+
+
+test('C02 confirmed manual DRAFT remains saved when follow-up list reload fails', async () => {
+  mockUpdated.mockRejectedValueOnce(new Error('GET /workouts unavailable'));
+  const view = render(<WorkoutComposer students={students} onUpdated={mockUpdated} />);
+  fireEvent.press(view.getByTestId('studio-student-student-a'));
+  await waitFor(() => expect(view.getByTestId('studio-exercise-exercise-a')).toBeTruthy());
+  fireEvent.press(view.getByTestId('studio-exercise-exercise-a'));
+  fireEvent.press(view.getByTestId('studio-exercise-add-1'));
+  fireEvent.press(view.getByTestId('manual-workout-create'));
+  await waitFor(() => expect(view.getByText(/Rascunho registrado no backend/)).toBeTruthy());
+  expect(view.queryByTestId('studio-error')).toBeNull();
+  expect(mockApi.mock.calls.filter(([p, , o]) => p === '/workouts' && o?.method === 'POST')).toHaveLength(1);
+});
+
+test('C02 confirmed AI candidate never invites duplicate generation after reload error', async () => {
+  mockUpdated.mockRejectedValueOnce(new Error('GET /workouts unavailable'));
+  const view = render(<IronIntelligencePanel students={students} workouts={[]} onUpdated={mockUpdated} />);
+  fireEvent.press(view.getByTestId('intelligence-student-student-a'));
+  await waitFor(() => expect(view.getByTestId('intelligence-generate').props.accessibilityState?.disabled).toBe(false));
+  fireEvent.press(view.getByTestId('intelligence-generate'));
+  await waitFor(() => expect(view.getByTestId('intelligence-refresh-warning')).toBeTruthy());
+  expect(view.getByTestId('intelligence-result')).toBeTruthy();
+  expect(view.queryByTestId('intelligence-error')).toBeNull();
+  expect(mockApi.mock.calls.filter(([p, , o]) => p === '/ai/workout-candidates' && o?.method === 'POST')).toHaveLength(1);
+});
+
+test('C02 AI candidate requires backend ID in addition to human-review status', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/students/student-a/assessments') return [];
+    if (path === '/ai/workout-candidates') return {
+      workout: { status: 'PENDING_REVIEW', createdByAI: true }, requiresHumanReview: true,
+    };
+    return [];
+  });
+  const view = render(<IronIntelligencePanel students={students} workouts={[]} onUpdated={mockUpdated} />);
+  fireEvent.press(view.getByTestId('intelligence-student-student-a'));
+  await waitFor(() => expect(view.getByTestId('intelligence-generate').props.accessibilityState?.disabled).toBe(false));
+  fireEvent.press(view.getByTestId('intelligence-generate'));
+  await waitFor(() => expect(view.getByText(/não confirmou um candidato aguardando revisão/)).toBeTruthy());
+  expect(view.queryByTestId('intelligence-result')).toBeNull();
+  expect(mockUpdated).not.toHaveBeenCalled();
+});
