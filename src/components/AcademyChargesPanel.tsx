@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GlowCard } from './GlowCard';
+import { brlFromMinor } from '../utils/academy-money';
 
 type Charge = {
   id: string; studentId?: string; amount?: number; status?: string;
@@ -16,11 +17,7 @@ function date(value?: string | null) {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? 'Não informado' : d.toLocaleDateString('pt-BR');
 }
-function recordedAmount(value?: number) {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-    ? new Intl.NumberFormat('pt-BR').format(value)
-    : 'Não informado';
-}
+function recordedAmount(value?: number) { return brlFromMinor(value); }
 const statusLabels: Record<string,string> = {
   PENDING: 'Pendente', PAID: 'Paga', CANCELED: 'Cancelada', CANCELLED: 'Cancelada',
 };
