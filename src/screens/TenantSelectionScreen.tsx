@@ -54,7 +54,7 @@ export function TenantSelectionScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
-        <Ionicons name="business-outline" size={36} color="#8b5cf6" />
+        <Ionicons name="business-outline" size={36} color="#2BF47A" />
         <Text style={styles.title}>Escolha sua unidade</Text>
         <Text style={styles.hint}>
           {mfaRequired
@@ -86,7 +86,7 @@ export function TenantSelectionScreen() {
                   <Ionicons
                     name={selected ? 'radio-button-on' : 'radio-button-off'}
                     size={20}
-                    color={selected ? '#8b5cf6' : '#64748b'}
+                    color={selected ? '#2BF47A' : '#64748b'}
                   />
                 </TouchableOpacity>
               );
@@ -151,7 +151,7 @@ export function TenantSelectionScreen() {
           }
         >
           {loading ? (
-            <ActivityIndicator color="#f1f5f9" />
+            <ActivityIndicator color="#04140b" />
           ) : (
             <Text style={styles.buttonText}>
               {mfaRequired ? 'Confirmar MFA e entrar' : 'Continuar'}
@@ -209,8 +209,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   optionSelected: {
-    borderColor: '#8b5cf6',
-    backgroundColor: '#8b5cf612',
+    borderColor: '#2BF47A',
+    backgroundColor: '#2BF47A12',
   },
   optionText: { flex: 1, color: '#94a3b8', fontWeight: '600' },
   optionTextSelected: { color: '#f1f5f9' },
@@ -229,14 +229,14 @@ const styles = StyleSheet.create({
   or: { color: '#64748b', textAlign: 'center', marginBottom: 10 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
   button: {
-    backgroundColor: '#8b5cf6',
+    backgroundColor: '#2BF47A',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
     marginTop: 4,
   },
   disabled: { opacity: 0.55 },
-  buttonText: { color: '#f1f5f9', fontWeight: '700' },
+  buttonText: { color: '#04140b', fontWeight: '700' },
   backButton: { alignItems: 'center', paddingVertical: 14 },
   backText: { color: '#94a3b8', fontWeight: '600' },
 });

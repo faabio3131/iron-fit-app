@@ -96,7 +96,7 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
           disabled={!email.trim() || loading}
           onPress={requestReset}
         >
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Solicitar recuperação</Text>}
+          {loading ? <ActivityIndicator color="#04140b" /> : <Text style={styles.primaryText}>Solicitar recuperação</Text>}
         </TouchableOpacity>
 
         {requested ? (
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 28,
   },
-  kicker: { color: '#8b5cf6', fontWeight: '800', fontSize: 11, letterSpacing: 1.5 },
+  kicker: { color: '#2BF47A', fontWeight: '800', fontSize: 11, letterSpacing: 1.5 },
   title: { color: '#f8fafc', fontSize: 30, fontWeight: '900', marginTop: 8 },
   subtitle: { color: '#94a3b8', fontSize: 14, lineHeight: 21, marginTop: 7, marginBottom: 20 },
   sectionTitle: { color: '#f1f5f9', fontWeight: '800', marginBottom: 10 },
@@ -179,18 +179,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   primary: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#2BF47A',
     borderRadius: 11,
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryText: { color: '#fff', fontWeight: '800' },
+  primaryText: { color: '#04140b', fontWeight: '800' },
   disabled: { opacity: 0.5 },
   confirm: { marginTop: 22, paddingTop: 18, borderTopWidth: 1, borderTopColor: '#273248' },
   policy: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginBottom: 10 },
   notice: { color: '#86efac', marginTop: 14, lineHeight: 18 },
   error: { color: '#fca5a5', marginTop: 12 },
   back: { alignItems: 'center', paddingVertical: 14, marginTop: 4 },
-  backText: { color: '#c4b5fd', fontWeight: '700' },
+  backText: { color: '#2BF47A', fontWeight: '700' },
 });

@@ -40,7 +40,7 @@ export function FinancialScreen() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.header}><View><Text style={styles.heading}>Meu Plano</Text><Text style={styles.sub}>Mensalidades e pagamentos 💳</Text></View><Ionicons name="wallet" size={24} color="#10b981" /></View>
       <Text style={styles.sectionTitle}>Cobranças</Text>
-      {loading ? <ActivityIndicator size="large" color="#8b5cf6" style={styles.loading} /> : charges.length === 0 ? (
+      {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : charges.length === 0 ? (
         <EmptyState icon="card-outline" title="Nenhuma cobrança" subtitle="Suas mensalidades aparecem aqui." />
       ) : charges.map((charge, index) => {
         const status = chargeStatusInfo(charge.status);

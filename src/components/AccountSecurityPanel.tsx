@@ -217,7 +217,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-      {loading ? <ActivityIndicator color="#8b5cf6" style={styles.loading} /> : null}
+      {loading ? <ActivityIndicator color="#2BF47A" style={styles.loading} /> : null}
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Step-up</Text>
@@ -255,7 +255,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
           disabled={!currentPassword || !strongPassword(newPassword) || loading}
           onPress={() => void changePassword()}
         >
-          <Text style={styles.buttonText}>Alterar senha e revogar sessões</Text>
+          <Text style={[styles.buttonText, styles.buttonTextOnAccent]}>Alterar senha e revogar sessões</Text>
         </TouchableOpacity>
       </View>
 
@@ -272,7 +272,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
           disabled={!currentPassword || !newEmail.trim() || loading}
           onPress={() => void requestEmailChange()}
         >
-          <Text style={styles.buttonText}>Solicitar alteração</Text>
+          <Text style={[styles.buttonText, styles.buttonTextOnAccent]}>Solicitar alteração</Text>
         </TouchableOpacity>
         <Field
           placeholder="Token de confirmação"
@@ -300,7 +300,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
             disabled={!currentPassword || loading}
             onPress={() => void setupMfa()}
           >
-            <Text style={styles.buttonText}>Configurar autenticador</Text>
+            <Text style={[styles.buttonText, styles.buttonTextOnAccent]}>Configurar autenticador</Text>
           </TouchableOpacity>
         ) : null}
         {mfaSecret ? (
@@ -321,7 +321,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
               disabled={mfaCode.length !== 6 || loading}
               onPress={() => void confirmMfa()}
             >
-              <Text style={styles.buttonText}>Confirmar MFA</Text>
+              <Text style={[styles.buttonText, styles.buttonTextOnAccent]}>Confirmar MFA</Text>
             </TouchableOpacity>
           </>
         ) : null}
@@ -347,7 +347,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
               style={styles.button}
               onPress={() => void logout()}
             >
-              <Text style={styles.buttonText}>Já salvei — entrar novamente</Text>
+              <Text style={[styles.buttonText, styles.buttonTextOnAccent]}>Já salvei — entrar novamente</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0a0e1a' },
   content: { padding: 16, paddingBottom: 100 },
   back: { alignSelf: 'flex-start', paddingVertical: 8, marginBottom: 4 },
-  backText: { color: '#c4b5fd', fontWeight: '700' },
+  backText: { color: '#2BF47A', fontWeight: '700' },
   title: { color: '#f8fafc', fontSize: 24, fontWeight: '900', marginBottom: 6 },
   muted: { color: '#94a3b8', fontSize: 12, lineHeight: 18 },
   loading: { marginVertical: 8 },
@@ -405,13 +405,14 @@ const styles = StyleSheet.create({
   cardTitle: { color: '#f1f5f9', fontWeight: '800', fontSize: 15, marginBottom: 8 },
   input: { color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 9, padding: 11, marginTop: 8 },
   policy: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginTop: 7 },
-  button: { backgroundColor: '#7c3aed', borderRadius: 9, padding: 11, alignItems: 'center', marginTop: 10 },
+  button: { backgroundColor: '#2BF47A', borderRadius: 9, padding: 11, alignItems: 'center', marginTop: 10 },
   secondaryButton: { backgroundColor: '#172033', borderWidth: 1, borderColor: '#334155', borderRadius: 9, padding: 11, alignItems: 'center', marginTop: 10 },
   dangerButton: { backgroundColor: '#b91c1c', borderRadius: 9, padding: 11, alignItems: 'center', marginTop: 10 },
   dangerSmall: { backgroundColor: '#991b1b', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
   disabled: { opacity: 0.45 },
   buttonText: { color: '#fff', fontWeight: '800', fontSize: 12 },
-  secret: { color: '#c4b5fd', fontSize: 11, marginTop: 6 },
+  buttonTextOnAccent: { color: '#04140b' },
+  secret: { color: '#2BF47A', fontSize: 11, marginTop: 6 },
   recoveryBox: { marginTop: 12, borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 10 },
   session: { flexDirection: 'row', gap: 10, alignItems: 'center', borderTopWidth: 1, borderTopColor: '#202a3e', paddingVertical: 10 },
   sessionInfo: { flex: 1 },

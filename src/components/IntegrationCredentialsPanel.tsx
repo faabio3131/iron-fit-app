@@ -123,7 +123,7 @@ function ActionButton({
       onPress={onPress}
       disabled={disabled}
     >
-      <Text style={styles.buttonText}>{label}</Text>
+      <Text style={[styles.buttonText, !danger && styles.buttonTextOnAccent]}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -314,7 +314,7 @@ export function IntegrationCredentialsPanel() {
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator color="#8b5cf6" />
+        <ActivityIndicator color="#2BF47A" />
         <Text style={styles.muted}>Carregando integrações configuráveis…</Text>
       </View>
     );
@@ -538,12 +538,13 @@ const styles = StyleSheet.create({
   multiline: { minHeight: 90, textAlignVertical: 'top' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 8 },
   chip: { borderWidth: 1, borderColor: '#334155', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
-  chipActive: { backgroundColor: '#2e1f52', borderColor: '#8b5cf6' },
+  chipActive: { backgroundColor: '#123524', borderColor: '#2BF47A' },
   chipText: { color: '#cbd5e1', fontSize: 12 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  button: { backgroundColor: '#7c3aed', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10 },
+  button: { backgroundColor: '#2BF47A', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10 },
   danger: { backgroundColor: '#991b1b' },
   buttonText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+  buttonTextOnAccent: { color: '#04140b' },
   disabled: { opacity: 0.45 },
   connection: { backgroundColor: '#0c1220', borderWidth: 1, borderColor: '#202a3e', borderRadius: 10, padding: 12, marginTop: 8 },
   connectionTitle: { color: '#f1f5f9', fontWeight: '800', fontSize: 15, marginBottom: 4 },

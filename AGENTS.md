@@ -387,10 +387,26 @@ Eliminar:
 - template genérico repetido;
 - inconsistência de espaçamento;
 - ações sem feedback;
-- verde/lime legado;
-- roxo legado dominante.
+- roxo legado dominante (`#8b5cf6`/`#7c3aed` e variantes).
 
-Manter identidade azul oficial do IRON.
+**Identidade oficial (atualizado 2026-10-25, decisão do Fábio): verde
+neon sobre preto, a mesma identidade do site institucional
+(fm-site-novo), não azul.** A referência anterior a "identidade azul
+oficial do IRON" neste arquivo estava desatualizada e não deve ser
+seguida. Paleta canônica em `src/theme/colors.ts`
+(`accent: '#2BF47A'`, fundo `#0a0e1a`/`#080c17`). Qualquer "azul
+oficial" citado em documentos históricos é superado por esta decisão.
+
+Blocos/cards devem acender um brilho verde neon ao passar o mouse
+(hover, web), igual ao efeito já usado no site — ver `GlowCard` em
+`src/components/GlowCard.tsx`. Em touch (mobile/app nativo) não há
+hover; o estado de repouso já reflete a identidade.
+
+Títulos de bloco/seção usam o verde de acento (não só preto e
+branco) — ver `sectionTitle` em `src/web/CommercialWebApp.tsx` como
+referência. Texto/ícone sobre preenchimento sólido do verde usa
+`colors.onAccent` (quase-preto) para manter contraste legível —
+nunca texto claro sobre o verde neon brilhante.
 
 Cada módulo deve refletir sua função.
 

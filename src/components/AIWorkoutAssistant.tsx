@@ -54,7 +54,7 @@ export function AIWorkoutAssistant({ visible, onClose, workoutCount, weeklyFrequ
       <View style={styles.overlay}>
         <View style={styles.panel}>
           <View style={styles.header}>
-            <View style={styles.titleRow}><Ionicons name="sparkles" size={19} color="#a78bfa" /><Text style={styles.title}>Assistente de Treino</Text></View>
+            <View style={styles.titleRow}><Ionicons name="sparkles" size={19} color="#2BF47A" /><Text style={styles.title}>Assistente de Treino</Text></View>
             <TouchableOpacity onPress={onClose} accessibilityLabel="Fechar assistente"><Ionicons name="close" size={24} color="#cbd5e1" /></TouchableOpacity>
           </View>
           <Text style={styles.notice}>Orientação complementar. Não substitui avaliação ou prescrição profissional.</Text>
@@ -65,7 +65,7 @@ export function AIWorkoutAssistant({ visible, onClose, workoutCount, weeklyFrequ
                 {message.role === 'assistant' && message.source === 'fallback' ? <Text style={styles.safeLabel}>MODO SEGURO</Text> : null}
               </View>
             ))}
-            {sending ? <ActivityIndicator size="small" color="#a78bfa" style={styles.loading} /> : null}
+            {sending ? <ActivityIndicator size="small" color="#2BF47A" style={styles.loading} /> : null}
           </ScrollView>
           <View style={styles.composer}>
             <TextInput
@@ -78,7 +78,7 @@ export function AIWorkoutAssistant({ visible, onClose, workoutCount, weeklyFrequ
               maxLength={600}
             />
             <TouchableOpacity style={[styles.send, sending ? styles.sendDisabled : null]} onPress={sendMessage} disabled={sending} accessibilityLabel="Enviar pergunta">
-              <Ionicons name="send" size={18} color="#f5f3ff" />
+              <Ionicons name="send" size={18} color="#04140b" />
             </TouchableOpacity>
           </View>
         </View>
@@ -89,21 +89,21 @@ export function AIWorkoutAssistant({ visible, onClose, workoutCount, weeklyFrequ
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: '#020617cc', justifyContent: 'flex-end' },
-  panel: { backgroundColor: '#0f1423', borderTopLeftRadius: 24, borderTopRightRadius: 24, minHeight: '68%', maxHeight: '90%', padding: 18, borderWidth: 1, borderColor: '#312e81' },
+  panel: { backgroundColor: '#0f1423', borderTopLeftRadius: 24, borderTopRightRadius: 24, minHeight: '68%', maxHeight: '90%', padding: 18, borderWidth: 1, borderColor: '#123524' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { color: '#f5f3ff', fontSize: 18, fontWeight: '800' },
+  title: { color: '#2BF47A', fontSize: 18, fontWeight: '800' },
   notice: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginTop: 8, marginBottom: 12 },
   messages: { flex: 1 },
   messagesContent: { paddingVertical: 8, gap: 8 },
   bubble: { maxWidth: '88%', paddingHorizontal: 13, paddingVertical: 10, borderRadius: 14 },
-  userBubble: { alignSelf: 'flex-end', backgroundColor: '#6d28d9' },
+  userBubble: { alignSelf: 'flex-end', backgroundColor: '#1a9e52' },
   assistantBubble: { alignSelf: 'flex-start', backgroundColor: '#1e293b' },
   messageText: { color: '#f8fafc', fontSize: 13, lineHeight: 18 },
   safeLabel: { color: '#fbbf24', fontSize: 9, fontWeight: '800', marginTop: 5 },
   loading: { alignSelf: 'flex-start', margin: 8 },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 10 },
   input: { flex: 1, minHeight: 44, maxHeight: 110, backgroundColor: '#131826', color: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 12, paddingVertical: 10 },
-  send: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#7c3aed' },
+  send: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2BF47A' },
   sendDisabled: { opacity: 0.55 },
 });

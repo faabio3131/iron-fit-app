@@ -38,7 +38,7 @@ export function SchedulesScreen() {
       </View>
       <CheckInScreen />
       <Text style={styles.sectionTitle}>Horários reservados</Text>
-      {loading ? <ActivityIndicator size="large" color="#8b5cf6" style={styles.loading} /> : schedules.length === 0 ? (
+      {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : schedules.length === 0 ? (
         <EmptyState icon="calendar-outline" title="Nenhum horário reservado" subtitle="Quando sua academia abrir a agenda, suas reservas aparecem aqui." />
       ) : schedules.map((schedule, index) => (
         <View key={schedule.id || index} style={styles.card}>
@@ -66,8 +66,8 @@ const styles = StyleSheet.create({
   sectionTitle: { color: '#f1f5f9', fontSize: 18, fontWeight: '700', marginBottom: 12 },
   loading: { marginTop: 40 },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1a2035', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#252d47', gap: 12 },
-  dateBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#8b5cf620', alignItems: 'center', justifyContent: 'center' },
-  dateText: { color: '#8b5cf6', fontWeight: '800', fontSize: 13 },
+  dateBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#2BF47A20', alignItems: 'center', justifyContent: 'center' },
+  dateText: { color: '#2BF47A', fontWeight: '800', fontSize: 13 },
   cardContent: { flex: 1 },
   cardTitle: { color: '#f1f5f9', fontSize: 15, fontWeight: '700' },
   meta: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
