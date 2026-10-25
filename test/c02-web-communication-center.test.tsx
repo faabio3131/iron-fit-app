@@ -11,7 +11,9 @@ jest.setTimeout(20000);
 beforeEach(() => {
   mockConsent = true;
   mockApi.mockReset();
-  mockApi.mockImplementation(async (path: string) => {
+  mockApi.mockImplementation(async (path: string, _token?: string, options?: { method?: string }) => {
+    if (path === '/communication/messages' && options?.method === 'POST') return { status: 'QUEUED' };
+    if (path === '/communication/templates' && options?.method === 'POST') return { id: 'template-new' };
     if (path === '/students') return [{ id: 'student-a', name: 'Aluno A', status: 'ACTIVE' }];
     if (path === '/students/student-a') return { id: 'student-a', status: 'ACTIVE', consentComm: mockConsent };
     if (path === '/communication/templates') return [{ id: 'template-a', name: 'Aviso', channel: 'WHATSAPP', body: 'Lembrete' }];
