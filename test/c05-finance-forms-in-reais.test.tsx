@@ -4,11 +4,18 @@ import { CommercialWebApp } from '../src/web/CommercialWebApp';
 
 const mockApi = jest.fn();
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
-jest.mock('../src/context/AuthContext', () => ({
-  useAuth: () => ({ profile: {
+// Stable auth identity is essential: a new profile reference on every render
+// would retrigger the shell effects indefinitely and mask the real API behavior.
+const mockAuth = {
+  profile: {
     id: 'owner-a', name: 'Proprietário', email: 'owner@example.com',
     roles: ['OWNER'], permissions: ['gym.read'],
-  }, activeTenantId: 'gym-a', logout: jest.fn() }),
+  },
+  activeTenantId: 'gym-a',
+  logout: jest.fn(),
+};
+jest.mock('../src/context/AuthContext', () => ({
+  useAuth: () => mockAuth,
 }));
 jest.mock('../src/services/api', () => ({
   api: (...args: unknown[]) => mockApi(...args),
