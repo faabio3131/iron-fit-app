@@ -15,8 +15,11 @@ import { WebAuthEntry } from '../web/WebAuthEntry';
 
 type Tab = 'treino' | 'agenda' | 'progresso' | 'financeiro' | 'perfil';
 
+const operationalRoles = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION', 'TRAINER'];
+
 function isStudentProfile(profile: any) {
-  return Array.isArray(profile?.roles) && profile.roles.includes('STUDENT');
+  const roles: string[] = Array.isArray(profile?.roles) ? profile.roles : [];
+  return roles.includes('STUDENT') && !roles.some((role) => operationalRoles.includes(role));
 }
 
 export function RootNavigator() {
@@ -38,7 +41,15 @@ export function RootNavigator() {
       : <LoginScreen onForgotPassword={() => setRecoveryMode(true)} />;
   }
 
-  if (Platform.OS === 'web' && profile && !isStudentProfile(profile)) {
+  // One canonical operations UI on Web/Android/iOS. Staff must never fall
+  // through to a student's screens just because the platform is native.
+  // Without a loaded, authorized profile, do not expose either surface.
+  if (!profile || !Array.isArray(profile.roles) || !profile.roles.length) {
+    return <View style={styles.boot} testID="profile-validation-pending">
+      <ActivityIndicator size="large" color="#2BF47A" />
+    </View>;
+  }
+  if (!isStudentProfile(profile)) {
     return <CommercialWebApp />;
   }
 
