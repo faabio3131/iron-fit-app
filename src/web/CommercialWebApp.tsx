@@ -14,6 +14,7 @@ import { WorkoutComposer } from '../components/WorkoutComposer';
 import { ScheduleCalendarPanel } from '../components/ScheduleCalendarPanel';
 import { AccessCenterPanel } from '../components/AccessCenterPanel';
 import { OperationsCockpitPanel, type CockpitShortcut } from '../components/OperationsCockpitPanel';
+import { OnboardingWorkspace } from '../components/OnboardingWorkspace';
 import { AcademyChargesPanel } from '../components/AcademyChargesPanel';
 import { PrivacyCenterPanel } from '../components/PrivacyCenterPanel';
 import { IronIntelligencePanel } from '../components/IronIntelligencePanel';
@@ -52,7 +53,6 @@ const modules: ModuleDefinition[] = [
   { key: 'integrations', label: 'Integrações', icon: 'git-network-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
   { key: 'creator', label: 'Rede de Criadores', icon: 'images-outline', roles: ['OWNER', 'MANAGER'], entitlement: ['content.external_youtube', 'content.iron_managed', 'content.tenant_private'] },
 ];
-const onboardingLabels: Record<string, string> = { ACADEMY_PROFILE: 'Perfil da academia', EQUIPMENT_INVENTORY: 'Inventário de equipamentos', TEAM_REVIEW: 'Revisão da equipe', FINISH: 'Finalizar onboarding' };
 
 function list(value: any): any[] {
   if (Array.isArray(value)) return value;
@@ -333,8 +333,22 @@ export function CommercialWebApp() {
     />;
   }
   function onboardingView() {
-    const step = onboarding?.nextStep as string | undefined;
-    return <Section title="Onboarding zero-touch" subtitle="A ordem é autoridade do backend; o navegador não escolhe tenant nem pula etapas."><Data value={onboarding ? [onboarding] : []} />{step === 'ACADEMY_PROFILE' ? <View style={styles.form}><Field label="Nome da academia" value={academy.name} onChangeText={(name) => setAcademy((v) => ({ ...v, name }))} /><Field label="Timezone IANA" value={academy.timezone} onChangeText={(timezone) => setAcademy((v) => ({ ...v, timezone }))} /></View> : null}{step ? <Button testID="onboarding-complete-step" label={saving ? 'Salvando…' : `Concluir: ${onboardingLabels[step] ?? step}`} disabled={saving || (step === 'ACADEMY_PROFILE' && !academy.name.trim())} onPress={() => void mutate(() => api('/commercial/onboarding', undefined, { method: 'PATCH', body: JSON.stringify({ step, ...(step === 'ACADEMY_PROFILE' ? { data: { name: academy.name.trim(), timezone: academy.timezone.trim() } } : {}) }) }))} /> : <Text style={styles.success}>Onboarding concluído.</Text>}</Section>;
+    const availableTargets: ('equipment' | 'team')[] = ['equipment', 'team'].filter(
+      (key): key is 'equipment' | 'team' => visible.some((item) => item.key === key),
+    );
+    return <OnboardingWorkspace
+      state={onboarding}
+      name={academy.name} timezone={academy.timezone} saving={saving}
+      onNameChange={(name) => setAcademy((v) => ({ ...v, name }))}
+      onTimezoneChange={(timezone) => setAcademy((v) => ({ ...v, timezone }))}
+      availableTargets={availableTargets}
+      onNavigate={(target) => setActive(target)}
+      onComplete={(step, dataForStep) => {
+        void mutate(() => api('/commercial/onboarding', undefined, {
+          method: 'PATCH', body: JSON.stringify({ step, ...(dataForStep ? { data: dataForStep } : {}) }),
+        }));
+      }}
+    />;
   }
   function studentsView() {
     return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Cadastrar aluno"><View style={styles.form}><Field label="Nome" value={student.name} onChangeText={(name) => setStudent((v) => ({ ...v, name }))} /><Field label="E-mail" value={student.email} onChangeText={(email) => setStudent((v) => ({ ...v, email }))} /><Field label="Telefone" value={student.phone} onChangeText={(phone) => setStudent((v) => ({ ...v, phone }))} /></View><Button testID="student-create" label="Cadastrar aluno" disabled={saving || !student.name.trim() || !student.email.trim()} onPress={() => void mutate(async () => { const created = await api('/students', undefined, { method: 'POST', body: JSON.stringify({ name: student.name.trim(), email: student.email.trim().toLowerCase(), ...(student.phone.trim() ? { phone: student.phone.trim() } : {}) }) }); setLastStudentInvite(created?.onboarding?.required ? created.onboarding : null); return created; }, () => setStudent({ name: '', email: '', phone: '' }))} />{lastStudentInvite ? <View style={styles.invite}><Text style={styles.rowTitle}>Convite de ativação — exibir uma vez</Text><Text selectable style={styles.json}>{lastStudentInvite.token}</Text><Text style={styles.muted}>Expira em: {String(lastStudentInvite.expiresAt ?? '—')}</Text></View> : null}</Section> : null}<Student360Panel key={activeTenantId ?? 'sem-academia'} students={list(data.students)} canReadWorkouts={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER')} canReadAccess={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')} canReadFinance={can('SUPER_ADMIN', 'OWNER') && adminStepUpActive} canEditConsents={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')} /></>;
