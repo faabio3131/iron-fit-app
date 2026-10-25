@@ -9,9 +9,9 @@ import { Student360Panel } from '../components/Student360Panel';
 import { AssessmentEvolutionPanel } from '../components/AssessmentEvolutionPanel';
 import { EquipmentIntelligencePanel } from '../components/EquipmentIntelligencePanel';
 import { ExercisesLibraryPanel } from '../components/ExercisesLibraryPanel';
+import { TeamManagementPanel } from '../components/TeamManagementPanel';
 import { GlowCard } from '../components/GlowCard';
 import { useAuth } from '../context/AuthContext';
-import { strongPassword } from '../security/password-policy';
 import { api } from '../services/api';
 
 type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'schedule' | 'access' | 'communication' | 'financial' | 'saasBilling' | 'security' | 'entitlements' | 'integrations' | 'creator';
@@ -25,7 +25,7 @@ const modules: ModuleDefinition[] = [
   { key: 'overview', label: 'Visão geral', icon: 'grid-outline', roles: operational },
   { key: 'onboarding', label: 'Onboarding', icon: 'rocket-outline', roles: ['OWNER', 'MANAGER'] },
   { key: 'students', label: 'Alunos', icon: 'people-outline', roles: staff },
-  { key: 'team', label: 'Equipe', icon: 'shield-checkmark-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
+  { key: 'team', label: 'Equipe', icon: 'shield-checkmark-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER'] },
   { key: 'equipment', label: 'Equipamentos', icon: 'barbell-outline', roles: staff, entitlement: ['equipment.catalog', 'equipment.inventory'] },
   { key: 'exercises', label: 'Exercícios', icon: 'fitness-outline', roles: staff },
   { key: 'assessments', label: 'Avaliações', icon: 'pulse-outline', roles: staff },
@@ -147,7 +147,6 @@ export function CommercialWebApp() {
   const [selectedAccount, setSelectedAccount] = useState('');
   const [student, setStudent] = useState({ name: '', email: '', phone: '' });
   const [lastStudentInvite, setLastStudentInvite] = useState<any>(null);
-  const [member, setMember] = useState({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' });
   const [selectedCatalogEquipment, setSelectedCatalogEquipment] = useState('');
   const [exercise, setExercise] = useState({ name: '', muscleGroup: '', level: '' });
   const [assessment, setAssessment] = useState({ weight: '', height: '', bodyFatPercent: '', notes: '' });
@@ -320,7 +319,12 @@ export function CommercialWebApp() {
     return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Cadastrar aluno"><View style={styles.form}><Field label="Nome" value={student.name} onChangeText={(name) => setStudent((v) => ({ ...v, name }))} /><Field label="E-mail" value={student.email} onChangeText={(email) => setStudent((v) => ({ ...v, email }))} /><Field label="Telefone" value={student.phone} onChangeText={(phone) => setStudent((v) => ({ ...v, phone }))} /></View><Button testID="student-create" label="Cadastrar aluno" disabled={saving || !student.name.trim() || !student.email.trim()} onPress={() => void mutate(async () => { const created = await api('/students', undefined, { method: 'POST', body: JSON.stringify({ name: student.name.trim(), email: student.email.trim().toLowerCase(), ...(student.phone.trim() ? { phone: student.phone.trim() } : {}) }) }); setLastStudentInvite(created?.onboarding?.required ? created.onboarding : null); return created; }, () => setStudent({ name: '', email: '', phone: '' }))} />{lastStudentInvite ? <View style={styles.invite}><Text style={styles.rowTitle}>Convite de ativação — exibir uma vez</Text><Text selectable style={styles.json}>{lastStudentInvite.token}</Text><Text style={styles.muted}>Expira em: {String(lastStudentInvite.expiresAt ?? '—')}</Text></View> : null}</Section> : null}<Student360Panel key={activeTenantId ?? 'sem-academia'} students={list(data.students)} canReadWorkouts={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER')} canReadAccess={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')} canReadFinance={can('SUPER_ADMIN', 'OWNER') && adminStepUpActive} canEditConsents={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')} /></>;
   }
   function teamView() {
-    return <><Section title="Adicionar membro"><View style={styles.form}><Field label="Nome" value={member.name} onChangeText={(name) => setMember((v) => ({ ...v, name }))} /><Field label="E-mail" value={member.email} onChangeText={(email) => setMember((v) => ({ ...v, email }))} /><Field label="Senha inicial" value={member.password} secureTextEntry onChangeText={(password) => setMember((v) => ({ ...v, password }))} /><Field label="Role" value={member.roleName} onChangeText={(roleName) => setMember((v) => ({ ...v, roleName: roleName.toUpperCase() }))} /></View><Button label="Adicionar à equipe" disabled={saving || !strongPassword(member.password) || !member.name.trim() || !member.email.trim()} onPress={() => void mutate(() => api('/users', undefined, { method: 'POST', body: JSON.stringify({ name: member.name.trim(), email: member.email.trim().toLowerCase(), password: member.password, roleName: member.roleName.trim(), ...(member.phone.trim() ? { phone: member.phone.trim() } : {}) }) }), () => setMember({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' }))} /></Section><Section title="Equipe"><Data value={data.users} /></Section><Section title="Permissões da sessão"><Data value={permissions.map((name) => ({ name }))} /></Section></>;
+    return <TeamManagementPanel
+      key={activeTenantId ?? 'sem-academia'}
+      members={list(data.users)}
+      actorRoles={roles}
+      onUpdated={() => loadModule('team')}
+    />;
   }
   function equipmentView() {
     return <EquipmentIntelligencePanel
