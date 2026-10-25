@@ -101,5 +101,6 @@ test('C02 rejected check-in never presents a successful attendance state', async
   fireEvent.press(view.getByTestId('agenda-checkin-booking-a'));
   fireEvent.press(view.getByTestId('agenda-confirm-checkin-booking-a'));
   await waitFor(() => expect(view.getByText(/Agendamento não pode receber check-in/)).toBeTruthy());
-  expect(view.getByText(/Agendado/)).toBeTruthy();
+  expect(view.getByTestId('agenda-booking-booking-a')).toBeTruthy();
+  expect(view.queryByText(/Presença registrada/)).toBeNull();
 });
