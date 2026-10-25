@@ -3,11 +3,11 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { CommercialWebApp } from '../src/web/CommercialWebApp';
 
 const mockApi = jest.fn();
-let mockCurrentRole = 'OWNER';
+let mockCurrentProfile = { id: 'owner-a', name: 'Operador IRON', roles: ['OWNER'], permissions: [] as string[] };
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('../src/context/AuthContext', () => ({
   useAuth: () => ({
-    profile: { id: 'owner-a', name: 'Operador IRON', roles: [mockCurrentRole], permissions: [] },
+    profile: mockCurrentProfile,
     activeTenantId: 'gym-a',
     logout: jest.fn(),
   }),
@@ -44,7 +44,7 @@ function setup() {
   });
 }
 
-beforeEach(() => { mockCurrentRole = 'OWNER'; setup(); });
+beforeEach(() => { mockCurrentProfile = { id: 'owner-a', name: 'Operador IRON', roles: ['OWNER'], permissions: [] }; setup(); });
 
 test('C02 workout studio only permits transitions the canonical backend supports', async () => {
   const view = render(<CommercialWebApp />);
@@ -88,7 +88,7 @@ test('C02 access center queries tenant-scoped credentials/devices and requires c
 });
 
 test('C02 reception access cannot query owner/manager device administration', async () => {
-  mockCurrentRole = 'RECEPTION';
+  mockCurrentProfile = { id: 'staff-a', name: 'Recepção IRON', roles: ['RECEPTION'], permissions: [] };
   const view = render(<CommercialWebApp />);
   await waitFor(() => expect(view.getByTestId('nav-access')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-access'));
