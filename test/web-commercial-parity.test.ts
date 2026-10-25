@@ -4,6 +4,9 @@ const navigator = fs.readFileSync('src/navigation/RootNavigator.tsx', 'utf8');
 const auth = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
 const login = fs.readFileSync('src/screens/LoginScreen.tsx', 'utf8');
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
+const student360 = fs.readFileSync('src/components/Student360Panel.tsx', 'utf8');
+const assessmentEvolution = fs.readFileSync('src/components/AssessmentEvolutionPanel.tsx', 'utf8');
+const operationalWeb = web + student360 + assessmentEvolution;
 const trial = fs.readFileSync('src/web/TrialSignupScreen.tsx', 'utf8');
 const workflow = fs.readFileSync('.github/workflows/mobile-ci.yml', 'utf8');
 
@@ -48,7 +51,7 @@ test('commercial modules consume backend sources of truth and entitlement keys',
     '/creator-network/content/tenant/items',
     '/ai/workout-candidates',
   ]) {
-    expect(web).toContain(route);
+    expect(operationalWeb).toContain(route);
   }
   expect(web).toContain("equipment.inventory");
   expect(web).toContain("ai.workout_generation");
