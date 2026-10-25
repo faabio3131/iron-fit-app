@@ -22,7 +22,7 @@ test('C04 canonical backend steps are visible but not marked complete locally', 
   expect(view.getByTestId('onboarding-step-ACADEMY_PROFILE')).toBeTruthy();
   expect(view.getByText('0 de 4 etapas concluídas')).toBeTruthy();
   expect(view.getByText('Etapa atual')).toBeTruthy();
-  expect(view.getByText('Aguardando etapa anterior')).toBeTruthy();
+  expect(view.getAllByText('Aguardando etapa anterior').length).toBe(3);
 });
 
 test('C04 Academy Profile requires valid name and submits only canonical step/data', () => {
