@@ -70,6 +70,7 @@ export function ScheduleCalendarPanel({ slots, canCheckIn, onDateSelected, refre
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [busyId, setBusyId] = useState('');
   const [confirmId, setConfirmId] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
@@ -121,13 +122,13 @@ export function ScheduleCalendarPanel({ slots, canCheckIn, onDateSelected, refre
   async function checkIn(id: string) {
     if (!canCheckIn || busyId || confirmId !== id) return;
     setBusyId(id);
-    setError('');
+    setActionError('');
     try {
       await api('/schedules/' + encodeURIComponent(id) + '/check-in', undefined, { method: 'PATCH' });
       setConfirmId('');
       setReloadKey((current) => current + 1);
     } catch (reason: unknown) {
-      setError(reason instanceof Error ? reason.message : 'Não foi possível registrar a presença.');
+      setActionError(reason instanceof Error ? reason.message : 'Não foi possível registrar a presença.');
     } finally {
       setBusyId('');
     }
@@ -176,6 +177,7 @@ export function ScheduleCalendarPanel({ slots, canCheckIn, onDateSelected, refre
       <Action label="Agendados" selected={status === 'SCHEDULED'} onPress={() => setStatus('SCHEDULED')} />
       <Action label="Check-ins" selected={status === 'CHECKED_IN'} onPress={() => setStatus('CHECKED_IN')} />
     </View>
+    {actionError ? <Text testID="agenda-action-error" style={styles.error}>{actionError}</Text> : null}
     <View style={styles.weekGrid}>{days.map((day) => <TouchableOpacity key={day} accessibilityRole="button"
       accessibilityState={{ selected: selectedDate === day }} testID={'agenda-day-' + day}
       onPress={() => select(day)} style={[styles.dayButton, selectedDate === day && styles.daySelected]}>
