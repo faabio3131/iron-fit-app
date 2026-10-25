@@ -495,7 +495,7 @@ export function CommercialWebApp() {
     return <>
       <Section title="Contas financeiras" subtitle="Caixa e contas pertencem somente à academia; cobrança da FM Tecnologia é gerida no FM Command.">
         <View style={styles.form}>
-          <Field label="Nome da conta" value={account.name}
+          <Field testID="finance-account-name" label="Nome da conta" value={account.name}
             onChangeText={(name) => setAccount((current) => ({ ...current, name }))} />
           <Field label="Tipo de conta" value={account.type}
             onChangeText={(type) => setAccount((current) => ({ ...current, type }))} />
@@ -523,7 +523,7 @@ export function CommercialWebApp() {
         <Text style={styles.label}>Aluno</Text>
         <Chips rows={students} selected={selectedFinancialStudent} onSelect={setSelectedFinancialStudent} />
         <View style={styles.form}>
-          <Field label="Nome do plano" value={studentPlan.planName}
+          <Field testID="finance-plan-name" label="Nome do plano" value={studentPlan.planName}
             onChangeText={(planName) => setStudentPlan((v) => ({ ...v, planName }))} />
           <Field testID="finance-subscription-amount" label="Mensalidade ou valor do plano (R$)" value={studentPlan.amount}
             onChangeText={(amount) => setStudentPlan((v) => ({ ...v, amount }))} />
