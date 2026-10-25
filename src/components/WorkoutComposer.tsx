@@ -117,7 +117,11 @@ export function WorkoutComposer({ students, onUpdated }: {
       }
       setNotice('Rascunho registrado. A aprovação humana é obrigatória antes da ativação.');
       setSessions(seed()); setGoal(''); setLevel(''); setNotes(''); setAssessmentId('');
-      await onUpdated();
+      try {
+        await onUpdated();
+      } catch {
+        setNotice('Rascunho registrado no backend, mas não foi possível atualizar a lista. Consulte os treinos antes de criar outro.');
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Não foi possível criar o treino.');
     } finally { setBusy(false); }
