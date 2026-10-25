@@ -28,7 +28,7 @@ function Button({ testID, label, onPress, disabled = false, secondary = false }:
     <Text style={[styles.buttonText, secondary && styles.secondaryText]}>{label}</Text>
   </TouchableOpacity>;
 }
-function dateLabel(input?: string) {
+function dateLabel(input?: string | null) {
   if (!input) return 'Não informado';
   const date = new Date(input);
   return Number.isNaN(date.getTime()) ? 'Não informado' : date.toLocaleString('pt-BR');
