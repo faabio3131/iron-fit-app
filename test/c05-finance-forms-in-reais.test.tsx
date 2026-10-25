@@ -29,7 +29,7 @@ beforeEach(() => {
     if (path === '/product-entitlements/tenant/current') return { id: 'sub-a', status: 'ACTIVE' };
     if (path === '/commercial/trial/status') return { status: 'TRIALING' };
     if (path === '/commercial/onboarding') return { status: 'COMPLETED', completedSteps: [], nextStep: null };
-    if (path === '/auth/step-up/status') return { active: true, expiresAt: '2099-12-31T00:00:00.000Z' };
+    if (path === '/auth/step-up/status') return { active: true, expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString() };
     if (path === '/financial/accounts') return [{ id: 'account-a', name: 'Caixa', active: true, initialBalance: 10000 }];
     if (path === '/financial/charges') return [];
     if (path === '/students') return [{ id: 'student-a', name: 'Ana Silva' }];
