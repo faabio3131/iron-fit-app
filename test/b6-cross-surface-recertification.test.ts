@@ -6,7 +6,9 @@ const navigator = fs.readFileSync('src/navigation/RootNavigator.tsx', 'utf8');
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
 const student360 = fs.readFileSync('src/components/Student360Panel.tsx', 'utf8');
 const assessmentEvolution = fs.readFileSync('src/components/AssessmentEvolutionPanel.tsx', 'utf8');
-const operationalWeb = web + student360 + assessmentEvolution;
+const equipmentIntelligence = fs.readFileSync('src/components/EquipmentIntelligencePanel.tsx', 'utf8');
+const exerciseLibrary = fs.readFileSync('src/components/ExercisesLibraryPanel.tsx', 'utf8');
+const operationalWeb = web + student360 + assessmentEvolution + equipmentIntelligence + exerciseLibrary;
 const trial = fs.readFileSync('src/web/TrialSignupScreen.tsx', 'utf8');
 const workouts = fs.readFileSync('src/screens/WorkoutsScreen.tsx', 'utf8');
 const schedules = fs.readFileSync('src/screens/SchedulesScreen.tsx', 'utf8');
@@ -62,8 +64,8 @@ test('B6 commercial Web consumes canonical backend domains and entitlement resol
 
 test('B6 Web operational mutations follow current security and EQ5 contracts', () => {
   expect(web).toContain('strongPassword(member.password)');
-  expect(web).toContain('equipment-catalog-select');
-  expect(web).toContain('catalogItemIds: [selectedCatalogEquipment]');
+  expect(equipmentIntelligence).toContain('equipment-catalog-select');
+  expect(equipmentIntelligence).toContain('catalogItemIds: [selectedCatalogEquipment]');
   expect(web).not.toContain('member.password.length < 6');
 });
 
