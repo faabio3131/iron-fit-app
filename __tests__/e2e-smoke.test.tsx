@@ -198,7 +198,7 @@ describe('student end-to-end smoke journey', () => {
 
   test('flow 4: charges load, profile navigation works and logout clears the secure session', async () => {
     const fetchMock = installFetchScenario({
-      charges: [{ id: 'charge-1', description: 'Mensalidade Setembro', amount: 199.9, dueDate: '2026-09-10', status: 'PENDING' }],
+      charges: [{ id: 'charge-1', description: 'Mensalidade Setembro', amount: 19990, dueDate: '2026-09-10', status: 'PENDING' }],
     });
     const view = render(<App />);
 
