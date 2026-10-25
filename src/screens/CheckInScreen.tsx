@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../services/api';
 
-export function CheckInScreen() {
+export function CheckInScreen({ onCheckedIn }: { onCheckedIn?: () => void } = {}) {
   const [checkingIn, setCheckingIn] = useState(false);
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
@@ -13,6 +13,7 @@ export function CheckInScreen() {
     try {
       await api('/me/check-in', undefined, { method: 'POST', body: JSON.stringify({}) });
       setMessage({ type: 'ok', text: 'Check-in registrado! Bom treino 💪' });
+      onCheckedIn?.();
     } catch (reason: unknown) {
       setMessage({ type: 'err', text: reason instanceof Error ? reason.message : 'Não foi possível registrar o check-in.' });
     } finally {
