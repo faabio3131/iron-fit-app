@@ -71,6 +71,7 @@ test('C02 Access Center filters real access events, translating denied decision 
   fireEvent.changeText(view.getByTestId('access-events-to'), '2026-10-25');
   fireEvent.press(view.getByText('Negados'));
   fireEvent.press(view.getByTestId('access-events-filter'));
+  await waitFor(() => expect(mockApi.mock.calls.some(([path]) => path.startsWith('/access/events?'))).toBe(true));
   await waitFor(() => expect(view.queryByTestId('access-event-evt-a')).toBeNull());
   const call = mockApi.mock.calls.find(([path]) => path.startsWith('/access/events?'));
   expect(call[0]).toContain('allowed=false');
