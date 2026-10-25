@@ -23,6 +23,7 @@ import { AggregatorHubPanel } from '../components/AggregatorHubPanel';
 import { GlowCard } from '../components/GlowCard';
 import { CreatorNetworkWorkspace } from '../components/CreatorNetworkWorkspace';
 import { useAuth } from '../context/AuthContext';
+import { brlFromMinor, brlToMinor, positiveBrlToMinor } from '../utils/academy-money';
 import { api } from '../services/api';
 
 type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'intelligence' | 'aggregator' | 'schedule' | 'access' | 'communication' | 'financial' | 'saasBilling' | 'security' | 'privacy' | 'entitlements' | 'integrations' | 'creator';
@@ -59,6 +60,12 @@ function list(value: any): any[] {
   if (Array.isArray(value)) return value;
   for (const key of ['items', 'data', 'results', 'students', 'users', 'charges', 'events']) if (Array.isArray(value?.[key])) return value[key];
   return [];
+}
+function financialDateIso(value: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) return null;
+  const candidate = value.trim() + 'T00:00:00.000Z';
+  const parsed = new Date(candidate);
+  return Number.isNaN(parsed.getTime()) || parsed.toISOString() !== candidate ? null : candidate;
 }
 function message(error: unknown) {
   if (error instanceof Error) {
@@ -470,14 +477,108 @@ export function CommercialWebApp() {
     />;
   }
   function financialView() {
-    const students = list(data.students); const accounts = list(data.accounts); const charges = list(data.charges);
-    return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? <Section title="Nova conta financeira"><View style={styles.form}><Field label="Nome" value={account.name} onChangeText={(name) => setAccount((v) => ({ ...v, name }))} /><Field label="Tipo" value={account.type} onChangeText={(type) => setAccount((v) => ({ ...v, type }))} /><Field label="Saldo inicial" value={account.initialBalance} numeric onChangeText={(initialBalance) => setAccount((v) => ({ ...v, initialBalance }))} /></View><Button label="Criar conta" disabled={saving || !account.name.trim()} onPress={() => void mutate(() => api('/financial/accounts', undefined, { method: 'POST', body: JSON.stringify({ name: account.name.trim(), type: account.type.trim(), initialBalance: Number(account.initialBalance) || 0 }) }), () => setAccount({ name: '', type: 'CASH', initialBalance: '0' }))} /></Section> : null}<Section title="Plano e cobrança do aluno" subtitle="Este fluxo é academia → aluno; billing SaaS FM → academia pertence ao bloco seguinte."><Chips rows={students} selected={selectedFinancialStudent} onSelect={setSelectedFinancialStudent} /><View style={styles.form}><Field label="Plano do aluno" value={studentPlan.planName} onChangeText={(planName) => setStudentPlan((v) => ({ ...v, planName }))} /><Field label="Valor" value={studentPlan.amount} numeric onChangeText={(amount) => setStudentPlan((v) => ({ ...v, amount }))} /><Field label="Próxima cobrança ISO" value={studentPlan.nextBillingAt} onChangeText={(nextBillingAt) => setStudentPlan((v) => ({ ...v, nextBillingAt }))} /></View><Button label="Criar assinatura do aluno" disabled={saving || !selectedFinancialStudent || !studentPlan.planName.trim() || !studentPlan.amount.trim() || (!Number.isSafeInteger(Number(studentPlan.amount)) || Number(studentPlan.amount) <= 0)} onPress={() => void mutate(() => api('/financial/subscriptions', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedFinancialStudent, planName: studentPlan.planName.trim(), amount: Number(studentPlan.amount), ...(studentPlan.nextBillingAt.trim() ? { nextBillingAt: studentPlan.nextBillingAt.trim() } : {}) }) }))} /><View style={styles.form}><Field label="Valor da cobrança" value={charge.amount} numeric onChangeText={(amount) => setCharge((v) => ({ ...v, amount }))} /><Field label="Vencimento ISO" value={charge.dueDate} onChangeText={(dueDate) => setCharge((v) => ({ ...v, dueDate }))} /><Field label="Meio de pagamento" value={charge.paymentMethod} onChangeText={(paymentMethod) => setCharge((v) => ({ ...v, paymentMethod }))} /></View><Button secondary label="Criar cobrança" disabled={saving || !selectedFinancialStudent || !charge.amount.trim() || (!Number.isSafeInteger(Number(charge.amount)) || Number(charge.amount) <= 0) || (!charge.dueDate.trim() || Number.isNaN(Date.parse(charge.dueDate.trim())))} onPress={() => void mutate(() => api('/financial/charges', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedFinancialStudent, amount: Number(charge.amount), dueDate: charge.dueDate.trim(), ...(charge.paymentMethod.trim() ? { paymentMethod: charge.paymentMethod.trim() } : {}) }) }))} /></Section><Section title="Contas"><Chips rows={accounts} selected={selectedAccount} onSelect={setSelectedAccount} /><Data value={accounts} /></Section><AcademyChargesPanel charges={charges} accounts={accounts}
-      selectedAccountId={selectedAccount} saving={saving}
-      onPay={(chargeId, accountId) => { void mutate(() =>
-        api(`/financial/charges/${chargeId}/pay`, undefined, {
-          method: 'PATCH', body: JSON.stringify({ accountId }),
-        }),
-      ); }} /></>;
+    const students = list(data.students);
+    const accounts = list(data.accounts);
+    const charges = list(data.charges);
+    // The IRON finance API stores integer minor units (centavos). The user
+    // enters reais; only the exact parser result is submitted to the backend.
+    const initialMinor = brlToMinor(account.initialBalance);
+    const subscriptionMinor = positiveBrlToMinor(studentPlan.amount);
+    const chargeMinor = positiveBrlToMinor(charge.amount);
+    const subscriptionDate = studentPlan.nextBillingAt.trim()
+      ? financialDateIso(studentPlan.nextBillingAt) : undefined;
+    const dueDate = financialDateIso(charge.dueDate);
+    const accountValid = !!account.name.trim() && initialMinor !== null;
+    const subscriptionValid = !!selectedFinancialStudent && !!studentPlan.planName.trim() &&
+      subscriptionMinor !== null && (!studentPlan.nextBillingAt.trim() || !!subscriptionDate);
+    const chargeValid = !!selectedFinancialStudent && chargeMinor !== null && !!dueDate;
+    return <>
+      <Section title="Contas financeiras" subtitle="Caixa e contas pertencem somente à academia; cobrança da FM Tecnologia é gerida no FM Command.">
+        <View style={styles.form}>
+          <Field label="Nome da conta" value={account.name}
+            onChangeText={(name) => setAccount((current) => ({ ...current, name }))} />
+          <Field label="Tipo de conta" value={account.type}
+            onChangeText={(type) => setAccount((current) => ({ ...current, type }))} />
+          <Field label="Saldo inicial (R$)" value={account.initialBalance}
+            onChangeText={(initialBalance) => setAccount((current) => ({ ...current, initialBalance }))} />
+        </View>
+        {initialMinor === null ? <Text testID="finance-account-invalid" style={styles.error}>Informe o saldo inicial em reais (ex.: 0 ou 100,00), sem valor negativo.</Text> : null}
+        <Button testID="finance-create-account" label="Criar conta" disabled={saving || !accountValid}
+          onPress={() => {
+            if (initialMinor === null) return;
+            void mutate(() => api('/financial/accounts', undefined, {
+              method: 'POST',
+              body: JSON.stringify({ name: account.name.trim(), type: account.type.trim(), initialBalance: initialMinor }),
+            }), () => setAccount({ name: '', type: 'CASH', initialBalance: '0' }));
+          }} />
+        {accounts.length ? accounts.map((item: any) => <View key={item.id} style={styles.row}>
+          <Text style={styles.rowTitle}>{item.name ?? 'Conta financeira'}</Text>
+          <Text style={styles.muted}>Saldo inicial: {brlFromMinor(item.initialBalance)} · {item.active === false ? 'Inativa' : 'Ativa'}</Text>
+        </View>) : <Text style={styles.muted}>Nenhuma conta cadastrada.</Text>}
+        <Text style={styles.label}>Conta para registrar recebimentos</Text>
+        <Chips rows={accounts.filter((item: any) => item.active !== false)} selected={selectedAccount} onSelect={setSelectedAccount} />
+      </Section>
+      <Section title="Assinatura e cobranças do aluno"
+        subtitle="Academia → aluno. Informe valores em reais; o IRON registra os centavos exatos. Não é a assinatura SaaS da FM.">
+        <Text style={styles.label}>Aluno</Text>
+        <Chips rows={students} selected={selectedFinancialStudent} onSelect={setSelectedFinancialStudent} />
+        <View style={styles.form}>
+          <Field label="Nome do plano" value={studentPlan.planName}
+            onChangeText={(planName) => setStudentPlan((v) => ({ ...v, planName }))} />
+          <Field label="Mensalidade ou valor do plano (R$)" value={studentPlan.amount}
+            onChangeText={(amount) => setStudentPlan((v) => ({ ...v, amount }))} />
+          <Field label="Próxima cobrança (AAAA-MM-DD, opcional)" value={studentPlan.nextBillingAt}
+            onChangeText={(nextBillingAt) => setStudentPlan((v) => ({ ...v, nextBillingAt }))} />
+        </View>
+        {studentPlan.amount.trim() && subscriptionMinor === null ?
+          <Text testID="finance-subscription-invalid" style={styles.error}>Informe um valor positivo em reais, por exemplo 149,90.</Text> : null}
+        {studentPlan.nextBillingAt.trim() && !subscriptionDate ?
+          <Text testID="finance-subscription-date-invalid" style={styles.error}>Informe uma data real no formato AAAA-MM-DD.</Text> : null}
+        <Button testID="finance-create-subscription" label="Criar assinatura do aluno"
+          disabled={saving || !subscriptionValid}
+          onPress={() => {
+            if (!subscriptionValid || subscriptionMinor === null) return;
+            void mutate(() => api('/financial/subscriptions', undefined, {
+              method: 'POST',
+              body: JSON.stringify({
+                studentId: selectedFinancialStudent, planName: studentPlan.planName.trim(),
+                amount: subscriptionMinor, ...(subscriptionDate ? { nextBillingAt: subscriptionDate } : {}),
+              }),
+            }));
+          }} />
+        <View style={styles.form}>
+          <Field label="Valor da cobrança (R$)" value={charge.amount}
+            onChangeText={(amount) => setCharge((v) => ({ ...v, amount }))} />
+          <Field label="Vencimento (AAAA-MM-DD)" value={charge.dueDate}
+            onChangeText={(dueDateInput) => setCharge((v) => ({ ...v, dueDate: dueDateInput }))} />
+          <Field label="Meio previsto (opcional)" value={charge.paymentMethod}
+            onChangeText={(paymentMethod) => setCharge((v) => ({ ...v, paymentMethod }))} />
+        </View>
+        {charge.amount.trim() && chargeMinor === null ?
+          <Text testID="finance-charge-invalid" style={styles.error}>Informe o valor positivo em reais (ex.: 99,90).</Text> : null}
+        {charge.dueDate.trim() && !dueDate ?
+          <Text testID="finance-charge-date-invalid" style={styles.error}>Vencimento inválido. Utilize AAAA-MM-DD.</Text> : null}
+        <Button testID="finance-create-charge" secondary label="Criar cobrança"
+          disabled={saving || !chargeValid}
+          onPress={() => {
+            if (!chargeValid || chargeMinor === null || !dueDate) return;
+            void mutate(() => api('/financial/charges', undefined, {
+              method: 'POST',
+              body: JSON.stringify({
+                studentId: selectedFinancialStudent, amount: chargeMinor, dueDate,
+                ...(charge.paymentMethod.trim() ? { paymentMethod: charge.paymentMethod.trim() } : {}),
+              }),
+            }));
+          }} />
+      </Section>
+      <AcademyChargesPanel charges={charges} accounts={accounts} selectedAccountId={selectedAccount}
+        saving={saving}
+        onPay={(chargeId, accountId, paymentMethod) => {
+          void mutate(() => api('/financial/charges/' + encodeURIComponent(chargeId) + '/pay', undefined, {
+            method: 'PATCH', body: JSON.stringify({ accountId, paymentMethod }),
+          }));
+        }} />
+    </>;
   }
   function entitlementsView() {
     const features = list(data.features);
