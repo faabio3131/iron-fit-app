@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { api } from '../services/api';
 import { GlowCard } from './GlowCard';
+import { brlFromMinor } from '../utils/academy-money';
 
 type StudentSummary = { id: string; name: string; email?: string; status?: string };
 type StudentProfile = StudentSummary & {
@@ -27,9 +28,7 @@ function day(value?: string) {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('pt-BR');
 }
-function money(value: number) {
-  return Number.isFinite(value) ? (value / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—';
-}
+function money(value: number) { return brlFromMinor(value); }
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return <GlowCard style={styles.block}><Text style={styles.heading}>{title}</Text><View style={styles.blockBody}>{children}</View></GlowCard>;
 }
