@@ -53,9 +53,8 @@ export function WorkoutComposer({ students, onUpdated }: {
     return () => { mounted = false; };
   }, []);
   useEffect(() => {
-    if (!studentId) { setAssessments([]); return; }
+    if (!studentId) return;
     let mounted = true;
-    setFetching(true);
     api(`/students/${studentId}/assessments`).then((rows) => {
       if (mounted) setAssessments(Array.isArray(rows) ? rows : []);
     }).catch((e: unknown) => {
@@ -64,6 +63,9 @@ export function WorkoutComposer({ students, onUpdated }: {
     return () => { mounted = false; };
   }, [studentId]);
 
+  function chooseStudent(id: string) {
+    setStudentId(id); setAssessmentId(''); setAssessments([]); setFetching(true); setError('');
+  }
   function changeSession(key: number, update: Partial<SessionDraft>) {
     setSessions((rows) => rows.map((row) => row.key === key ? { ...row, ...update } : row));
   }
@@ -82,8 +84,7 @@ export function WorkoutComposer({ students, onUpdated }: {
     sessions.some((session) => !session.name.trim() || session.exercises.length === 0 ||
       positiveInt(session.estimatedMinutes) === null ||
       session.exercises.some((exercise) =>
-        positiveInt(exercise.sets) === null || positiveInt(exercise.reps) === null ||
-        positiveInt(exercise.restSeconds) === null ||
+        positiveInt(exercise.sets) === null || exercise.reps.trim().length === 0 || exercise.reps.trim().length > 80 ||
         (exercise.restSeconds.trim() !== '' && (!Number.isInteger(Number(exercise.restSeconds)) || Number(exercise.restSeconds) < 0)),
       )), [frequency, sessions]);
   const ready = !!studentId && !invalid && sessions.length > 0 &&
@@ -128,7 +129,7 @@ export function WorkoutComposer({ students, onUpdated }: {
     <Text style={styles.label}>Aluno</Text>
     <View style={styles.actions}>{students.map((student) => <Button key={student.id}
       testID={`studio-student-${student.id}`} label={`${student.name ?? 'Aluno'}${student.id === studentId ? ' ✓' : ''}`}
-      onPress={() => { setStudentId(student.id); setAssessmentId(''); }} />)}</View>
+      onPress={() => chooseStudent(student.id)} />)}</View>
     {fetching ? <ActivityIndicator color="#2BF47A" /> : null}
     {studentId && assessments.length ? <>
       <Text style={styles.label}>Avaliação de referência (opcional)</Text>
