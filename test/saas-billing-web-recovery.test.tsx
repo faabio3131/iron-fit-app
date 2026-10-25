@@ -49,7 +49,7 @@ test('C03 translates historical invoice and agreement, preserving minor units an
   const view = render(<SaasBillingPanel />);
   await waitFor(() => expect(view.getByText('IRON Profissional')).toBeTruthy());
   expect(view.getByTestId('saas-billing-state')).toBeTruthy();
-  expect(view.getByText('R$ 109,00') || view.getByText('R$ 109,00')).toBeTruthy();
+  expect(view.getAllByText(/R\$\s*109,00/).length).toBeGreaterThanOrEqual(1);
   expect(view.getByText(/Histórico local de leitura/)).toBeTruthy();
   expect(view.queryByText('LEGACY_READ_ONLY')).toBeNull();
   expect(view.queryByText('FM_COMMAND')).toBeNull();
