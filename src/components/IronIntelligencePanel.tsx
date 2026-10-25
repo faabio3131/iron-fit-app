@@ -32,9 +32,8 @@ export function IronIntelligencePanel({ students, workouts, onUpdated }: {
   const candidates = workouts.filter((w) => w.createdByAI);
 
   useEffect(() => {
-    if (!studentId) { setAssessments([]); return; }
+    if (!studentId) return;
     let mounted = true;
-    setFetching(true);
     api(`/students/${studentId}/assessments`).then((rows) => {
       if (mounted) setAssessments(Array.isArray(rows) ? rows : []);
     }).catch((e: unknown) => {
@@ -42,6 +41,11 @@ export function IronIntelligencePanel({ students, workouts, onUpdated }: {
     }).finally(() => { if (mounted) setFetching(false); });
     return () => { mounted = false; };
   }, [studentId]);
+
+  function chooseStudent(id: string) {
+    setStudentId(id); setAssessmentId(''); setAssessments([]); setFetching(true);
+    setError(''); setResult(null);
+  }
 
   async function generate() {
     if (!studentId || busy || fetching) return;
@@ -76,7 +80,7 @@ export function IronIntelligencePanel({ students, workouts, onUpdated }: {
       <Text style={styles.label}>Aluno da academia</Text>
       <View style={styles.actions}>{students.map((s) => <Action key={s.id} testID={`intelligence-student-${s.id}`}
         label={`${s.name ?? 'Aluno'}${studentId === s.id ? ' ✓' : ''}`}
-        onPress={() => { setStudentId(s.id); setAssessmentId(''); setError(''); setResult(null); }} />)}</View>
+        onPress={() => chooseStudent(s.id)} />)}</View>
       {fetching ? <ActivityIndicator color="#2BF47A" /> : null}
       {assessments.length > 0 ? <>
         <Text style={styles.label}>Avaliação de referência (opcional)</Text>
