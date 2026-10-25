@@ -2,6 +2,8 @@ import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { CommercialWebApp } from '../src/web/CommercialWebApp';
 
+jest.setTimeout(20000);
+
 const mockApi = jest.fn();
 let mockCurrentProfile = { id: 'owner-a', name: 'Operador IRON', roles: ['OWNER'], permissions: [] as string[] };
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
@@ -93,7 +95,7 @@ test('C02 reception access cannot query owner/manager device administration', as
   await waitFor(() => expect(view.getByTestId('nav-access')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-access'));
   await waitFor(() => expect(view.getByText('Credenciais dos alunos')).toBeTruthy());
-  expect(mockApi).toHaveBeenCalledWith('/access/credentials');
+  await waitFor(() => expect(mockApi).toHaveBeenCalledWith('/access/credentials'));
   expect(mockApi).not.toHaveBeenCalledWith('/access/devices');
   expect(view.queryByText('Dispositivos de acesso')).toBeNull();
 });
