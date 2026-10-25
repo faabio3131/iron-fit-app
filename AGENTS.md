@@ -398,9 +398,13 @@ seguida. Paleta canônica em `src/theme/colors.ts`
 oficial" citado em documentos históricos é superado por esta decisão.
 
 Blocos/cards devem acender um brilho verde neon ao passar o mouse
-(hover, web), igual ao efeito já usado no site — ver `GlowCard` em
-`src/components/GlowCard.tsx`. Em touch (mobile/app nativo) não há
-hover; o estado de repouso já reflete a identidade.
+(hover, web) — ver `GlowCard` em `src/components/GlowCard.tsx`. Em
+touch (mobile/app nativo e web mobile), não existe hover real, então
+o toque acende o brilho e ele permanece por um instante depois de
+soltar (`TOUCH_LINGER_MS` no GlowCard), em vez de sumir
+instantaneamente — reproduz o efeito do site, que usa `:hover` puro
+em CSS e se beneficia do comportamento "grudento" de :hover em
+navegadores mobile ao toque.
 
 Títulos de bloco/seção usam o verde de acento (não só preto e
 branco) — ver `sectionTitle` em `src/web/CommercialWebApp.tsx` como
