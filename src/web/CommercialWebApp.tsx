@@ -12,6 +12,7 @@ import { ExercisesLibraryPanel } from '../components/ExercisesLibraryPanel';
 import { TeamManagementPanel } from '../components/TeamManagementPanel';
 import { WorkoutComposer } from '../components/WorkoutComposer';
 import { ScheduleCalendarPanel } from '../components/ScheduleCalendarPanel';
+import { ScheduleManagementPanel } from '../components/ScheduleManagementPanel';
 import { AccessCenterPanel } from '../components/AccessCenterPanel';
 import { OperationsCockpitPanel, type CockpitShortcut } from '../components/OperationsCockpitPanel';
 import { OnboardingWorkspace } from '../components/OnboardingWorkspace';
@@ -162,17 +163,13 @@ export function CommercialWebApp() {
   const [selectedCatalogEquipment, setSelectedCatalogEquipment] = useState('');
   const [exercise, setExercise] = useState({ name: '', muscleGroup: '', level: '' });
   const [assessment, setAssessment] = useState({ weight: '', height: '', bodyFatPercent: '', notes: '' });
-  const [schedule, setSchedule] = useState({ weekday: '1', startTime: '08:00', endTime: '09:00', capacity: '10' });
   const [account, setAccount] = useState({ name: '', type: 'CASH', initialBalance: '0' });
   const [studentPlan, setStudentPlan] = useState({ planName: '', amount: '', nextBillingAt: '' });
   const [charge, setCharge] = useState({ amount: '', dueDate: '', paymentMethod: '' });
   const [academy, setAcademy] = useState({ name: '', timezone: 'America/Sao_Paulo' });
   const [configDraft, setConfigDraft] = useState<Record<string, string>>({});
   const [reviewWorkoutId, setReviewWorkoutId] = useState<string | null>(null);
-  const [selectedScheduleStudent, setSelectedScheduleStudent] = useState('');
-  const [selectedScheduleSlot, setSelectedScheduleSlot] = useState('');
   const [bookingDate, setBookingDate] = useState('');
-  const [lastBooking, setLastBooking] = useState<any>(null);
   const [scheduleRefresh, setScheduleRefresh] = useState(0);
   const [adminStepUpActive, setAdminStepUpActive] = useState(false);
   const [adminStepUpExpiresAt, setAdminStepUpExpiresAt] = useState<string | null>(null);
@@ -446,10 +443,21 @@ export function CommercialWebApp() {
       onUpdated={() => loadModule('intelligence')} />;
   }
   function scheduleView() {
-    const students = list(data.students); const slots = list(data.slots);
-    return <><ScheduleCalendarPanel key={activeTenantId ?? 'sem-academia'} slots={slots}
-      canCheckIn={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')}
-      onDateSelected={setBookingDate} refreshToken={scheduleRefresh} />{can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? <Section title="Criar horário"><View style={styles.form}><Field label="Dia 0-6" value={schedule.weekday} numeric onChangeText={(weekday) => setSchedule((v) => ({ ...v, weekday }))} /><Field label="Início" value={schedule.startTime} onChangeText={(startTime) => setSchedule((v) => ({ ...v, startTime }))} /><Field label="Fim" value={schedule.endTime} onChangeText={(endTime) => setSchedule((v) => ({ ...v, endTime }))} /><Field label="Capacidade" value={schedule.capacity} numeric onChangeText={(capacity) => setSchedule((v) => ({ ...v, capacity }))} /></View><Button label="Criar horário" disabled={saving} onPress={() => void mutate(() => api('/schedule-slots', undefined, { method: 'POST', body: JSON.stringify({ weekday: Number(schedule.weekday), startTime: schedule.startTime.trim(), endTime: schedule.endTime.trim(), capacity: Number(schedule.capacity), active: true }) }))} /></Section> : null}{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Agendar aluno e check-in" subtitle="O agendamento e o check-in são validados no tenant autenticado pelo backend."><Text style={styles.label}>Aluno</Text><Chips rows={students} selected={selectedScheduleStudent} onSelect={setSelectedScheduleStudent} /><Text style={styles.label}>Horário</Text><Chips rows={slots} selected={selectedScheduleSlot} onSelect={setSelectedScheduleSlot} /><Field label="Data ISO" value={bookingDate} onChangeText={setBookingDate} /><Button testID="schedule-book" label="Agendar aluno" disabled={saving || !selectedScheduleStudent || !selectedScheduleSlot || !bookingDate.trim()} onPress={() => void mutate(async () => { const created = await api('/schedules', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedScheduleStudent, slotId: selectedScheduleSlot, date: bookingDate.trim() }) }); setLastBooking(created); return created; })} />{lastBooking?.id ? <View style={styles.invite}><Text style={styles.rowTitle}>Agendamento criado</Text><Text style={styles.muted}>ID: {lastBooking.id}</Text><Button secondary testID="schedule-check-in" label="Registrar check-in" disabled={saving} onPress={() => void mutate(() => api(`/schedules/${lastBooking.id}/check-in`, undefined, { method: 'PATCH' }), () => setLastBooking(null))} /></View> : null}</Section> : null}</>;
+    const students = list(data.students);
+    const slots = list(data.slots);
+    return <>
+      <ScheduleCalendarPanel key={activeTenantId ?? 'sem-academia'} slots={slots}
+        canCheckIn={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')}
+        onDateSelected={setBookingDate} refreshToken={scheduleRefresh} />
+      {can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ?
+        <ScheduleManagementPanel key={activeTenantId ?? 'sem-academia'}
+          students={students} slots={slots} bookingDate={bookingDate} onDateChange={setBookingDate}
+          canManageSlots={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
+          onUpdated={async () => {
+            await loadModule('schedule');
+            setScheduleRefresh((current) => current + 1);
+          }} /> : null}
+    </>;
   }
   function accessView() {
     return <AccessCenterPanel key={activeTenantId ?? 'sem-academia'}

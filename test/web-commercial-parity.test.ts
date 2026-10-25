@@ -9,8 +9,9 @@ const assessmentEvolution = fs.readFileSync('src/components/AssessmentEvolutionP
 const workoutComposer = fs.readFileSync('src/components/WorkoutComposer.tsx', 'utf8');
 const intelligence = fs.readFileSync('src/components/IronIntelligencePanel.tsx', 'utf8');
 const accessCenter = fs.readFileSync('src/components/AccessCenterPanel.tsx', 'utf8');
+const scheduleManagement = fs.readFileSync('src/components/ScheduleManagementPanel.tsx', 'utf8');
 const operationalWeb = web + student360 + assessmentEvolution;
-const fullWeb = operationalWeb + workoutComposer + intelligence + accessCenter;
+const fullWeb = operationalWeb + workoutComposer + intelligence + accessCenter + scheduleManagement;
 const trial = fs.readFileSync('src/web/TrialSignupScreen.tsx', 'utf8');
 const workflow = fs.readFileSync('.github/workflows/mobile-ci.yml', 'utf8');
 
