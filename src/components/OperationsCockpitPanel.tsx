@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   subtitle: { color: '#f1f5f9', fontSize: 13, fontWeight: '800' },
   kpis: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   kpi: { padding: 14, flexGrow: 1, flexBasis: 164, backgroundColor: '#101d2a', borderColor: '#2a3f47', borderWidth: 1, borderRadius: 12, gap: 4 },
-  kpiLabel: { color: '#b8c8d8', fontWeight: '700', fontSize: 12 },
+  kpiLabel: { color: '#2BF47A', fontWeight: '700', fontSize: 12 },
   kpiValue: { color: '#eefcf3', fontWeight: '900', fontSize: 27 },
   kpiNote: { color: '#8497aa', fontSize: 11 },
   bars: { minHeight: 124, flexDirection: 'row', alignItems: 'flex-end', gap: 7, paddingVertical: 8 },
