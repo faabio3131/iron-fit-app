@@ -131,12 +131,12 @@ export function AccessCenterPanel({
       return;
     }
     setLoadingEvents(true); setEventError('');
-    const params = new URLSearchParams();
-    if (decision !== 'ALL') params.set('allowed', decision);
-    if (parsedFrom) params.set('from', parsedFrom);
-    if (parsedTo) params.set('to', parsedTo);
     try {
-      const path = '/access/events' + (params.toString() ? '?' + params.toString() : '');
+      const params: string[] = [];
+      if (decision !== 'ALL') params.push('allowed=' + encodeURIComponent(decision));
+      if (parsedFrom) params.push('from=' + encodeURIComponent(parsedFrom));
+      if (parsedTo) params.push('to=' + encodeURIComponent(parsedTo));
+      const path = '/access/events' + (params.length ? '?' + params.join('&') : '');
       const result = await api(path);
       if (!Array.isArray(result)) throw new Error('O backend não retornou um histórico válido.');
       setFilteredEvents(result);
