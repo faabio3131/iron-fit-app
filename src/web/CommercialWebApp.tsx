@@ -13,6 +13,7 @@ import { TeamManagementPanel } from '../components/TeamManagementPanel';
 import { WorkoutComposer } from '../components/WorkoutComposer';
 import { ScheduleCalendarPanel } from '../components/ScheduleCalendarPanel';
 import { AccessCenterPanel } from '../components/AccessCenterPanel';
+import { OperationsCockpitPanel, type CockpitShortcut } from '../components/OperationsCockpitPanel';
 import { PrivacyCenterPanel } from '../components/PrivacyCenterPanel';
 import { IronIntelligencePanel } from '../components/IronIntelligencePanel';
 import { AggregatorHubPanel } from '../components/AggregatorHubPanel';
@@ -312,8 +313,22 @@ export function CommercialWebApp() {
   }
 
   function overview() {
-    const showFinancial = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
-    return <><Section title="Academia e sessão"><Data value={data.gym ? [data.gym] : []} /><Text style={styles.muted}>Usuário: {profile?.name ?? profile?.email ?? '—'} · Papéis: {roles.join(', ') || '—'} · Tenant derivado da sessão: {activeTenantId ?? '—'}</Text></Section><Section title="Dashboard"><Data value={data.summary ? [data.summary] : []} /></Section>{showFinancial ? <Section title="Receita — 30 dias"><Data value={data.revenue} /></Section> : null}<Section title="Presença — 7 dias"><Data value={data.attendance} /></Section>{showFinancial ? <Section title="Cobranças vencidas"><Data value={data.overdue} /></Section> : null}<Section title="Aniversários"><Data value={data.birthdays} /></Section></>;
+    const financialAuthorized = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
+    const eligibleShortcuts: CockpitShortcut[] = ['students', 'team', 'equipment', 'workouts', 'schedule', 'access', 'financial'];
+    const authorizedShortcuts = eligibleShortcuts.filter((key) => visible.some((module) => module.key === key));
+    return <OperationsCockpitPanel academyName={typeof data.gym?.name === 'string' ? data.gym.name : undefined}
+      operatorName={profile?.name ?? profile?.email}
+      summary={data.summary ?? null}
+      attendance={Array.isArray(data.attendance) ? data.attendance : null}
+      revenue={financialAuthorized && Array.isArray(data.revenue) ? data.revenue : null}
+      overdue={financialAuthorized && Array.isArray(data.overdue) ? data.overdue : null}
+      birthdays={Array.isArray(data.birthdays) ? data.birthdays : null}
+      financialAuthorized={financialAuthorized}
+      availableModules={authorizedShortcuts}
+      onNavigate={(key) => setActive(key)}
+      onRefresh={() => { void loadModule('overview'); }}
+      refreshing={loading}
+    />;
   }
   function onboardingView() {
     const step = onboarding?.nextStep as string | undefined;
