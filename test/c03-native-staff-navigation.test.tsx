@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, Text } from 'react-native';
+import { Platform } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { RootNavigator } from '../src/navigation/RootNavigator';
 
@@ -11,13 +11,21 @@ jest.mock('../src/context/AuthContext', () => ({
   useAuth: () => mockAuth,
 }));
 jest.mock('../src/web/CommercialWebApp', () => ({
-  CommercialWebApp: () => <Text testID="canonical-staff-operations">Operação</Text>,
+  CommercialWebApp: () => {
+    const React = require('react');
+    const Native = require('react-native');
+    return React.createElement(Native.Text, { testID: 'canonical-staff-operations' }, 'Operação');
+  },
 }));
 jest.mock('../src/web/WebAuthEntry', () => ({ WebAuthEntry: () => null }));
 jest.mock('../src/screens/LoginScreen', () => ({ LoginScreen: () => null }));
 jest.mock('../src/screens/PasswordRecoveryScreen', () => ({ PasswordRecoveryScreen: () => null }));
 jest.mock('../src/screens/TenantSelectionScreen', () => ({ TenantSelectionScreen: () => null }));
-jest.mock('../src/screens/WorkoutsScreen', () => ({ WorkoutsScreen: () => <Text testID="student-workouts">Aluno</Text> }));
+jest.mock('../src/screens/WorkoutsScreen', () => ({ WorkoutsScreen: () => {
+    const React = require('react');
+    const Native = require('react-native');
+    return React.createElement(Native.Text, { testID: 'student-workouts' }, 'Aluno');
+  } }));
 jest.mock('../src/screens/SchedulesScreen', () => ({ SchedulesScreen: () => null }));
 jest.mock('../src/screens/EvolutionScreen', () => ({ EvolutionScreen: () => null }));
 jest.mock('../src/screens/FinancialScreen', () => ({ FinancialScreen: () => null }));
