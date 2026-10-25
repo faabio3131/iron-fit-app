@@ -4,6 +4,9 @@ const api = fs.readFileSync('src/services/api.ts', 'utf8');
 const auth = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
 const navigator = fs.readFileSync('src/navigation/RootNavigator.tsx', 'utf8');
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
+const student360 = fs.readFileSync('src/components/Student360Panel.tsx', 'utf8');
+const assessmentEvolution = fs.readFileSync('src/components/AssessmentEvolutionPanel.tsx', 'utf8');
+const operationalWeb = web + student360 + assessmentEvolution;
 const trial = fs.readFileSync('src/web/TrialSignupScreen.tsx', 'utf8');
 const workouts = fs.readFileSync('src/screens/WorkoutsScreen.tsx', 'utf8');
 const schedules = fs.readFileSync('src/screens/SchedulesScreen.tsx', 'utf8');
@@ -48,7 +51,7 @@ test('B6 commercial Web consumes canonical backend domains and entitlement resol
     '/product-entitlements/tenant/current',
     '/product-entitlements/tenant/features',
   ]) {
-    expect(web).toContain(route);
+    expect(operationalWeb).toContain(route);
   }
   expect(web).toContain('equipment.inventory');
   expect(web).toContain('equipment.catalog');
