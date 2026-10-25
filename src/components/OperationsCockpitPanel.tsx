@@ -1,6 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GlowCard } from './GlowCard';
+import { brlFromMinor } from '../utils/academy-money';
 
 type Summary = {
   students?: { total?: number; active?: number; inactive?: number };
@@ -117,11 +118,11 @@ export function OperationsCockpitPanel({ academyName, operatorName, summary, att
           </View>)}
         </View> : <Text style={styles.hint}>Nenhuma cobrança vencida retornada pela consulta.</Text>}
       </Section>
-      <Section title="Recebimentos — últimos 30 dias" description="Valores conforme a unidade registrada pela API financeira; não representam faturamento do SaaS.">
+      <Section title="Recebimentos — últimos 30 dias" description="Recebimentos da academia em reais, convertidos dos centavos registrados pelo backend; não representam billing da FM.">
         {revenueRows.length ? <View style={styles.recordList}>
           {revenueRows.slice(-7).map((row) => <View key={row.date} style={styles.record}>
             <Text style={styles.recordName}>{date(row.date)}</Text>
-            <Text style={styles.hint}>Valor registrado: {number(row.amount)}</Text>
+            <Text style={styles.hint}>Valor recebido: {brlFromMinor(row.amount)}</Text>
           </View>)}
         </View> : <Text style={styles.hint}>Não há movimentações no período consultado.</Text>}
       </Section>
