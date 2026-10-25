@@ -37,6 +37,7 @@ async function finance() {
   await waitFor(() => expect(view.getByTestId('nav-financial')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-financial'));
   await waitFor(() => expect(view.getByTestId('finance-create-charge')).toBeTruthy());
+  await waitFor(() => expect(view.getByText('Ana Silva')).toBeTruthy());
   return view;
 }
 
