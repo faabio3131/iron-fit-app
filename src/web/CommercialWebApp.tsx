@@ -161,6 +161,7 @@ export function CommercialWebApp() {
   const [credentialType, setCredentialType] = useState('QR_CODE');
   const [credentialExpiresAt, setCredentialExpiresAt] = useState('');
   const [lastCredential, setLastCredential] = useState<any>(null);
+  const [pendingCredentialRevoke, setPendingCredentialRevoke] = useState<string | null>(null);
   const [adminStepUpActive, setAdminStepUpActive] = useState(false);
   const [adminStepUpExpiresAt, setAdminStepUpExpiresAt] = useState<string | null>(null);
   const [adminPassword, setAdminPassword] = useState('');
@@ -219,7 +220,7 @@ export function CommercialWebApp() {
       if (key === 'assessments') { next.students = await api('/students'); if (selectedStudent) next.assessments = await api(`/students/${selectedStudent}/assessments`); }
       if (key === 'workouts') { [next.workouts, next.students] = await Promise.all([api('/workouts'), api('/students')]); }
       if (key === 'schedule') { [next.slots, next.students] = await Promise.all([api('/schedule-slots'), api('/students')]); }
-      if (key === 'access') { [next.events, next.students] = await Promise.all([api('/access/events'), api('/students')]); }
+      if (key === 'access') { [next.events, next.students, next.credentials, next.devices] = await Promise.all([api('/access/events'), api('/students'), api('/access/credentials'), can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? api('/access/devices') : Promise.resolve([])]); }
       if (key === 'financial') { [next.accounts, next.charges, next.students] = await Promise.all([api('/financial/accounts'), api('/financial/charges'), api('/students')]); }
       if (key === 'entitlements') { [next.features, next.configurations] = await Promise.all([api('/product-entitlements/tenant/features'), api('/product-entitlements/tenant/configurations')]); next.subscription = subscription; }
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
@@ -357,7 +358,7 @@ export function CommercialWebApp() {
   function workoutsView() {
     const students = list(data.students); const workouts = list(data.workouts);
     const weeklyFrequency = workoutDraft.weeklyFrequency.trim() ? Number(workoutDraft.weeklyFrequency) : undefined;
-    return <><Section title="Criar treino manual" subtitle="A criação humana usa o mesmo domínio canônico e inicia em DRAFT."><Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} /><View style={styles.form}><Field label="Objetivo" value={workoutDraft.goal} onChangeText={(goal) => setWorkoutDraft((v) => ({ ...v, goal }))} /><Field label="Nível" value={workoutDraft.level} onChangeText={(level) => setWorkoutDraft((v) => ({ ...v, level }))} /><Field label="Frequência semanal" value={workoutDraft.weeklyFrequency} numeric onChangeText={(value) => setWorkoutDraft((v) => ({ ...v, weeklyFrequency: value }))} /><Field label="Observações" value={workoutDraft.notes} onChangeText={(notes) => setWorkoutDraft((v) => ({ ...v, notes }))} /></View><Button testID="manual-workout-create" label="Criar rascunho" disabled={saving || !selectedStudent || (weeklyFrequency !== undefined && (!Number.isInteger(weeklyFrequency) || weeklyFrequency < 1))} onPress={() => void mutate(() => api('/workouts', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedStudent, ...(workoutDraft.goal.trim() ? { goal: workoutDraft.goal.trim() } : {}), ...(workoutDraft.level.trim() ? { level: workoutDraft.level.trim() } : {}), ...(weeklyFrequency !== undefined ? { weeklyFrequency } : {}), ...(workoutDraft.notes.trim() ? { notes: workoutDraft.notes.trim() } : {}) }) }), () => setWorkoutDraft({ goal: '', level: '', weeklyFrequency: '', notes: '' }))} /></Section>{enabled('ai.workout_generation') ? <Section title="Iron Intelligence — candidato de treino" subtitle="A IA cria somente PENDING_REVIEW. Aprovação/ativação permanece humana."><Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} /><Field label="Instruções opcionais" value={aiInstructions} onChangeText={setAiInstructions} /><Button label="Gerar candidato" disabled={saving || !selectedStudent} onPress={() => void mutate(() => api('/ai/workout-candidates', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedStudent, ...(aiInstructions.trim() ? { instructions: aiInstructions.trim() } : {}) }) }))} /></Section> : null}<Section title="Treinos e revisão humana">{workouts.length ? workouts.map((workout: any) => <View key={workout.id} style={styles.row}><Text style={styles.rowTitle}>{workout.student?.user?.name ?? workout.goal ?? workout.id}</Text><Text style={styles.muted}>Status: {workout.status} · IA: {workout.createdByAI ? 'sim' : 'não'}</Text>{workout.status === 'PENDING_REVIEW' ? <View style={styles.actions}><Button label="Aprovar" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'APPROVED' }) }))} /><Button secondary label="Ativar" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'ACTIVE' }) }))} /></View> : null}</View>) : <Text style={styles.muted}>Nenhum treino encontrado.</Text>}</Section></>;
+    return <><Section title="Criar treino manual" subtitle="A criação humana usa o mesmo domínio canônico e inicia em DRAFT."><Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} /><View style={styles.form}><Field label="Objetivo" value={workoutDraft.goal} onChangeText={(goal) => setWorkoutDraft((v) => ({ ...v, goal }))} /><Field label="Nível" value={workoutDraft.level} onChangeText={(level) => setWorkoutDraft((v) => ({ ...v, level }))} /><Field label="Frequência semanal" value={workoutDraft.weeklyFrequency} numeric onChangeText={(value) => setWorkoutDraft((v) => ({ ...v, weeklyFrequency: value }))} /><Field label="Observações" value={workoutDraft.notes} onChangeText={(notes) => setWorkoutDraft((v) => ({ ...v, notes }))} /></View><Button testID="manual-workout-create" label="Criar rascunho" disabled={saving || !selectedStudent || (weeklyFrequency !== undefined && (!Number.isInteger(weeklyFrequency) || weeklyFrequency < 1))} onPress={() => void mutate(() => api('/workouts', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedStudent, ...(workoutDraft.goal.trim() ? { goal: workoutDraft.goal.trim() } : {}), ...(workoutDraft.level.trim() ? { level: workoutDraft.level.trim() } : {}), ...(weeklyFrequency !== undefined ? { weeklyFrequency } : {}), ...(workoutDraft.notes.trim() ? { notes: workoutDraft.notes.trim() } : {}) }) }), () => setWorkoutDraft({ goal: '', level: '', weeklyFrequency: '', notes: '' }))} /></Section>{enabled('ai.workout_generation') ? <Section title="Iron Intelligence — candidato de treino" subtitle="A IA cria somente PENDING_REVIEW. Aprovação/ativação permanece humana."><Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} /><Field label="Instruções opcionais" value={aiInstructions} onChangeText={setAiInstructions} /><Button label="Gerar candidato" disabled={saving || !selectedStudent} onPress={() => void mutate(() => api('/ai/workout-candidates', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedStudent, ...(aiInstructions.trim() ? { instructions: aiInstructions.trim() } : {}) }) }))} /></Section> : null}<Section title="Treinos e revisão humana">{workouts.length ? workouts.map((workout: any) => <View key={workout.id} style={styles.row}><Text style={styles.rowTitle}>{workout.student?.user?.name ?? workout.goal ?? workout.id}</Text><Text style={styles.muted}>Status: {workout.status} · IA: {workout.createdByAI ? 'sim' : 'não'}</Text>{workout.status === 'DRAFT' || workout.status === 'PENDING_REVIEW' ? <Button testID={`workout-approve-${workout.id}`} label="Aprovar treino" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'APPROVED' }) }))} /> : null}{workout.status === 'APPROVED' ? <Button testID={`workout-activate-${workout.id}`} secondary label="Ativar treino" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'ACTIVE' }) }))} /> : null}</View>) : <Text style={styles.muted}>Nenhum treino encontrado.</Text>}</Section></>;
   }
   function scheduleView() {
     const students = list(data.students); const slots = list(data.slots);
@@ -365,7 +366,48 @@ export function CommercialWebApp() {
   }
   function accessView() {
     const students = list(data.students);
-    return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Emitir credencial de acesso" subtitle="O QR token é retornado uma única vez; a autoridade de acesso permanece no backend."><Chips rows={students} selected={selectedAccessStudent} onSelect={setSelectedAccessStudent} /><View style={styles.form}><Field label="Tipo" value={credentialType} onChangeText={setCredentialType} /><Field label="Expira em ISO (opcional)" value={credentialExpiresAt} onChangeText={setCredentialExpiresAt} /></View><Button testID="access-credential-create" label="Gerar credencial" disabled={saving || !selectedAccessStudent} onPress={() => void mutate(async () => { const created = await api('/access/credentials', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedAccessStudent, ...(credentialType.trim() ? { type: credentialType.trim() } : {}), ...(credentialExpiresAt.trim() ? { expiresAt: credentialExpiresAt.trim() } : {}) }) }); setLastCredential(created); return created; })} />{lastCredential?.qrToken ? <View style={styles.invite}><Text style={styles.rowTitle}>QR token — exibir uma única vez</Text><Text selectable style={styles.json}>{lastCredential.qrToken}</Text><Text style={styles.muted}>Credencial: {lastCredential.credentialId ?? '—'} · Tipo: {lastCredential.type ?? '—'}</Text><Button secondary label="Ocultar token" onPress={() => setLastCredential(null)} /></View> : null}</Section> : null}<Section title="Histórico de acessos"><Data value={data.events} /></Section></>;
+    const credentials = list(data.credentials);
+    const devices = list(data.devices);
+    return <>
+      {can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? (
+        <Section title="Emitir credencial de acesso" subtitle="O QR token é exibido apenas após a emissão; a decisão de entrada pertence ao backend.">
+          <Text style={styles.label}>Aluno</Text>
+          <Chips rows={students} selected={selectedAccessStudent} onSelect={setSelectedAccessStudent} />
+          <View style={styles.form}>
+            <Field label="Tipo" value={credentialType} onChangeText={setCredentialType} />
+            <Field label="Expira em ISO (opcional)" value={credentialExpiresAt} onChangeText={setCredentialExpiresAt} />
+          </View>
+          <Button testID="access-credential-create" label="Gerar credencial" disabled={saving || !selectedAccessStudent} onPress={() => void mutate(async () => {
+            const created = await api('/access/credentials', undefined, { method: 'POST', body: JSON.stringify({
+              studentId: selectedAccessStudent,
+              ...(credentialType.trim() ? { type: credentialType.trim() } : {}),
+              ...(credentialExpiresAt.trim() ? { expiresAt: credentialExpiresAt.trim() } : {}),
+            }) });
+            setLastCredential(created);
+            return created;
+          })} />
+          {lastCredential?.qrToken ? <View style={styles.invite}>
+            <Text style={styles.rowTitle}>QR token — exibir uma única vez</Text>
+            <Text selectable style={styles.json}>{lastCredential.qrToken}</Text>
+            <Text style={styles.muted}>Tipo: {lastCredential.type ?? '—'}</Text>
+            <Button secondary label="Ocultar token" onPress={() => setLastCredential(null)} />
+          </View> : null}
+        </Section>
+      ) : null}
+      <Section title="Credenciais dos alunos" subtitle="Consulte o estado e revogue credenciais quando necessário. Tokens e hashes não são listados.">
+        {credentials.length ? credentials.map((credential: any) => <View key={credential.id} style={styles.row}>
+          <Text style={styles.rowTitle}>{credential.student?.user?.name ?? 'Aluno'}</Text>
+          <Text style={styles.muted}>Tipo: {credential.type ?? '—'} · Estado: {credential.status === 'ACTIVE' ? 'Ativa' : credential.status === 'EXPIRED' ? 'Expirada' : 'Inativa'}</Text>
+          {credential.active ? pendingCredentialRevoke === credential.id ? <View style={styles.actions}>
+            <Text style={styles.muted}>Confirma a revogação desta credencial?</Text>
+            <Button testID={`access-revoke-confirm-${credential.id}`} label="Confirmar revogação" disabled={saving} onPress={() => void mutate(() => api(`/access/credentials/${credential.id}/revoke`, undefined, { method: 'PATCH' }), () => setPendingCredentialRevoke(null))} />
+            <Button secondary label="Cancelar" onPress={() => setPendingCredentialRevoke(null)} />
+          </View> : <Button testID={`access-revoke-${credential.id}`} secondary label="Revogar credencial" disabled={saving} onPress={() => setPendingCredentialRevoke(credential.id)} /> : null}
+        </View>) : <Text style={styles.muted}>Nenhuma credencial registrada.</Text>}
+      </Section>
+      {can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? <Section title="Dispositivos de acesso" subtitle="Estado operacional dos dispositivos, sem expor tokens."><Data value={devices} empty="Nenhum dispositivo cadastrado." /></Section> : null}
+      <Section title="Histórico de acessos"><Data value={data.events} /></Section>
+    </>;
   }
   function financialView() {
     const students = list(data.students); const accounts = list(data.accounts); const charges = list(data.charges);
