@@ -44,7 +44,6 @@ export function FinancialScreen() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     api('/me/charges')
       .then((payload) => {
         if (!active) return;
@@ -68,7 +67,11 @@ export function FinancialScreen() {
       ? charge.status === 'PENDING' || charge.status === 'OVERDUE'
       : charge.status === 'PAID')), [charges, filter]);
 
-  const reload = useCallback(() => setReloadVersion((current) => current + 1), []);
+  const reload = useCallback(() => {
+    setLoading(true);
+    setError('');
+    setReloadVersion((current) => current + 1);
+  }, []);
 
   return <ScrollView style={styles.scroll} contentContainerStyle={styles.content} testID="student-financial-screen">
     <View style={styles.header}>
