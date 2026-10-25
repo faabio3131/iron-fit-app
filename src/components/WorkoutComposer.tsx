@@ -143,7 +143,7 @@ export function WorkoutComposer({ students, onUpdated }: {
     <View style={styles.form}>
       <Input label="Objetivo" value={goal} onChangeText={setGoal} />
       <Input label="Nível" value={level} onChangeText={setLevel} />
-      <Input label="Frequência semanal (1–14)" value={frequency} onChangeText={setFrequency} />
+      <Input label="Frequência semanal (1–14)" testID="studio-frequency" value={frequency} onChangeText={setFrequency} />
       <Input label="Observações profissionais" value={notes} onChangeText={setNotes} />
     </View>
     <Text style={styles.label}>Biblioteca de exercícios</Text>
