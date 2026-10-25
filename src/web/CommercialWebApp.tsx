@@ -10,11 +10,13 @@ import { AssessmentEvolutionPanel } from '../components/AssessmentEvolutionPanel
 import { EquipmentIntelligencePanel } from '../components/EquipmentIntelligencePanel';
 import { ExercisesLibraryPanel } from '../components/ExercisesLibraryPanel';
 import { TeamManagementPanel } from '../components/TeamManagementPanel';
+import { WorkoutComposer } from '../components/WorkoutComposer';
+import { IronIntelligencePanel } from '../components/IronIntelligencePanel';
 import { GlowCard } from '../components/GlowCard';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
-type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'schedule' | 'access' | 'communication' | 'financial' | 'saasBilling' | 'security' | 'entitlements' | 'integrations' | 'creator';
+type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'intelligence' | 'schedule' | 'access' | 'communication' | 'financial' | 'saasBilling' | 'security' | 'entitlements' | 'integrations' | 'creator';
 type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; value: boolean | number | string[] | null; source?: string; reason?: string | null };
 type ModuleDefinition = { key: ModuleKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name']; roles?: string[]; entitlement?: string[] };
 const restrictedAdminModules: ModuleKey[] = ['financial', 'saasBilling', 'entitlements', 'integrations'];
@@ -30,6 +32,7 @@ const modules: ModuleDefinition[] = [
   { key: 'exercises', label: 'Exercícios', icon: 'fitness-outline', roles: staff },
   { key: 'assessments', label: 'Avaliações', icon: 'pulse-outline', roles: staff },
   { key: 'workouts', label: 'Treinos', icon: 'clipboard-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER'] },
+  { key: 'intelligence', label: 'IRON Intelligence', icon: 'sparkles-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER'], entitlement: ['ai.workout_generation'] },
   { key: 'schedule', label: 'Agenda', icon: 'calendar-outline', roles: staff },
   { key: 'access', label: 'Acessos', icon: 'key-outline', roles: operational },
   { key: 'communication', label: 'Comunicação', icon: 'chatbubbles-outline', roles: operational },
@@ -155,9 +158,8 @@ export function CommercialWebApp() {
   const [studentPlan, setStudentPlan] = useState({ planName: '', amount: '', nextBillingAt: '' });
   const [charge, setCharge] = useState({ amount: '', dueDate: '', paymentMethod: '' });
   const [academy, setAcademy] = useState({ name: '', timezone: 'America/Sao_Paulo' });
-  const [aiInstructions, setAiInstructions] = useState('');
   const [configDraft, setConfigDraft] = useState<Record<string, string>>({});
-  const [workoutDraft, setWorkoutDraft] = useState({ goal: '', level: '', weeklyFrequency: '', notes: '' });
+  const [reviewWorkoutId, setReviewWorkoutId] = useState<string | null>(null);
   const [selectedScheduleStudent, setSelectedScheduleStudent] = useState('');
   const [selectedScheduleSlot, setSelectedScheduleSlot] = useState('');
   const [bookingDate, setBookingDate] = useState('');
@@ -223,7 +225,7 @@ export function CommercialWebApp() {
       if (key === 'equipment') { const calls: Promise<any>[] = [api('/equipments')]; if (enabled('equipment.catalog')) calls.push(api('/equipments/catalog')); const [inventory, catalog] = await Promise.all(calls); Object.assign(next, { inventory, catalog: catalog ?? [] }); }
       if (key === 'exercises') next.exercises = await api('/exercises');
       if (key === 'assessments') next.students = await api('/students');
-      if (key === 'workouts') { [next.workouts, next.students] = await Promise.all([api('/workouts'), api('/students')]); }
+      if (key === 'workouts' || key === 'intelligence') { [next.workouts, next.students] = await Promise.all([api('/workouts'), api('/students')]); }
       if (key === 'schedule') { [next.slots, next.students] = await Promise.all([api('/schedule-slots'), api('/students')]); }
       if (key === 'access') { [next.events, next.students, next.credentials, next.devices] = await Promise.all([api('/access/events'), api('/students'), api('/access/credentials'), can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? api('/access/devices') : Promise.resolve([])]); }
       if (key === 'financial') { [next.accounts, next.charges, next.students] = await Promise.all([api('/financial/accounts'), api('/financial/charges'), api('/students')]); }
@@ -352,9 +354,63 @@ export function CommercialWebApp() {
       canCreate={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER')} />;
   }
   function workoutsView() {
-    const students = list(data.students); const workouts = list(data.workouts);
-    const weeklyFrequency = workoutDraft.weeklyFrequency.trim() ? Number(workoutDraft.weeklyFrequency) : undefined;
-    return <><Section title="Criar treino manual" subtitle="A criação humana usa o mesmo domínio canônico e inicia em DRAFT."><Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} /><View style={styles.form}><Field label="Objetivo" value={workoutDraft.goal} onChangeText={(goal) => setWorkoutDraft((v) => ({ ...v, goal }))} /><Field label="Nível" value={workoutDraft.level} onChangeText={(level) => setWorkoutDraft((v) => ({ ...v, level }))} /><Field label="Frequência semanal" value={workoutDraft.weeklyFrequency} numeric onChangeText={(value) => setWorkoutDraft((v) => ({ ...v, weeklyFrequency: value }))} /><Field label="Observações" value={workoutDraft.notes} onChangeText={(notes) => setWorkoutDraft((v) => ({ ...v, notes }))} /></View><Button testID="manual-workout-create" label="Criar rascunho" disabled={saving || !selectedStudent || (weeklyFrequency !== undefined && (!Number.isInteger(weeklyFrequency) || weeklyFrequency < 1))} onPress={() => void mutate(() => api('/workouts', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedStudent, ...(workoutDraft.goal.trim() ? { goal: workoutDraft.goal.trim() } : {}), ...(workoutDraft.level.trim() ? { level: workoutDraft.level.trim() } : {}), ...(weeklyFrequency !== undefined ? { weeklyFrequency } : {}), ...(workoutDraft.notes.trim() ? { notes: workoutDraft.notes.trim() } : {}) }) }), () => setWorkoutDraft({ goal: '', level: '', weeklyFrequency: '', notes: '' }))} /></Section>{enabled('ai.workout_generation') ? <Section title="Iron Intelligence — candidato de treino" subtitle="A IA cria somente PENDING_REVIEW. Aprovação/ativação permanece humana."><Chips rows={students} selected={selectedStudent} onSelect={setSelectedStudent} /><Field label="Instruções opcionais" value={aiInstructions} onChangeText={setAiInstructions} /><Button label="Gerar candidato" disabled={saving || !selectedStudent} onPress={() => void mutate(() => api('/ai/workout-candidates', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedStudent, ...(aiInstructions.trim() ? { instructions: aiInstructions.trim() } : {}) }) }))} /></Section> : null}<Section title="Treinos e revisão humana">{workouts.length ? workouts.map((workout: any) => <View key={workout.id} style={styles.row}><Text style={styles.rowTitle}>{workout.student?.user?.name ?? workout.goal ?? workout.id}</Text><Text style={styles.muted}>Status: {workout.status} · IA: {workout.createdByAI ? 'sim' : 'não'}</Text>{workout.status === 'DRAFT' || workout.status === 'PENDING_REVIEW' ? <Button testID={`workout-approve-${workout.id}`} label="Aprovar treino" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'APPROVED' }) }))} /> : null}{workout.status === 'APPROVED' ? <Button testID={`workout-activate-${workout.id}`} secondary label="Ativar treino" disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, { method: 'PATCH', body: JSON.stringify({ status: 'ACTIVE' }) }))} /> : null}</View>) : <Text style={styles.muted}>Nenhum treino encontrado.</Text>}</Section></>;
+    const students = list(data.students);
+    const workouts = list(data.workouts);
+    return <>
+      <WorkoutComposer key={activeTenantId ?? 'sem-academia'} students={students}
+        onUpdated={() => loadModule('workouts')} />
+      <Section title="Treinos e revisão profissional"
+        subtitle="Candidatos de IA e treinos manuais passam pela revisão humana. Examine sessões e exercícios antes de aprovar.">
+        {workouts.length ? workouts.map((workout: any) => {
+          const reviewing = reviewWorkoutId === workout.id;
+          const eligible = workout.status === 'DRAFT' || workout.status === 'PENDING_REVIEW';
+          return <View key={workout.id} style={styles.row}>
+            <Text style={styles.rowTitle}>{workout.student?.user?.name ?? workout.goal ?? 'Treino'}</Text>
+            <Text style={styles.muted}>Objetivo: {workout.goal ?? 'Não definido'} · Situação: {
+              workout.status === 'DRAFT' ? 'Rascunho' : workout.status === 'PENDING_REVIEW' ?
+                'Aguardando revisão humana' : workout.status === 'APPROVED' ? 'Aprovado' :
+                  workout.status === 'ACTIVE' ? 'Ativo' : 'Finalizado'
+            } · Origem: {workout.createdByAI ? 'Candidato IA' : 'Manual'}</Text>
+            <Text style={styles.muted}>Sessões: {Array.isArray(workout.sessions) ? workout.sessions.length : 0}</Text>
+            <Button testID={`workout-details-${workout.id}`} secondary
+              label={reviewing ? 'Ocultar detalhes' : 'Revisar detalhes'} onPress={() => setReviewWorkoutId(reviewing ? null : workout.id)} />
+            {reviewing ? <View style={styles.rowFields}>
+              <Text style={styles.rowTitle}>Conteúdo para revisão profissional</Text>
+              <Text style={styles.muted}>Nível: {workout.level ?? 'Não informado'} · Frequência: {workout.weeklyFrequency ?? '—'} vez(es) por semana</Text>
+              {workout.notes ? <Text style={styles.muted}>Observações: {workout.notes}</Text> : null}
+              {(Array.isArray(workout.sessions) ? workout.sessions : []).map((session: any) => <View key={session.id ?? session.order} style={styles.rowField}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle}>{session.name ?? 'Sessão'}</Text>
+                  {(Array.isArray(session.exercises) ? session.exercises : []).map((entry: any, index: number) =>
+                    <Text key={entry.id ?? index} style={styles.muted}>{
+                      entry.exercise?.name ?? 'Exercício'
+                    } · {entry.sets ?? '—'} séries · {entry.reps ?? '—'} repetições · descanso {entry.restSeconds ?? '—'}s</Text>)}
+                </View>
+              </View>)}
+              {eligible ? <View style={styles.actions}>
+                <Text style={styles.muted}>Aprovar registra o profissional revisor na auditoria. A ativação é uma etapa distinta.</Text>
+                <Button testID={`workout-review-confirm-${workout.id}`} label="Confirmar revisão e aprovação"
+                  disabled={saving} onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, {
+                    method: 'PATCH', body: JSON.stringify({ status: 'APPROVED' }),
+                  }), () => setReviewWorkoutId(null))} />
+              </View> : null}
+            </View> : null}
+            {eligible ? <Button testID={`workout-approve-${workout.id}`} label="Revisar antes de aprovar"
+              disabled={saving} onPress={() => setReviewWorkoutId(workout.id)} /> : null}
+            {workout.status === 'APPROVED' ? <Button testID={`workout-activate-${workout.id}`}
+              secondary label="Ativar treino aprovado" disabled={saving}
+              onPress={() => void mutate(() => api(`/workouts/${workout.id}/status`, undefined, {
+                method: 'PATCH', body: JSON.stringify({ status: 'ACTIVE' }),
+              }))} /> : null}
+          </View>;
+        }) : <Text style={styles.muted}>Nenhum treino cadastrado.</Text>}
+      </Section>
+    </>;
+  }
+  function intelligenceView() {
+    return <IronIntelligencePanel key={activeTenantId ?? 'sem-academia'}
+      students={list(data.students)} workouts={list(data.workouts)}
+      onUpdated={() => loadModule('intelligence')} />;
   }
   function scheduleView() {
     const students = list(data.students); const slots = list(data.slots);
@@ -421,7 +477,7 @@ export function CommercialWebApp() {
   }
   function content() {
     if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
-    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenterPanel canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'financial') return financialView(); if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel />; return <><Section title="Creator Network"><Data value={data.overview ? [data.overview] : []} /></Section><Section title="Conteúdo"><Data value={data.items} /></Section><Section title="Analytics"><Data value={data.analytics ? [data.analytics] : []} /></Section></>;
+    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'intelligence') return intelligenceView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenterPanel canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'financial') return financialView(); if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel />; return <><Section title="Creator Network"><Data value={data.overview ? [data.overview] : []} /></Section><Section title="Conteúdo"><Data value={data.items} /></Section><Section title="Analytics"><Data value={data.analytics ? [data.analytics] : []} /></Section></>;
   }
 
   const topBar = <View style={styles.top}><View><Text style={styles.brand}>IRON</Text><Text style={styles.muted}>Gestão da academia</Text></View><View style={styles.actions}><Text style={styles.muted}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
