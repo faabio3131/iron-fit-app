@@ -7,6 +7,8 @@ import { IntegrationCredentialsPanel } from '../components/IntegrationCredential
 import { CommunicationCenterPanel } from '../components/CommunicationCenterPanel';
 import { Student360Panel } from '../components/Student360Panel';
 import { AssessmentEvolutionPanel } from '../components/AssessmentEvolutionPanel';
+import { EquipmentIntelligencePanel } from '../components/EquipmentIntelligencePanel';
+import { ExercisesLibraryPanel } from '../components/ExercisesLibraryPanel';
 import { GlowCard } from '../components/GlowCard';
 import { useAuth } from '../context/AuthContext';
 import { strongPassword } from '../security/password-policy';
@@ -321,38 +323,24 @@ export function CommercialWebApp() {
     return <><Section title="Adicionar membro"><View style={styles.form}><Field label="Nome" value={member.name} onChangeText={(name) => setMember((v) => ({ ...v, name }))} /><Field label="E-mail" value={member.email} onChangeText={(email) => setMember((v) => ({ ...v, email }))} /><Field label="Senha inicial" value={member.password} secureTextEntry onChangeText={(password) => setMember((v) => ({ ...v, password }))} /><Field label="Role" value={member.roleName} onChangeText={(roleName) => setMember((v) => ({ ...v, roleName: roleName.toUpperCase() }))} /></View><Button label="Adicionar à equipe" disabled={saving || !strongPassword(member.password) || !member.name.trim() || !member.email.trim()} onPress={() => void mutate(() => api('/users', undefined, { method: 'POST', body: JSON.stringify({ name: member.name.trim(), email: member.email.trim().toLowerCase(), password: member.password, roleName: member.roleName.trim(), ...(member.phone.trim() ? { phone: member.phone.trim() } : {}) }) }), () => setMember({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' }))} /></Section><Section title="Equipe"><Data value={data.users} /></Section><Section title="Permissões da sessão"><Data value={permissions.map((name) => ({ name }))} /></Section></>;
   }
   function equipmentView() {
-    const catalog = list(data.catalog);
-    return <>
-      {enabled('equipment.inventory') && enabled('equipment.catalog') && can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? (
-        <Section
-          title="Selecionar equipamento do catálogo"
-          subtitle="O catálogo mestre é a autoridade. A academia seleciona apenas itens canônicos para seu inventário."
-        >
-          <Chips
-            rows={catalog}
-            selected={selectedCatalogEquipment}
-            onSelect={setSelectedCatalogEquipment}
-          />
-          <Button
-            testID="equipment-catalog-select"
-            label="Adicionar ao inventário"
-            disabled={saving || !selectedCatalogEquipment}
-            onPress={() => void mutate(
-              () => api('/equipments/catalog/selection', undefined, {
-                method: 'POST',
-                body: JSON.stringify({ catalogItemIds: [selectedCatalogEquipment] }),
-              }),
-              () => setSelectedCatalogEquipment(''),
-            )}
-          />
-        </Section>
-      ) : null}
-      <Section title="Inventário"><Data value={data.inventory} /></Section>
-      {enabled('equipment.catalog') ? <Section title="Catálogo canônico"><Data value={data.catalog} /></Section> : null}
-    </>;
+    return <EquipmentIntelligencePanel
+      key={activeTenantId ?? 'sem-academia'}
+      inventory={list(data.inventory)}
+      catalog={list(data.catalog)}
+      catalogEnabled={enabled('equipment.catalog')}
+      canManage={enabled('equipment.inventory') && enabled('equipment.catalog') && can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
+      canSuggest={enabled('equipment.catalog') && can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER')}
+      canGovern={can('SUPER_ADMIN')}
+      onUpdated={() => loadModule('equipment')}
+    />;
   }
   function exercisesView() {
-    return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER') ? <Section title="Novo exercício"><View style={styles.form}><Field label="Nome" value={exercise.name} onChangeText={(name) => setExercise((v) => ({ ...v, name }))} /><Field label="Grupo muscular" value={exercise.muscleGroup} onChangeText={(muscleGroup) => setExercise((v) => ({ ...v, muscleGroup }))} /><Field label="Nível" value={exercise.level} onChangeText={(level) => setExercise((v) => ({ ...v, level }))} /></View><Button label="Criar exercício" disabled={saving || !exercise.name.trim()} onPress={() => void mutate(() => api('/exercises', undefined, { method: 'POST', body: JSON.stringify({ name: exercise.name.trim(), ...(exercise.muscleGroup.trim() ? { muscleGroup: exercise.muscleGroup.trim() } : {}), ...(exercise.level.trim() ? { level: exercise.level.trim() } : {}) }) }), () => setExercise({ name: '', muscleGroup: '', level: '' }))} /></Section> : null}<Section title="Biblioteca"><Data value={data.exercises} /></Section></>;
+    return <ExercisesLibraryPanel
+      key={activeTenantId ?? 'sem-academia'}
+      exercises={list(data.exercises)}
+      canCreate={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER')}
+      onUpdated={() => loadModule('exercises')}
+    />;
   }
   function assessmentsView() {
     return <AssessmentEvolutionPanel key={activeTenantId ?? 'sem-academia'}
