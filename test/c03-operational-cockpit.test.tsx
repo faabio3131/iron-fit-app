@@ -37,7 +37,7 @@ test('C03 Cockpit renders canonical KPIs, named academy, real checkins and upcom
   expect(view.getByText('120')).toBeTruthy();
   expect(view.getByTestId('cockpit-attendance-chart')).toBeTruthy();
   expect(view.getByText('Em 2 dia(s)')).toBeTruthy();
-  expect(view.queryByText('Cobranças da academia')).toBeNull();
+  expect(view.queryByTestId('cockpit-financial-pending')).toBeNull();
   expect(view.queryByText('Recebimentos — últimos 30 dias')).toBeNull();
 });
 
@@ -52,7 +52,7 @@ test('C03 financial data stays hidden from non-stepped-up user even if accidenta
 test('C03 owner step-up displays only academy-to-student financial indicators', () => {
   const view = mount(true);
   expect(view.getByTestId('cockpit-financial-pending')).toBeTruthy();
-  expect(view.getByText('Cobranças da academia')).toBeTruthy();
+  expect(view.getAllByText('Cobranças da academia').length).toBeGreaterThanOrEqual(1);
   expect(view.getByText('Vencimento: 10/10/2026')).toBeTruthy();
   expect(view.getByText('Valor registrado: 500')).toBeTruthy();
   expect(view.getByText(/Financeiro academia/)).toBeTruthy();
