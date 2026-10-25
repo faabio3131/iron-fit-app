@@ -22,7 +22,8 @@ const shortcuts: CockpitShortcut[] = ['students', 'schedule', 'access', 'financi
 
 beforeEach(() => { onNavigate.mockClear(); onRefresh.mockClear(); });
 
-function mount(financialAuthorized: boolean, availableModules = shortcuts, data = summary) {
+function mount(financialAuthorized: boolean, availableModules = shortcuts,
+  data: React.ComponentProps<typeof OperationsCockpitPanel>['summary'] = summary) {
   return render(<OperationsCockpitPanel academyName="Academia A" operatorName="Proprietário"
     summary={data} attendance={attendance} revenue={revenue} overdue={overdue} birthdays={birthdays}
     financialAuthorized={financialAuthorized} availableModules={availableModules} onNavigate={onNavigate}
