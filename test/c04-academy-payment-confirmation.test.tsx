@@ -22,8 +22,12 @@ test('C04 never marks a charge as paid on initial click; requires explicit confi
   expect(view.getByTestId('academy-charge-confirmation')).toBeTruthy();
   expect(onPay).not.toHaveBeenCalled();
   expect(view.getByText(/Confirme somente se o pagamento realmente foi recebido/)).toBeTruthy();
+  expect(view.getByTestId('academy-payment-method-required')).toBeTruthy();
   fireEvent.press(view.getByTestId('academy-charge-confirm-pay'));
-  expect(onPay).toHaveBeenCalledWith('charge-1', 'account-a');
+  expect(onPay).not.toHaveBeenCalled();
+  fireEvent.press(view.getByTestId('academy-payment-method-PIX'));
+  fireEvent.press(view.getByTestId('academy-charge-confirm-pay'));
+  expect(onPay).toHaveBeenCalledWith('charge-1', 'account-a', 'PIX');
   expect(onPay).toHaveBeenCalledTimes(1);
 });
 
@@ -48,6 +52,7 @@ test('C04 switching account after review invalidates confirmation', () => {
   const view = mount();
   fireEvent.press(view.getByTestId('academy-charge-prepare-charge-1'));
   expect(view.getByTestId('academy-charge-confirmation')).toBeTruthy();
+  fireEvent.press(view.getByTestId('academy-payment-method-PIX'));
   view.rerender(<AcademyChargesPanel charges={charges} accounts={accounts} selectedAccountId="account-b"
     saving={false} onPay={onPay} />);
   expect(view.getByTestId('academy-charge-account-changed')).toBeTruthy();
