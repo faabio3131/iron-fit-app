@@ -40,8 +40,10 @@ function extractDate(value: string, boundary: 'from' | 'to') {
   if (!value.trim()) return '';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) return null;
   const day = value.trim();
-  const parsed = new Date(day + 'T12:00:00.000Z');
-  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== day) return null;
+  const [year, month, date] = day.split('-').map(Number);
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const monthDays = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (year < 1970 || month < 1 || month > 12 || date < 1 || date > monthDays[month - 1]) return null;
   return day + (boundary === 'from' ? 'T00:00:00.000Z' : 'T23:59:59.999Z');
 }
 
