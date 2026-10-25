@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { PASSWORD_POLICY_TEXT, strongPassword } from '../security/password-policy';
+import { GlowCard } from './GlowCard';
 
 function Field({
   placeholder,
@@ -219,7 +220,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
       {loading ? <ActivityIndicator color="#2BF47A" style={styles.loading} /> : null}
 
-      <View style={styles.card}>
+      <GlowCard style={styles.card}>
         <Text style={styles.cardTitle}>Step-up</Text>
         <Field
           placeholder="Senha atual"
@@ -234,9 +235,9 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
             onChangeText={setSecondFactor}
           />
         ) : null}
-      </View>
+      </GlowCard>
 
-      <View style={styles.card}>
+      <GlowCard style={styles.card}>
         <Text style={styles.cardTitle}>Senha</Text>
         <Field
           placeholder="Nova senha"
@@ -257,9 +258,9 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
         >
           <Text style={[styles.buttonText, styles.buttonTextOnAccent]}>Alterar senha e revogar sessões</Text>
         </TouchableOpacity>
-      </View>
+      </GlowCard>
 
-      <View style={styles.card}>
+      <GlowCard style={styles.card}>
         <Text style={styles.cardTitle}>E-mail</Text>
         <Text style={styles.muted}>Atual: {profile?.email ?? '—'}</Text>
         <Field
@@ -286,9 +287,9 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
         >
           <Text style={styles.buttonText}>Confirmar novo e-mail</Text>
         </TouchableOpacity>
-      </View>
+      </GlowCard>
 
-      <View style={styles.card}>
+      <GlowCard style={styles.card}>
         <Text style={styles.cardTitle}>MFA</Text>
         <Text style={styles.muted}>
           Estado: {profile?.mfaEnabled ? 'habilitado' : 'desabilitado'}
@@ -351,9 +352,9 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
             </TouchableOpacity>
           </View>
         ) : null}
-      </View>
+      </GlowCard>
 
-      <View style={styles.card}>
+      <GlowCard style={styles.card}>
         <Text style={styles.cardTitle}>Sessões</Text>
         {sessions.map((session) => (
           <View key={session.id} style={styles.session}>
@@ -386,7 +387,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
         >
           <Text style={styles.buttonText}>Revogar outras sessões</Text>
         </TouchableOpacity>
-      </View>
+      </GlowCard>
     </ScrollView>
   );
 }
@@ -401,8 +402,8 @@ const styles = StyleSheet.create({
   loading: { marginVertical: 8 },
   error: { color: '#fca5a5', backgroundColor: '#301215', padding: 10, borderRadius: 8, marginTop: 10 },
   notice: { color: '#86efac', backgroundColor: '#12301f', padding: 10, borderRadius: 8, marginTop: 10 },
-  card: { backgroundColor: '#111827', borderWidth: 1, borderColor: '#273248', borderRadius: 14, padding: 14, marginTop: 12 },
-  cardTitle: { color: '#f1f5f9', fontWeight: '800', fontSize: 15, marginBottom: 8 },
+  card: { backgroundColor: '#1a2035', borderWidth: 1, borderColor: '#252d47', borderRadius: 14, padding: 14, marginTop: 12 },
+  cardTitle: { color: '#2BF47A', fontWeight: '800', fontSize: 15, marginBottom: 8 },
   input: { color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 9, padding: 11, marginTop: 8 },
   policy: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginTop: 7 },
   button: { backgroundColor: '#2BF47A', borderRadius: 9, padding: 11, alignItems: 'center', marginTop: 10 },

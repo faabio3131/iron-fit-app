@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { api } from '../services/api';
+import { GlowCard } from './GlowCard';
 
 type Provider = {
   providerCode: string;
@@ -325,7 +326,7 @@ export function IntegrationCredentialsPanel() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {notice ? <Text style={styles.success}>{notice}</Text> : null}
 
-      <View style={styles.section}>
+      <GlowCard style={styles.section}>
         <Text style={styles.title}>Integrações da academia</Text>
         <Text style={styles.muted}>
           Ambiente: {environment || 'indisponível'} · Definido pelo servidor. Tenant derivado da sessão. Segredos são write-only.
@@ -426,9 +427,9 @@ export function IntegrationCredentialsPanel() {
             ) : null}
           </>
         )}
-      </View>
+      </GlowCard>
 
-      <View style={styles.section}>
+      <GlowCard style={styles.section}>
         <Text style={styles.title}>Conexões configuradas</Text>
         {connections.length === 0 ? (
           <Text style={styles.muted}>Nenhuma conexão configurada neste tenant/ambiente.</Text>
@@ -453,10 +454,10 @@ export function IntegrationCredentialsPanel() {
             </View>
           </View>
         ))}
-      </View>
+      </GlowCard>
 
       {action ? (
-        <View style={styles.section} testID="integration-step-up-action">
+        <GlowCard style={styles.section} testID="integration-step-up-action">
           <Text style={styles.title}>
             {action === 'replace'
               ? 'Substituir credencial'
@@ -508,7 +509,7 @@ export function IntegrationCredentialsPanel() {
               }}
             />
           </View>
-        </View>
+        </GlowCard>
       ) : null}
     </View>
   );
@@ -516,14 +517,14 @@ export function IntegrationCredentialsPanel() {
 
 const styles = StyleSheet.create({
   section: {
-    backgroundColor: '#111827',
+    backgroundColor: '#1a2035',
     borderWidth: 1,
-    borderColor: '#273248',
+    borderColor: '#252d47',
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
   },
-  title: { color: '#f8fafc', fontSize: 17, fontWeight: '800', marginBottom: 6 },
+  title: { color: '#2BF47A', fontSize: 17, fontWeight: '800', marginBottom: 6 },
   muted: { color: '#94a3b8', fontSize: 13, lineHeight: 18, marginBottom: 8 },
   label: { color: '#94a3b8', fontSize: 11, fontWeight: '700', marginTop: 8, marginBottom: 5 },
   field: { marginBottom: 8 },
