@@ -12,6 +12,7 @@ import { ExercisesLibraryPanel } from '../components/ExercisesLibraryPanel';
 import { TeamManagementPanel } from '../components/TeamManagementPanel';
 import { WorkoutComposer } from '../components/WorkoutComposer';
 import { ScheduleCalendarPanel } from '../components/ScheduleCalendarPanel';
+import { AccessCenterPanel } from '../components/AccessCenterPanel';
 import { IronIntelligencePanel } from '../components/IronIntelligencePanel';
 import { AggregatorHubPanel } from '../components/AggregatorHubPanel';
 import { GlowCard } from '../components/GlowCard';
@@ -168,11 +169,6 @@ export function CommercialWebApp() {
   const [bookingDate, setBookingDate] = useState('');
   const [lastBooking, setLastBooking] = useState<any>(null);
   const [scheduleRefresh, setScheduleRefresh] = useState(0);
-  const [selectedAccessStudent, setSelectedAccessStudent] = useState('');
-  const [credentialType, setCredentialType] = useState('QR_CODE');
-  const [credentialExpiresAt, setCredentialExpiresAt] = useState('');
-  const [lastCredential, setLastCredential] = useState<any>(null);
-  const [pendingCredentialRevoke, setPendingCredentialRevoke] = useState<string | null>(null);
   const [adminStepUpActive, setAdminStepUpActive] = useState(false);
   const [adminStepUpExpiresAt, setAdminStepUpExpiresAt] = useState<string | null>(null);
   const [adminPassword, setAdminPassword] = useState('');
@@ -423,49 +419,14 @@ export function CommercialWebApp() {
       onDateSelected={setBookingDate} refreshToken={scheduleRefresh} />{can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? <Section title="Criar horário"><View style={styles.form}><Field label="Dia 0-6" value={schedule.weekday} numeric onChangeText={(weekday) => setSchedule((v) => ({ ...v, weekday }))} /><Field label="Início" value={schedule.startTime} onChangeText={(startTime) => setSchedule((v) => ({ ...v, startTime }))} /><Field label="Fim" value={schedule.endTime} onChangeText={(endTime) => setSchedule((v) => ({ ...v, endTime }))} /><Field label="Capacidade" value={schedule.capacity} numeric onChangeText={(capacity) => setSchedule((v) => ({ ...v, capacity }))} /></View><Button label="Criar horário" disabled={saving} onPress={() => void mutate(() => api('/schedule-slots', undefined, { method: 'POST', body: JSON.stringify({ weekday: Number(schedule.weekday), startTime: schedule.startTime.trim(), endTime: schedule.endTime.trim(), capacity: Number(schedule.capacity), active: true }) }))} /></Section> : null}{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Agendar aluno e check-in" subtitle="O agendamento e o check-in são validados no tenant autenticado pelo backend."><Text style={styles.label}>Aluno</Text><Chips rows={students} selected={selectedScheduleStudent} onSelect={setSelectedScheduleStudent} /><Text style={styles.label}>Horário</Text><Chips rows={slots} selected={selectedScheduleSlot} onSelect={setSelectedScheduleSlot} /><Field label="Data ISO" value={bookingDate} onChangeText={setBookingDate} /><Button testID="schedule-book" label="Agendar aluno" disabled={saving || !selectedScheduleStudent || !selectedScheduleSlot || !bookingDate.trim()} onPress={() => void mutate(async () => { const created = await api('/schedules', undefined, { method: 'POST', body: JSON.stringify({ studentId: selectedScheduleStudent, slotId: selectedScheduleSlot, date: bookingDate.trim() }) }); setLastBooking(created); return created; })} />{lastBooking?.id ? <View style={styles.invite}><Text style={styles.rowTitle}>Agendamento criado</Text><Text style={styles.muted}>ID: {lastBooking.id}</Text><Button secondary testID="schedule-check-in" label="Registrar check-in" disabled={saving} onPress={() => void mutate(() => api(`/schedules/${lastBooking.id}/check-in`, undefined, { method: 'PATCH' }), () => setLastBooking(null))} /></View> : null}</Section> : null}</>;
   }
   function accessView() {
-    const students = list(data.students);
-    const credentials = list(data.credentials);
-    const devices = list(data.devices);
-    return <>
-      {can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? (
-        <Section title="Emitir credencial de acesso" subtitle="O QR token é exibido apenas após a emissão; a decisão de entrada pertence ao backend.">
-          <Text style={styles.label}>Aluno</Text>
-          <Chips rows={students} selected={selectedAccessStudent} onSelect={setSelectedAccessStudent} />
-          <View style={styles.form}>
-            <Field label="Tipo" value={credentialType} onChangeText={setCredentialType} />
-            <Field label="Expira em ISO (opcional)" value={credentialExpiresAt} onChangeText={setCredentialExpiresAt} />
-          </View>
-          <Button testID="access-credential-create" label="Gerar credencial" disabled={saving || !selectedAccessStudent} onPress={() => void mutate(async () => {
-            const created = await api('/access/credentials', undefined, { method: 'POST', body: JSON.stringify({
-              studentId: selectedAccessStudent,
-              ...(credentialType.trim() ? { type: credentialType.trim() } : {}),
-              ...(credentialExpiresAt.trim() ? { expiresAt: credentialExpiresAt.trim() } : {}),
-            }) });
-            setLastCredential(created);
-            return created;
-          })} />
-          {lastCredential?.qrToken ? <View style={styles.invite}>
-            <Text style={styles.rowTitle}>QR token — exibir uma única vez</Text>
-            <Text selectable style={styles.json}>{lastCredential.qrToken}</Text>
-            <Text style={styles.muted}>Tipo: {lastCredential.type ?? '—'}</Text>
-            <Button secondary label="Ocultar token" onPress={() => setLastCredential(null)} />
-          </View> : null}
-        </Section>
-      ) : null}
-      <Section title="Credenciais dos alunos" subtitle="Consulte o estado e revogue credenciais quando necessário. Tokens e hashes não são listados.">
-        {credentials.length ? credentials.map((credential: any) => <View key={credential.id} style={styles.row}>
-          <Text style={styles.rowTitle}>{credential.student?.user?.name ?? 'Aluno'}</Text>
-          <Text style={styles.muted}>Tipo: {credential.type ?? '—'} · Estado: {credential.status === 'ACTIVE' ? 'Ativa' : credential.status === 'EXPIRED' ? 'Expirada' : 'Inativa'}</Text>
-          {credential.active ? pendingCredentialRevoke === credential.id ? <View style={styles.actions}>
-            <Text style={styles.muted}>Confirma a revogação desta credencial?</Text>
-            <Button testID={`access-revoke-confirm-${credential.id}`} label="Confirmar revogação" disabled={saving} onPress={() => void mutate(() => api(`/access/credentials/${credential.id}/revoke`, undefined, { method: 'PATCH' }), () => setPendingCredentialRevoke(null))} />
-            <Button secondary label="Cancelar" onPress={() => setPendingCredentialRevoke(null)} />
-          </View> : <Button testID={`access-revoke-${credential.id}`} secondary label="Revogar credencial" disabled={saving} onPress={() => setPendingCredentialRevoke(credential.id)} /> : null}
-        </View>) : <Text style={styles.muted}>Nenhuma credencial registrada.</Text>}
-      </Section>
-      {can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? <Section title="Dispositivos de acesso" subtitle="Estado operacional dos dispositivos, sem expor tokens."><Data value={devices} empty="Nenhum dispositivo cadastrado." /></Section> : null}
-      <Section title="Histórico de acessos"><Data value={data.events} /></Section>
-    </>;
+    return <AccessCenterPanel key={activeTenantId ?? 'sem-academia'}
+      students={list(data.students)}
+      credentials={list(data.credentials)}
+      events={list(data.events)}
+      devices={list(data.devices)}
+      canManageDevices={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
+      onUpdated={() => loadModule('access')}
+    />;
   }
   function financialView() {
     const students = list(data.students); const accounts = list(data.accounts); const charges = list(data.charges);
