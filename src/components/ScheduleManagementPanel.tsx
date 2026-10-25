@@ -27,7 +27,7 @@ function Action({ testID, label, disabled, selected, onPress }: {
   return <TouchableOpacity testID={testID} accessibilityRole="button"
     accessibilityState={{ disabled: !!disabled, selected: !!selected }}
     disabled={disabled} onPress={onPress} style={[styles.button, selected && styles.active, disabled && styles.disabled]}>
-    <Text style={styles.buttonText}>{label}</Text>
+    <Text style={[styles.buttonText, selected && styles.selectedText]}>{label}</Text>
   </TouchableOpacity>;
 }
 function Field({ testID, label, value, onChangeText }: {
@@ -40,8 +40,8 @@ function Field({ testID, label, value, onChangeText }: {
   </View>;
 }
 
-export function ScheduleManagementPanel({ students, slots, initialDate, canManageSlots, onUpdated }: {
-  students: Student[]; slots: Slot[]; initialDate: string;
+export function ScheduleManagementPanel({ students, slots, bookingDate, onDateChange, canManageSlots, onUpdated }: {
+  students: Student[]; slots: Slot[]; bookingDate: string; onDateChange: (day: string) => void;
   canManageSlots: boolean; onUpdated: () => Promise<void> | void;
 }) {
   const [weekdayValue, setWeekdayValue] = useState(1);
@@ -50,12 +50,10 @@ export function ScheduleManagementPanel({ students, slots, initialDate, canManag
   const [capacity, setCapacity] = useState('10');
   const [studentId, setStudentId] = useState('');
   const [slotId, setSlotId] = useState('');
-  const [manualDate, setManualDate] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [refreshWarning, setRefreshWarning] = useState('');
-  const bookingDate = manualDate || initialDate;
   const activeSlots = useMemo(() => slots.filter((slot) => slot.active !== false), [slots]);
   const selectedSlot = activeSlots.find((slot) => slot.id === slotId);
   const selectedStudent = students.find((student) => student.id === studentId);
@@ -120,7 +118,7 @@ export function ScheduleManagementPanel({ students, slots, initialDate, canManag
         selected={slot.id === slotId} disabled={busy} onPress={() => setSlotId(slot.id)} />)}</View>
       {!activeSlots.length ? <Text style={styles.warning}>Nenhum horário ativo cadastrado para esta academia.</Text> : null}
       <Field testID="schedule-booking-date" label="Data (AAAA-MM-DD)" value={bookingDate}
-        onChangeText={setManualDate} />
+        onChangeText={onDateChange} />
       {!dateValid && bookingDate ? <Text testID="schedule-invalid-date" style={styles.warning}>Informe uma data real no formato AAAA-MM-DD.</Text> : null}
       {dateValid && selectedSlot && !weekdayMatches ?
         <Text testID="schedule-weekday-mismatch" style={styles.warning}>A data escolhida não corresponde ao dia da semana do horário.</Text> : null}
@@ -157,6 +155,7 @@ const styles = StyleSheet.create({
   active: { backgroundColor: '#2BF47A' },
   disabled: { opacity: 0.4 },
   buttonText: { color: '#f0fef3', fontSize: 12, fontWeight: '800' },
+  selectedText: { color: '#04150b' },
   warning: { color: '#f5c48b', fontSize: 12, lineHeight: 18 },
   error: { color: '#fca5a5', backgroundColor: '#351b22', padding: 12, borderRadius: 10, fontSize: 12 },
   success: { color: '#2BF47A', fontSize: 12, fontWeight: '800' },
