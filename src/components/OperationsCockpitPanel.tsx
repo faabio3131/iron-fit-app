@@ -40,8 +40,8 @@ function date(value?: string) {
   return Number.isNaN(parsed.getTime()) ? 'Não informado' : parsed.toLocaleDateString('pt-BR');
 }
 function Kpi({ label, value, note, testID }: { label: string; value: number | undefined; note: string; testID?: string }) {
-  return <View style={styles.kpi} testID={testID}><Text style={styles.kpiLabel}>{label}</Text>
-    <Text style={styles.kpiValue}>{number(value)}</Text><Text style={styles.kpiNote}>{note}</Text></View>;
+  return <GlowCard style={styles.kpi} testID={testID}><Text style={styles.kpiLabel}>{label}</Text>
+    <Text style={styles.kpiValue}>{number(value)}</Text><Text style={styles.kpiNote}>{note}</Text></GlowCard>;
 }
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return <GlowCard style={styles.card}><Text style={styles.title}>{title}</Text>
@@ -128,11 +128,11 @@ export function OperationsCockpitPanel({ academyName, operatorName, summary, att
     </> : null}
     {shortcutsAvailable.length ? <Section title="Acesso rápido" description="Atalhos apenas para módulos permitidos ao seu perfil e plano.">
       <View style={styles.shortcuts}>
-        {shortcutsAvailable.map((item) => <TouchableOpacity key={item.key} accessibilityRole="button"
+        {shortcutsAvailable.map((item) => <GlowCard key={item.key}
           testID={'cockpit-shortcut-' + item.key} onPress={() => onNavigate(item.key)} style={styles.shortcut}>
           <Text style={styles.shortcutTitle}>{item.label}</Text>
           <Text style={styles.hint}>{item.description}</Text>
-        </TouchableOpacity>)}
+        </GlowCard>)}
       </View>
     </Section> : null}
   </View>;
