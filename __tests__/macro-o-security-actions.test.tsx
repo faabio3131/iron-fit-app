@@ -510,3 +510,15 @@ test.each(['MANAGER', 'TRAINER'])('RBAC: %s nao solicita financeiro pela ficha d
   expect(view.queryByTestId('nav-financial')).toBeNull();
   expect(view.queryByTestId('nav-saasBilling')).toBeNull();
 });
+
+
+test('RBAC: recepcao nao consulta historico de transacoes financeiras no Aluno 360', async () => {
+  mockProfile = { id: 'reception-transaction-audit', name: 'Recepcao', email: 'reception@example.com', roles: ['RECEPTION'], permissions: [] };
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-students')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-students'));
+  await waitFor(() => expect(view.getByText('Aluno 360')).toBeTruthy());
+  fireEvent.press(view.getByText('Aluno 360'));
+  await waitFor(() => expect(mockApi.mock.calls.some(([path]) => path === '/students/student-1')).toBe(true));
+  expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/financial/transactions'))).toBe(false);
+});

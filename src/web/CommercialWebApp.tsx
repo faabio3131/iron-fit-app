@@ -227,7 +227,7 @@ export function CommercialWebApp() {
           const canSeeWorkoutHistory = can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER');
           const canSeeAccessHistory = can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION');
           const canSeeStudentFinance = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
-          const [studentDetail, assessments, schedules, workouts, accessEvents, subscriptions, charges] = await Promise.all([
+          const [studentDetail, assessments, schedules, workouts, accessEvents, subscriptions, charges, transactions] = await Promise.all([
             api(`/students/${selectedStudent}`),
             api(`/students/${selectedStudent}/assessments`),
             api(`/students/${selectedStudent}/schedules`),
@@ -235,8 +235,9 @@ export function CommercialWebApp() {
             canSeeAccessHistory ? api(`/access/events?studentId=${encodeURIComponent(selectedStudent)}`) : Promise.resolve([]),
             canSeeStudentFinance ? api(`/financial/subscriptions?studentId=${encodeURIComponent(selectedStudent)}`) : Promise.resolve([]),
             canSeeStudentFinance ? api(`/financial/charges?studentId=${encodeURIComponent(selectedStudent)}`) : Promise.resolve([]),
+            canSeeStudentFinance ? api(`/financial/transactions?studentId=${encodeURIComponent(selectedStudent)}`) : Promise.resolve([]),
           ]);
-          Object.assign(next, { studentDetail, assessments, schedules, workouts, accessEvents, subscriptions, charges });
+          Object.assign(next, { studentDetail, assessments, schedules, workouts, accessEvents, subscriptions, charges, transactions });
         }
       }
       if (key === 'team') next.users = await api('/users');
@@ -499,7 +500,7 @@ export function CommercialWebApp() {
         </View>
         <View style={styles.compactGrid}>
           {can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <View style={styles.compactPane}><Section compact title="Acessos"><Data value={data.accessEvents} empty="Nenhum evento de acesso registrado." /></Section></View> : null}
-          {can('SUPER_ADMIN', 'OWNER') ? <View style={styles.compactPaneWide}><Section compact title="Plano e financeiro" subtitle={canSeeStudentFinance ? 'Dados financeiros liberados pela reautenticação administrativa.' : 'Dados protegidos. Reautentique na área Financeiro para consultar.'}>{canSeeStudentFinance ? <><Data value={data.subscriptions} empty="Nenhum plano financeiro." /><Data value={data.charges} empty="Nenhuma cobrança." /></> : <Button secondary label="Abrir Financeiro protegido" onPress={() => setActive('financial')} />}</Section></View> : null}
+          {can('SUPER_ADMIN', 'OWNER') ? <View style={styles.compactPaneWide}><Section compact title="Plano e financeiro" subtitle={canSeeStudentFinance ? 'Dados financeiros liberados pela reautenticação administrativa.' : 'Dados protegidos. Reautentique na área Financeiro para consultar.'}>{canSeeStudentFinance ? <><Data value={data.subscriptions} empty="Nenhum plano financeiro." /><Data value={data.charges} empty="Nenhuma cobrança." /><Data value={data.transactions} empty="Nenhuma transa??o registrada." /></> : <Button secondary label="Abrir Financeiro protegido" onPress={() => setActive('financial')} />}</Section></View> : null}
         </View>
       </View> : null}
     </>;
