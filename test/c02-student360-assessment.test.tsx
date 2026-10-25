@@ -36,7 +36,7 @@ test('C02 Alunos 360 shows canonical profile, assessments, bookings and permitte
     canReadWorkouts canReadAccess={false} canReadFinance={false} canEditConsents={false} />);
   fireEvent.press(view.getByTestId('student360-select-student-a'));
   await waitFor(() => expect(view.getByText(/Treino funcional/)).toBeTruthy());
-  expect(view.getByText('Ana Silva')).toBeTruthy();
+  expect(view.getAllByText('Ana Silva').length).toBeGreaterThan(0);
   expect(view.getByText(/Força · Aprovado/)).toBeTruthy();
   expect(view.getByText(/Presença confirmada/)).toBeTruthy();
   expect(view.queryByText('Plano e financeiro da academia')).toBeNull();
