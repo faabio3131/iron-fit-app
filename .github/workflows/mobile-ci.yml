@@ -43,6 +43,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Real Web static-server adversarial URL regression
+        run: node --test test/serve-web-negative-path.mjs
+
       - name: Release readiness
         run: npm run release:check
 
