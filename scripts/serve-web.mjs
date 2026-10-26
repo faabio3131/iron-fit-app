@@ -21,7 +21,13 @@ const mime = {
 };
 
 function safePath(urlPath) {
-  const decoded = decodeURIComponent((urlPath || '/').split('?')[0]);
+  let decoded;
+  try {
+    decoded = decodeURIComponent((urlPath || '/').split('?')[0]);
+  } catch {
+    // Malformed URI encoding is untrusted request data, never a process error.
+    return null;
+  }
   const canonical = decoded.replaceAll('\\\\', '/');
   const segments = canonical.split('/').filter(Boolean);
   if (segments.some((segment) => segment === '..')) return null;
