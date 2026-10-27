@@ -22,14 +22,15 @@ import { IronIntelligencePanel } from '../components/IronIntelligencePanel';
 import { AggregatorHubPanel } from '../components/AggregatorHubPanel';
 import { GlowCard } from '../components/GlowCard';
 import { CreatorNetworkWorkspace } from '../components/CreatorNetworkWorkspace';
+import { FiscalCenter } from './FiscalCenter';
 import { useAuth } from '../context/AuthContext';
 import { brlFromMinor, brlToMinor, positiveBrlToMinor } from '../utils/academy-money';
 import { api } from '../services/api';
 
-type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'intelligence' | 'aggregator' | 'schedule' | 'access' | 'communication' | 'financial' | 'saasBilling' | 'security' | 'privacy' | 'entitlements' | 'integrations' | 'creator';
+type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'intelligence' | 'aggregator' | 'schedule' | 'access' | 'communication' | 'financial' | 'fiscal' | 'saasBilling' | 'security' | 'privacy' | 'entitlements' | 'integrations' | 'creator';
 type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; value: boolean | number | string[] | null; source?: string; reason?: string | null };
 type ModuleDefinition = { key: ModuleKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name']; roles?: string[]; entitlement?: string[] };
-const restrictedAdminModules: ModuleKey[] = ['financial', 'saasBilling', 'entitlements', 'integrations'];
+const restrictedAdminModules: ModuleKey[] = ['financial', 'fiscal', 'saasBilling', 'entitlements', 'integrations'];
 
 const operational = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION'];
 const staff = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION', 'TRAINER'];
@@ -43,11 +44,11 @@ const modules: ModuleDefinition[] = [
   { key: 'assessments', label: 'Avaliações', icon: 'pulse-outline', roles: staff },
   { key: 'workouts', label: 'Treinos', icon: 'clipboard-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER'] },
   { key: 'intelligence', label: 'IRON Intelligence', icon: 'sparkles-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER'], entitlement: ['ai.workout_generation'] },
-  { key: 'aggregator', label: 'Aggregator Hub', icon: 'git-merge-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION'] },
   { key: 'schedule', label: 'Agenda', icon: 'calendar-outline', roles: staff },
   { key: 'access', label: 'Acessos', icon: 'key-outline', roles: operational },
   { key: 'communication', label: 'Comunicação', icon: 'chatbubbles-outline', roles: operational },
   { key: 'financial', label: 'Financeiro', icon: 'lock-closed-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
+  { key: 'fiscal', label: 'Fiscal / NFS-e', icon: 'document-text-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
   { key: 'saasBilling', label: 'Assinatura IRON', icon: 'card-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
   { key: 'security', label: 'Segurança', icon: 'shield-checkmark-outline' },
   { key: 'privacy', label: 'Privacidade', icon: 'document-text-outline' },
@@ -159,7 +160,9 @@ export function CommercialWebApp() {
 
 function TenantCommercialWebApp() {
   const { profile, activeTenantId, logout } = useAuth();
-  const compact = useWindowDimensions().width < 980;
+  const { width: viewportWidth } = useWindowDimensions();
+  const compact = viewportWidth < 980;
+  const narrow = viewportWidth < 560;
   const roles = useMemo<string[]>(() => Array.isArray(profile?.roles) ? profile.roles : [], [profile]);
   const permissions = useMemo<string[]>(() => Array.isArray(profile?.permissions) ? profile.permissions : [], [profile]);
   const [active, setActive] = useState<ModuleKey>('overview');
@@ -602,12 +605,12 @@ function TenantCommercialWebApp() {
   }
   function content() {
     if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
-    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'intelligence') return intelligenceView(); if (active === 'aggregator') return <AggregatorHubPanel key={activeTenantId ?? 'sem-academia'} canManage={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenterPanel key={activeTenantId ?? 'sem-academia'} canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'financial') return financialView(); if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenterPanel key={activeTenantId ?? 'sem-academia'} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />; return <CreatorNetworkWorkspace key={activeTenantId ?? 'sem-academia'}
+    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'intelligence') return intelligenceView(); if (active === 'aggregator') return <AggregatorHubPanel key={activeTenantId ?? 'sem-academia'} canManage={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenterPanel key={activeTenantId ?? 'sem-academia'} canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'financial') return financialView(); if (active === 'fiscal') return <FiscalCenter />; if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenterPanel key={activeTenantId ?? 'sem-academia'} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />; return <CreatorNetworkWorkspace key={activeTenantId ?? 'sem-academia'}
       items={list(data.items)} overview={data.overview ?? null} analytics={data.analytics ?? null}
       refreshing={loading} onRefresh={() => { void loadModule('creator'); }} />;
   }
 
-  const topBar = <View style={styles.top}><View><Text style={styles.brand}>IRON</Text><Text style={styles.muted}>Gestão da academia</Text></View><View style={styles.actions}><Text style={styles.muted}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
+  const topBar = <View style={[styles.top, narrow && styles.topNarrow]}><View><Text style={styles.brand}>IRON</Text><Text style={styles.muted}>Gestão da academia</Text></View><View style={styles.actions}><Text style={styles.muted}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
   if (!shellReady) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={styles.contentInner}>{error ? <Text style={styles.error}>{error}</Text> : <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Validando assinatura, trial e capabilities…</Text></View>}</View></View>;
   if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#2BF47A' : '#94a3b8'} /><Text style={[styles.navText, active === item.key && styles.navTextActive]}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Trial expirado, assinatura inativa/ausente ou suspensa. A superfície operacional permanece fail-closed. Assinatura IRON e Segurança continuam disponíveis para recuperação.</Text></View><Section title="Estado comercial"><Text style={styles.muted}>Avaliação: {trial?.status === 'EXPIRED' ? 'Expirada' : trial?.status === 'INACTIVE' ? 'Inativa' : trial?.status === 'TRIALING' ? 'Em andamento' : 'Situação não confirmada'}</Text><Text style={styles.muted}>Assinatura: {subscription?.status === 'SUSPENDED' ? 'Suspensa' : subscription?.status === 'CANCELED' ? 'Cancelada' : subscription?.status === 'ACTIVE' ? 'Ativa' : 'Situação não confirmada'}</Text></Section>{active === 'security' ? <AccountSecurityPanel /> : active === 'privacy' ? <PrivacyCenterPanel key={activeTenantId ?? 'sem-academia'} /> : active === 'saasBilling' && can('SUPER_ADMIN', 'OWNER') ? (adminStepUpActive ? <SaasBillingPanel onCommercialStateChanged={loadShell} /> : adminGateView()) : <Section title="Recuperação de acesso" subtitle="Selecione Segurança, Privacidade ou Assinatura IRON nas áreas permitidas ao seu perfil."><Text style={styles.muted}>A operação da academia permanece bloqueada até o backend confirmar a situação comercial.</Text></Section>}</ScrollView></View></View>;
   return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#2BF47A' : '#94a3b8'} /><Text style={[styles.navText, active === item.key && styles.navTextActive]}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>Tenant derivado da sessão autenticada · {activeTenantId ?? 'sem tenant ativo'}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando dados canônicos…</Text></View> : content()}</ScrollView></View></View>;
@@ -617,6 +620,7 @@ const styles = StyleSheet.create({
   adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
   app: { flex: 1, backgroundColor: '#080c17' },
   top: { minHeight: 72, padding: 18, backgroundColor: '#101625', borderBottomWidth: 1, borderBottomColor: '#273248', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  topNarrow: { padding: 10 },
   brand: { color: '#f8fafc', fontSize: 22, fontWeight: '900', letterSpacing: 3 },
   body: { flex: 1, flexDirection: 'row' },
   bodyCompact: { flexDirection: 'column' },
@@ -653,14 +657,14 @@ const styles = StyleSheet.create({
   fieldWrap: { minWidth: 180, flexGrow: 1, flexBasis: 210 },
   label: { color: '#94a3b8', fontSize: 11, fontWeight: '700', marginBottom: 5 },
   input: { color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 9, padding: 10 },
-  button: { alignSelf: 'flex-start', backgroundColor: '#2BF47A', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10, marginTop: 4 },
+  button: { minHeight: 44, alignSelf: 'flex-start', backgroundColor: '#2BF47A', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10, marginTop: 4 },
   secondary: { backgroundColor: '#172033', borderWidth: 1, borderColor: '#334155' },
   buttonText: { color: '#fff', fontWeight: '800', fontSize: 12 },
   buttonTextOnAccent: { color: '#04140b' },
   disabled: { opacity: 0.45 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 10 },
-  chip: { borderWidth: 1, borderColor: '#334155', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
+  chip: { minHeight: 44, justifyContent: 'center', borderWidth: 1, borderColor: '#334155', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
   chipActive: { backgroundColor: '#123524', borderColor: '#2BF47A' },
   chipText: { color: '#cbd5e1', fontSize: 12 },
   chipTextActive: { color: '#2BF47A', fontWeight: '700' },
