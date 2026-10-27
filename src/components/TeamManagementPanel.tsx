@@ -109,7 +109,7 @@ export function TeamManagementPanel({ members, actorRoles, rosterLoaded = true, 
       {members.length === 0 ? <Text style={styles.muted}>Nenhum membro encontrado.</Text> : members.map((member) => {
         const role = member.roleName as TeamRole | undefined;
         const desiredRole = selectedRole[member.id] ?? (allowedRoles.includes(role as TeamRole) ? role as TeamRole : 'TRAINER');
-        const manageable = member.canManage === true && member.accountActive !== false &&
+        const manageable = (isOwner || isManager) && member.canManage === true && member.accountActive !== false &&
           (role === 'MANAGER' || role === 'RECEPTION' || role === 'TRAINER') && (!isManager || role !== 'MANAGER');
         const active = member.membershipActive === true;
         return <View key={member.id} style={styles.entry}>
