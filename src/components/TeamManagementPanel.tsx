@@ -38,9 +38,10 @@ function Field({ label, value, onChangeText, testID }: {
   </View>;
 }
 
-export function TeamManagementPanel({ members, actorRoles, onUpdated }: {
+export function TeamManagementPanel({ members, actorRoles, rosterLoaded, onUpdated }: {
   members: TeamMember[];
   actorRoles: string[];
+  rosterLoaded: boolean;
   onUpdated: () => Promise<void>;
 }) {
   const [name, setName] = useState('');
@@ -57,7 +58,7 @@ export function TeamManagementPanel({ members, actorRoles, onUpdated }: {
   const allowedRoles: TeamRole[] = isOwner ? ['MANAGER', 'RECEPTION', 'TRAINER'] : ['RECEPTION', 'TRAINER'];
 
   async function perform(action: () => Promise<unknown>, success: string, reset?: () => void) {
-    if (working) return;
+    if (working || !rosterLoaded) return;
     setWorking(true); setError(''); setNotice('');
     try {
       await action();
@@ -91,7 +92,7 @@ export function TeamManagementPanel({ members, actorRoles, onUpdated }: {
           onPress={() => setInviteRole(role)} secondary={inviteRole !== role} />)}
       </View>
       <Action label={working ? 'Enviando…' : 'Enviar convite'}
-        testID="team-invite-submit" disabled={!inviteValid || working}
+        testID="team-invite-submit" disabled={!rosterLoaded || !inviteValid || working}
         onPress={() => { void perform(() => api('/users/invite', undefined, {
           method: 'POST', body: JSON.stringify({
             name: name.trim(), email: email.trim().toLowerCase(), roleName: inviteRole,
@@ -131,25 +132,25 @@ export function TeamManagementPanel({ members, actorRoles, onUpdated }: {
             </View>
             {pending?.id === member.id && pending.kind === 'role'
               ? <View style={styles.actions}><Text style={styles.warning}>Confirmar alteração para {roleLabel[desiredRole]}?</Text>
-                <Action testID={`team-role-confirm-${member.id}`} label="Confirmar função" disabled={working}
+                <Action testID={`team-role-confirm-${member.id}`} label="Confirmar função" disabled={working || !rosterLoaded}
                   onPress={() => { void perform(() => api(`/users/${member.id}/membership/role`, undefined, {
                     method: 'PATCH', body: JSON.stringify({ roleName: desiredRole }),
                   }), 'Função atualizada.', () => setPending(null)); }} />
                 <Action label="Cancelar" secondary onPress={() => setPending(null)} />
               </View>
               : <Action testID={`team-role-save-${member.id}`} label="Alterar função"
-                disabled={working || desiredRole === role} onPress={() => setPending({ id: member.id, kind: 'role' })} />}
+                disabled={working || !rosterLoaded || desiredRole === role} onPress={() => setPending({ id: member.id, kind: 'role' })} />}
             {pending?.id === member.id && pending.kind === 'status'
               ? <View style={styles.actions}>
                 <Text style={styles.warning}>Confirmar {active ? 'desativação' : 'reativação'} deste vínculo? {active ? 'Sessões de atualização serão revogadas pelo servidor.' : ''}</Text>
-                <Action testID={`team-status-confirm-${member.id}`} label="Confirmar alteração" disabled={working}
+                <Action testID={`team-status-confirm-${member.id}`} label="Confirmar alteração" disabled={working || !rosterLoaded}
                   onPress={() => { void perform(() => api(`/users/${member.id}/membership/status`, undefined, {
                     method: 'PATCH', body: JSON.stringify({ active: !active }),
                   }), 'Estado do vínculo atualizado.', () => setPending(null)); }} />
                 <Action label="Cancelar" secondary onPress={() => setPending(null)} />
               </View>
               : <Action testID={`team-status-toggle-${member.id}`} label={active ? 'Desativar acesso' : 'Reativar acesso'}
-                  disabled={working} onPress={() => setPending({ id: member.id, kind: 'status', next: !active })} />}
+                  disabled={working || !rosterLoaded} onPress={() => setPending({ id: member.id, kind: 'status', next: !active })} />}
           </> : <Text style={styles.muted}>Este membro está fora do seu escopo de gerenciamento ou a conta não está ativa.</Text>}
         </View>;
       })}
