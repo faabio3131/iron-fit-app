@@ -127,7 +127,7 @@ test('Equipe apresenta permissões efetivas e permite somente convites governado
   fireEvent.press(view.getByTestId('nav-team'));
   await waitFor(() => expect(view.getByTestId('team-invite-submit')).toBeTruthy());
 
-  expect(view.getByText('Professor Dois')).toBeTruthy();
+  await waitFor(() => expect(view.getByText('Professor Dois')).toBeTruthy());
   expect(view.getByText('workouts.read')).toBeTruthy();
   expect(view.getAllByText(/Vínculo: Ativo/).length).toBeGreaterThan(0);
 
@@ -231,6 +231,7 @@ test('Workout Studio monta sessão com equipamento compatível e cria DRAFT can�
   await waitFor(() => expect(view.getByTestId('nav-workouts')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-workouts'));
   await waitFor(() => expect(view.getByText('Workout Studio — criação manual')).toBeTruthy());
+  await waitFor(() => expect(view.getByTestId('studio-student-student-1')).toBeTruthy());
   fireEvent.press(view.getByTestId('studio-student-student-1'));
   await waitFor(() => expect(view.getByTestId('studio-exercise-exercise-1')).toBeTruthy());
   fireEvent.press(view.getByTestId('studio-exercise-exercise-1'));
