@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '../components/EmptyState';
+import { RequestErrorState } from '../components/RequestErrorState';
 import { api } from '../services/api';
 import { brlFromMinor } from '../utils/academy-money';
 
@@ -106,12 +107,9 @@ export function FinancialScreen() {
       <ActivityIndicator size="large" color="#2BF47A" />
       <Text style={styles.sub}>Consultando suas cobranças…</Text>
     </View> : null}
-    {error ? <View testID="student-charges-error" style={styles.errorCard}>
-      <Text style={styles.errorTitle}>Não foi possível consultar suas cobranças</Text>
-      <Text style={styles.errorText}>{error}</Text>
-      <TouchableOpacity accessibilityRole="button" testID="student-charges-retry"
-        style={styles.retryButton} onPress={reload}><Text style={styles.retryText}>Tentar novamente</Text></TouchableOpacity>
-    </View> : null}
+    {error ? <RequestErrorState testID="student-charges-error" retryTestID="student-charges-retry"
+      title="Não foi possível consultar suas cobranças"
+      message={`Sem conexão ou serviço indisponível. ${error}`} onRetry={reload} /> : null}
     {!loading && !error ? <>
       {charges.length ? <View style={styles.filters}>
         <TouchableOpacity testID="student-charges-filter-all" accessibilityRole="button"

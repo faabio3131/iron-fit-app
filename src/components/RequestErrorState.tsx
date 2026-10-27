@@ -6,13 +6,17 @@ export function RequestErrorState({
   title = 'Não foi possível atualizar',
   message = 'Sem conexão ou serviço indisponível. Verifique sua internet e tente novamente.',
   onRetry,
+  testID = 'mobile-request-error',
+  retryTestID = 'mobile-request-retry',
 }: {
   title?: string;
   message?: string;
   onRetry: () => void;
+  testID?: string;
+  retryTestID?: string;
 }) {
   return (
-    <View style={styles.card} testID="mobile-request-error">
+    <View style={styles.card} testID={testID}>
       <View style={styles.icon}>
         <Ionicons name="cloud-offline-outline" size={24} color="#67d6ff" />
       </View>
@@ -20,7 +24,7 @@ export function RequestErrorState({
       <Text style={styles.message}>{message}</Text>
       <TouchableOpacity
         accessibilityRole="button"
-        testID="mobile-request-retry"
+        testID={retryTestID}
         style={styles.button}
         onPress={onRetry}
       >

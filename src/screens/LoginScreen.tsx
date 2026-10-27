@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { IronBrand } from '../components/IronBrand';
 
 type LoginScreenProps = {
   initialEmail?: string;
@@ -81,19 +82,8 @@ export function LoginScreen({
     >
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          <View style={styles.logoBadge}>
-            <Ionicons name="cloud" size={48} color="#f1f5f9" />
-            <Ionicons
-              name="barbell"
-              size={28}
-              color="#2BF47A"
-              style={styles.logoBarbell}
-            />
-          </View>
-          <Text style={styles.logoTitle}>Iron Fit</Text>
-          <Text style={styles.logoTagline}>
-            A força da sua academia,{String.fromCharCode(10)}na nuvem.
-          </Text>
+          <IronBrand />
+          <Text style={styles.logoTagline}>A força da sua academia, na nuvem.</Text>
         </View>
 
         <View style={styles.card}>
