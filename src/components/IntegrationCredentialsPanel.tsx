@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Linking,
   StyleSheet,
   Text,
   TextInput,
@@ -8,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { api } from '../services/api';
+import { API_URL } from '../config/env';
 
 type Provider = {
   providerCode: string;
@@ -128,7 +130,7 @@ function ActionButton({
   );
 }
 
-export function IntegrationCredentialsPanel() {
+export function IntegrationCredentialsPanel({ canStartOAuth = false }: { canStartOAuth?: boolean }) {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [environment, setEnvironment] = useState('');
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -152,6 +154,8 @@ export function IntegrationCredentialsPanel() {
     [providers, selectedProviderCode],
   );
 
+  const oauthMode = !!selectedProvider?.supportsOAuth && authModel === 'OAUTH2';
+
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -168,7 +172,7 @@ export function IntegrationCredentialsPanel() {
         const first = nextProviders[0];
         setSelectedProviderCode(first.providerCode);
         setAuthModel(first.authModels?.[0] ?? '');
-        setCapabilities(Array.isArray(first.capabilities) ? [...first.capabilities] : []);
+        setCapabilities(first.providerCode === 'meta' && first.capabilities?.includes('meta.whatsapp') ? ['meta.whatsapp'] : Array.isArray(first.capabilities) ? [...first.capabilities] : []);
       }
     } catch (reason) {
       setError(errorMessage(reason));
@@ -187,7 +191,7 @@ export function IntegrationCredentialsPanel() {
   function selectProvider(provider: Provider) {
     setSelectedProviderCode(provider.providerCode);
     setAuthModel(provider.authModels?.[0] ?? '');
-    setCapabilities(Array.isArray(provider.capabilities) ? [...provider.capabilities] : []);
+    setCapabilities(provider.providerCode === 'meta' && provider.capabilities?.includes('meta.whatsapp') ? ['meta.whatsapp'] : Array.isArray(provider.capabilities) ? [...provider.capabilities] : []);
     setPublicConfiguration('{}');
     setSecret('');
     setStepUp(EMPTY_STEP);
@@ -255,6 +259,31 @@ export function IntegrationCredentialsPanel() {
     }
   }
 
+  async function startOAuth() {
+    if (!canStartOAuth || !selectedProvider || !oauthMode || !stepUp.currentPassword || capabilities.length === 0) {
+      setError('A autorizacao OAuth exige proprietario, provedor e reautenticacao.'); return;
+    }
+    if (!selectedProvider.environments.includes(environment)) {
+      setError('Este provedor nao esta disponivel no ambiente atual.'); return;
+    }
+    setSaving(true); setError(''); setNotice('');
+    try {
+      const result = await api('/integrations/oauth/' + selectedProvider.providerCode + '/start', undefined, {
+        method: 'POST',
+        body: JSON.stringify({
+          redirectUri: API_URL + '/integrations/oauth/' + selectedProvider.providerCode + '/callback',
+          capabilities, ...stepPayload(stepUp),
+        }),
+      });
+      if (typeof result?.authorizationUrl !== 'string' || !/^https:\/\/[^/\s]+/i.test(result.authorizationUrl)) {
+        throw new Error('O servidor nao retornou uma URL HTTPS valida.');
+      }
+      setStepUp(EMPTY_STEP);
+      await Linking.openURL(result.authorizationUrl);
+      setNotice('Autorizacao iniciada. Conclua o consentimento no provedor e atualize esta tela.');
+    } catch (reason) { setError(errorMessage(reason)); }
+    finally { setSaving(false); }
+  }
   function beginAction(
     connectionId: string,
     next: 'replace' | 'rotate' | 'verify' | 'revoke',
@@ -347,7 +376,7 @@ export function IntegrationCredentialsPanel() {
                   ]}
                   onPress={() => selectProvider(provider)}
                 >
-                  <Text style={styles.chipText}>{provider.providerCode}</Text>
+                  <Text style={styles.chipText}>{provider.providerCode === 'fm-fiscal-core' ? 'FM Fiscal Core' : provider.providerCode}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -388,6 +417,24 @@ export function IntegrationCredentialsPanel() {
                   ))}
                 </View>
 
+                {oauthMode ? (
+                  <View style={styles.section}>
+                    <Text style={styles.title}>Autorizacao OAuth</Text>
+                    <Text style={styles.muted}>Somente o proprietario pode iniciar esta conexao. Recursos selecionados; tokens no cofre do IRON.</Text>
+                    <SecretField
+                      testID="integration-oauth-current-password"
+                      label="Senha atual - reautenticacao"
+                      value={stepUp.currentPassword}
+                      onChangeText={(currentPassword) => setStepUp((v) => ({ ...v, currentPassword }))}
+                    />
+                    <ActionButton
+                      testID="integration-oauth-start"
+                      label={saving ? 'Abrindo autorizacao...' : 'Conectar com OAuth'}
+                      disabled={saving || !canStartOAuth || !stepUp.currentPassword || capabilities.length === 0}
+                      onPress={() => { void startOAuth(); }}
+                    />
+                  </View>
+                ) : (<>
                 <PlainField
                   label="Configuração pública JSON — nunca coloque segredo aqui"
                   value={publicConfiguration}
@@ -422,6 +469,7 @@ export function IntegrationCredentialsPanel() {
                   disabled={saving || capabilities.length === 0}
                   onPress={() => { void createConnection(); }}
                 />
+                </>)}
               </>
             ) : null}
           </>

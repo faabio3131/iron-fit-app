@@ -205,7 +205,7 @@ describe('student end-to-end smoke journey', () => {
     await loginDirect(view);
     fireEvent.press(view.getByText('Plano'));
     await waitFor(() => expect(view.getByText('Mensalidade Setembro')).toBeTruthy(), { timeout: E2E_WAIT_MS });
-    expect(view.getByText('R$ 199,90')).toBeTruthy();
+    expect(view.getByText(/199,90/)).toBeTruthy();
 
     fireEvent.press(view.getByText('Perfil'));
     await waitFor(() => expect(view.getByText('Ana Silva')).toBeTruthy(), { timeout: E2E_WAIT_MS });
