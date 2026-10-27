@@ -19,7 +19,6 @@ export function WorkoutsScreen() {
 
   useEffect(() => {
     let active = true;
-    setLoadError('');
     api('/me/workouts')
       .then((data) => {
         if (active) {
@@ -52,7 +51,7 @@ export function WorkoutsScreen() {
         </View>
         <AIInsightCard workoutCount={workouts.length} weeklyFrequency={weeklyFrequency} onOpenAssistant={() => setAssistantVisible(true)} /></View> : null}
         <Text style={styles.sectionTitle}>Seus Treinos</Text>
-        {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? <RequestErrorState message={`Sem conexão ou serviço indisponível. ${loadError}`} onRetry={() => { setLoading(true); setReloadVersion((n) => n + 1); }} /> : workouts.length === 0 ? (
+        {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? <RequestErrorState message={`Sem conexão ou serviço indisponível. ${loadError}`} onRetry={() => { setLoadError(''); setLoading(true); setReloadVersion((n) => n + 1); }} /> : workouts.length === 0 ? (
           <EmptyState icon="barbell-outline" title="Nenhum treino ainda" subtitle="Seu instrutor ainda não liberou treinos para você." />
         ) : workouts.map((workout) => (
           <View key={workout.id} style={styles.card}>
