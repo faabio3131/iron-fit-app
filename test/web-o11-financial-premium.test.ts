@@ -10,7 +10,8 @@ test('O11 Web loads the canonical academy finance read models behind the protect
   expect(web).toContain("api('/financial/subscriptions')");
   expect(web).toContain("api('/financial/transactions')");
   expect(web).toContain("api('/financial/charges?overdue=true')");
-  expect(web).toContain("const restrictedAdminModules: ModuleKey[] = ['financial'");
+  expect(web).toMatch(/const restrictedAdminModules: ModuleKey\[\] = \[[^\]]*\x27financial\x27/);
+  expect(web).toContain("if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView()");
   expect(web).toContain("{ key: 'financial', label: 'Financeiro'");
   expect(web).toContain("roles: ['SUPER_ADMIN', 'OWNER']");
 });
