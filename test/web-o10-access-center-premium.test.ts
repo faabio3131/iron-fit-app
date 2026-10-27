@@ -2,6 +2,7 @@ import fs from 'node:fs';
 
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
 const access = fs.readFileSync('src/web/AccessCenterWorkspace.tsx', 'utf8');
+const activeAccess = fs.readFileSync('src/components/AccessCenterPanel.tsx', 'utf8');
 
 test('O10 Web loads canonical Access Center read models with role-aware devices', () => {
   expect(web).toContain("import { AccessCenterWorkspace } from './AccessCenterWorkspace';");
@@ -41,5 +42,10 @@ test('O10 Web preserves backend authority and never sends tenant or secret hashe
   expect(web).not.toMatch(/JSON\.stringify\([^\n]*gymId/);
   expect(web).toContain("canManageDevices={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}");
   expect(web).toContain("method: 'PATCH'");
-  expect(web).toContain('/revoke');
+  // A tela ativa usa AccessCenterPanel; verifique a revogação real no componente montado.
+  expect(web).toContain('<AccessCenterPanel');
+  expect(activeAccess).toContain("'/access/credentials/' + encodeURIComponent(id) + '/revoke'");
+  expect(activeAccess).toContain("method: 'PATCH'");
+  expect(activeAccess).not.toContain('tokenHash');
+  expect(activeAccess).not.toContain('biometricHash');
 });
