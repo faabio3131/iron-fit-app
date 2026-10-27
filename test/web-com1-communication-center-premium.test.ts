@@ -2,13 +2,16 @@ import fs from 'node:fs';
 
 const center = fs.readFileSync('src/web/CommunicationCenter.tsx', 'utf8');
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
+const activeCenter = fs.readFileSync('src/components/CommunicationCenterPanel.tsx', 'utf8');
 
 test('COM-1 exposes Communication Center only to backend-authorized operational roles', () => {
   expect(web).toContain("{ key: 'communication', label: 'Comunicação'");
   expect(web).toContain("roles: operational");
-  expect(web).toContain("<CommunicationCenter");
+  expect(web).toContain("<CommunicationCenterPanel");
   expect(web).toContain("canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}");
-  expect(web).toContain("canInspectIntegrations={can('SUPER_ADMIN', 'OWNER')}");
+  // Current operational panel has no integration credentials read access.
+  expect(activeCenter).not.toContain("/integrations/connections");
+  expect(activeCenter).toContain("canManageAutomations ? api('/communication/automations')");
 });
 
 test('COM-1 presents only the externally implemented WhatsApp dispatch channel', () => {
