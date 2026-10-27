@@ -173,71 +173,56 @@ test('Cockpit mostra agenda, alertas e candidatos da Intelligence com drill-down
   expect(view.getByText(/Seg · 08:00–09:00/)).toBeTruthy();
 });
 
-test('Equipment Intelligence oferece catálogo, inventário, compatibilidade e candidate intake sem cadastro manual', async () => {
+test('Equipment Intelligence oferece catálogo, inventário e candidate intake sem cadastro manual paralelo', async () => {
   mockFeatureSet = [
     { featureKey: 'equipment.catalog', kind: 'FEATURE', value: true, source: 'PLAN' },
     { featureKey: 'equipment.inventory', kind: 'FEATURE', value: true, source: 'PLAN' },
   ];
   const view = render(<CommercialWebApp />);
-
   await waitFor(() => expect(view.getByTestId('nav-equipment')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-equipment'));
-
-  await waitFor(() => expect(view.getByText('Catálogo mestre')).toBeTruthy());
-  expect(view.getByText('Inventário inteligente')).toBeTruthy();
-  expect(view.getByText('Compatibilidade por exercício')).toBeTruthy();
-  expect(view.getByText('Não encontrou o equipamento?')).toBeTruthy();
+  await waitFor(() => expect(view.getByText('Catálogo mestre de equipamentos')).toBeTruthy());
+  expect(view.getByText('Inventário da academia')).toBeTruthy();
+  expect(view.getByText('Sugerir equipamento ao catálogo')).toBeTruthy();
+  expect(view.getByTestId('equipment-search')).toBeTruthy();
   expect(view.queryByText('Novo equipamento')).toBeNull();
-
-  fireEvent.press(view.getByText('Agachamento'));
-  fireEvent.press(view.getByText('Consultar compatibilidade'));
-  await waitFor(() => expect(mockApi.mock.calls.some(([path]) => path === '/equipments/exercises/exercise-1/compatible')).toBe(true));
-
-  fireEvent.changeText(view.getByLabelText('Nome proposto'), 'Equipamento Novo');
+  fireEvent.changeText(view.getByTestId('equipment-candidate-name'), 'Equipamento Novo');
   fireEvent.press(view.getByTestId('equipment-candidate-submit'));
   await waitFor(() => {
     const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/equipments/catalog/candidates' && options?.method === 'POST');
     expect(call).toBeTruthy();
-    const parsedBody = JSON.parse(String(call?.[2]?.body ?? '{}'));
-    expect(parsedBody).toMatchObject({ proposedName: 'Equipamento Novo' });
+    expect(JSON.parse(String(call?.[2]?.body ?? '{}'))).toMatchObject({ proposedName: 'Equipamento Novo' });
   });
 });
 
-test('Biblioteca de exercícios oferece busca, filtros, conteúdo e compatibilidade', async () => {
+test('Biblioteca de exercícios pesquisa, filtra e consulta compatibilidade canônica', async () => {
   const view = render(<CommercialWebApp />);
   await waitFor(() => expect(view.getByTestId('nav-exercises')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-exercises'));
-
   await waitFor(() => expect(view.getByText('Biblioteca de exercícios')).toBeTruthy());
   await waitFor(() => expect(view.getByText('Agachamento')).toBeTruthy());
   expect(view.getByText('Supino reto')).toBeTruthy();
-
-  fireEvent.changeText(view.getByLabelText('Buscar exercício'), 'supino');
+  fireEvent.changeText(view.getByTestId('exercise-search'), 'supino');
   expect(view.queryByText('Agachamento')).toBeNull();
   expect(view.getByText('Supino reto')).toBeTruthy();
-
-  fireEvent.changeText(view.getByLabelText('Buscar exercício'), '');
-  fireEvent.press(view.getByText('Agachamento'));
-  await waitFor(() => expect(view.getByText('Conteúdo: video-agachamento')).toBeTruthy());
-  fireEvent.press(view.getByText('Consultar equipamentos compatíveis'));
+  fireEvent.changeText(view.getByTestId('exercise-search'), '');
+  expect(view.getByText('Contraindicações e cuidados')).toBeTruthy();
+  fireEvent.press(view.getByTestId('exercise-compatibility-exercise-1'));
   await waitFor(() => expect(mockApi.mock.calls.some(([path]) => path === '/equipments/exercises/exercise-1/compatible')).toBe(true));
+  expect(view.getByText('Compatibilidade com o inventário')).toBeTruthy();
 });
 
-test('Avaliações mostram evolução corporal, composição, restrições e contexto de treino', async () => {
+test('Avaliações apresentam histórico real, evolução e restrições sem trocar de domínio', async () => {
   const view = render(<CommercialWebApp />);
   await waitFor(() => expect(view.getByTestId('nav-assessments')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-assessments'));
-
-  await waitFor(() => expect(view.getByText('Aluno 360')).toBeTruthy());
-  fireEvent.press(view.getByText('Aluno 360'));
-
-  await waitFor(() => expect(view.getByText('Evolução corporal')).toBeTruthy());
-  expect(view.getByText('Contexto de treino')).toBeTruthy();
-  expect(view.getByText('Histórico de avaliações')).toBeTruthy();
-  await waitFor(() => expect(view.getByText(/Δ -2 kg/)).toBeTruthy());
+  await waitFor(() => expect(view.getByText('Histórico de evolução física')).toBeTruthy());
+  fireEvent.press(view.getByTestId('assessment-select-student-1'));
+  await waitFor(() => expect(view.getByTestId('assessment-weight-delta')).toBeTruthy());
+  expect(view.getByText(/Variação de peso desde a avaliação anterior: -2.0 kg/)).toBeTruthy();
   expect(view.getAllByText(/Cintura: 84 cm/).length).toBeGreaterThan(0);
-  expect(view.getAllByText(/Cuidado com joelho direito/).length).toBeGreaterThan(0);
-  expect(view.getByText('Hipertrofia')).toBeTruthy();
+  expect(view.getAllByText(/Restrições: Cuidado com joelho direito/).length).toBeGreaterThan(0);
+  expect(mockApi.mock.calls.some(([path]) => path === '/students/student-1/assessments')).toBe(true);
 });
 
 test('Workout Studio monta sessão completa e envia rascunho canônico', async () => {
