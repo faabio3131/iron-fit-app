@@ -45,7 +45,8 @@ export function WorkoutsScreen() {
           <View><Text style={styles.heading}>Olá, {profile?.name?.split(' ')[0] || 'Atleta'}</Text><Text style={styles.sub}>Bora treinar hoje? 💪</Text></View>
           <View style={styles.avatar}><Ionicons name="person" size={24} color="#2BF47A" /></View>
         </View>
-        {!loadError ? <View style={styles.stats}>
+        {!loadError ? <View>
+          <View style={styles.stats}>
           <StatCard icon="barbell" value={String(workouts.length)} label="Treinos" color="#2BF47A" />
           <StatCard icon="calendar" value={String(weeklyFrequency)} label="Dias/semana" color="#f59e0b" />
         </View>
