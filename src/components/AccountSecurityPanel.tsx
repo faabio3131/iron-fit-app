@@ -317,7 +317,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-      {loading ? <View style={styles.loading}><ActivityIndicator color="#2F91FF" /><Text style={styles.muted}>Aplicando alteração segura…</Text></View> : null}
+      {loading ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Aplicando alteração segura…</Text></View> : null}
 
       <ScrollView horizontal contentContainerStyle={styles.tabs}>
         {([
@@ -517,7 +517,7 @@ export function AccountSecurityPanel({ onBack }: { onBack?: () => void }) {
           </View>
 
           {sessionLoading ? (
-            <View style={styles.loading}><ActivityIndicator color="#2F91FF" /><Text style={styles.muted}>Carregando sessões…</Text></View>
+            <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando sessões…</Text></View>
           ) : sessions.length ? (
             sessions.map((session) => (
               <View key={session.id} style={[styles.session, session.current && styles.sessionCurrent]}>
@@ -559,47 +559,47 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 80 },
   back: { alignSelf: 'flex-start', paddingVertical: 8, marginBottom: 3 },
   backText: { color: '#B8DCFF', fontWeight: '800', fontSize: 11 },
-  hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#071629', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 14, marginBottom: 8 },
+  hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 14, marginBottom: 8 },
   heroCopy: { flex: 1, minWidth: 260 },
   eyebrow: { color: '#56EC95', fontSize: 10, fontWeight: '900', letterSpacing: 0.8, marginBottom: 3 },
   title: { color: '#EEF1F5', fontSize: 22, fontWeight: '900', letterSpacing: -0.4, marginBottom: 4 },
   muted: { color: '#A1A6AE', fontSize: 11, lineHeight: 16 },
-  securityBadge: { minWidth: 170, backgroundColor: '#050B14', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
+  securityBadge: { minWidth: 170, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
   securityBadgeLabel: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
   securityBadgeValue: { color: '#EEF1F5', fontSize: 14, fontWeight: '900', marginTop: 3 },
   summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  summaryCard: { flexGrow: 1, flexBasis: 220, minWidth: 190, backgroundColor: '#071629', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, padding: 10 },
+  summaryCard: { flexGrow: 1, flexBasis: 220, minWidth: 190, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, padding: 10 },
   summaryLabel: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
   summaryValue: { color: '#EEF1F5', fontSize: 15, fontWeight: '900', marginTop: 4 },
   summaryMeta: { color: '#9299A1', fontSize: 9, lineHeight: 13, marginTop: 3 },
   tabs: { flexDirection: 'row', gap: 6, paddingBottom: 8 },
-  tab: { backgroundColor: '#050B14', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 7 },
-  tabActive: { backgroundColor: '#09243D', borderColor: '#2F91FF' },
+  tab: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 7 },
+  tabActive: { backgroundColor: '#153320', borderColor: '#2BF47A' },
   tabText: { color: '#A1A6AE', fontSize: 10, fontWeight: '800' },
   tabTextActive: { color: '#EEF1F5' },
   reauthCard: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 12, padding: 11, marginBottom: 8 },
   reauthCopy: { flex: 1, minWidth: 250 },
   reauthFields: { flexGrow: 1, flexBasis: 360, minWidth: 280 },
   twoColumns: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start' },
-  card: { flexGrow: 1, flexBasis: 420, minWidth: 300, backgroundColor: '#071629', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 13, marginBottom: 8 },
+  card: { flexGrow: 1, flexBasis: 420, minWidth: 300, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 13, marginBottom: 8 },
   cardTitle: { color: '#EEF1F5', fontWeight: '900', fontSize: 15, marginBottom: 4 },
   subTitle: { color: '#DDE3E4', fontWeight: '900', fontSize: 12, marginTop: 7, marginBottom: 3 },
   field: { marginTop: 7 },
   fieldLabel: { color: '#A1A6AE', fontSize: 10, fontWeight: '800', marginBottom: 4 },
-  input: { color: '#EEF1F5', backgroundColor: '#050B14', borderWidth: 1, borderColor: '#252A2B', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
+  input: { color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   policy: { color: '#A1A6AE', fontSize: 10, lineHeight: 15, marginTop: 6 },
   help: { color: '#9299A1', fontSize: 10, lineHeight: 15, marginTop: 8 },
-  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#247BE0', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
+  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#19B95D', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
   buttonSecondary: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31' },
   buttonDanger: { backgroundColor: '#7f1d1d' },
   buttonText: { color: '#fff', fontWeight: '900', fontSize: 10 },
   disabled: { opacity: 0.42 },
   divider: { height: 1, backgroundColor: '#1B2420', marginTop: 12 },
-  enrollmentBox: { backgroundColor: '#050B14', borderWidth: 1, borderColor: '#24262B', borderRadius: 10, padding: 10, marginTop: 8 },
+  enrollmentBox: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 10, padding: 10, marginTop: 8 },
   oneTimeLabel: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase', marginTop: 7 },
-  oneTimeValue: { color: '#8CC5FF', fontSize: 10, lineHeight: 15, marginTop: 3 },
-  recoveryBox: { marginTop: 9, backgroundColor: '#050B14', borderWidth: 1, borderColor: '#2F91FF', borderRadius: 10, padding: 10 },
-  recoveryWarning: { color: '#8CC5FF', fontSize: 11, fontWeight: '900' },
+  oneTimeValue: { color: '#7DFFB1', fontSize: 10, lineHeight: 15, marginTop: 3 },
+  recoveryBox: { marginTop: 9, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#2BF47A', borderRadius: 10, padding: 10 },
+  recoveryWarning: { color: '#7DFFB1', fontSize: 11, fontWeight: '900' },
   codeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   code: { color: '#DDE3E4', fontSize: 10, backgroundColor: '#101416', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 5 },
   sessionHeader: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' },
@@ -611,10 +611,10 @@ const styles = StyleSheet.create({
   sessionTitle: { color: '#EEF1F5', fontWeight: '900', fontSize: 11 },
   sessionFacts: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 5 },
   sessionFact: { color: '#9299A1', fontSize: 9 },
-  activeBadge: { color: '#8CC5FF', backgroundColor: '#142018', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 8, fontWeight: '800' },
+  activeBadge: { color: '#7DFFB1', backgroundColor: '#142018', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 8, fontWeight: '800' },
   inactiveBadge: { color: '#b3c3d5', backgroundColor: '#111317', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 8, fontWeight: '800' },
   empty: { color: '#828A91', fontSize: 10, paddingVertical: 9 },
   error: { color: '#fca5a5', backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', padding: 9, borderRadius: 9, marginBottom: 8 },
-  notice: { color: '#8CC5FF', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 9, borderRadius: 9, marginBottom: 8 },
+  notice: { color: '#7DFFB1', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 9, borderRadius: 9, marginBottom: 8 },
   loading: { flexDirection: 'row', gap: 8, alignItems: 'center', paddingVertical: 9 },
 });
