@@ -242,14 +242,18 @@ function TenantCommercialWebApp() {
       const next: Record<string, any> = {};
       if (key === 'overview') {
         const canSeeFinancialDashboard = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
-        const [summary, revenue, attendance, overdue, birthdays, gym] = await Promise.all([
+        const canSeeSchedule = visible.some((item) => item.key === 'schedule');
+        const canSeeWorkouts = visible.some((item) => item.key === 'workouts');
+        const [summary, revenue, attendance, overdue, birthdays, gym, cockpitSlots, cockpitWorkouts] = await Promise.all([
           api('/dashboard/summary'),
           canSeeFinancialDashboard ? api('/dashboard/revenue?days=30') : Promise.resolve(null),
           api('/dashboard/attendance?days=7'),
           canSeeFinancialDashboard ? api('/dashboard/overdue') : Promise.resolve(null),
           api('/dashboard/birthdays?days=30'),
           activeTenantId && can('OWNER', 'MANAGER') ? api(`/gyms/${activeTenantId}`).catch(() => null) : Promise.resolve(null),
-        ]); Object.assign(next, { summary, revenue, attendance, overdue, birthdays, gym });
+          canSeeSchedule ? api('/schedule-slots') : Promise.resolve(null),
+          canSeeWorkouts ? api('/workouts') : Promise.resolve(null),
+        ]); Object.assign(next, { summary, revenue, attendance, overdue, birthdays, gym, cockpitSlots, cockpitWorkouts });
       }
       if (key === 'students') next.students = await api('/students');
       if (key === 'team') next.users = await api('/users');
@@ -264,7 +268,7 @@ function TenantCommercialWebApp() {
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
       setData(next);
     } catch (reason) { setError(message(reason)); setData({}); } finally { setLoading(false); }
-  }, [activeTenantId, adminStepUpActive, can, enabled, selectedStudent, subscription]);
+  }, [activeTenantId, adminStepUpActive, can, enabled, selectedStudent, subscription, visible]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -406,6 +410,8 @@ function TenantCommercialWebApp() {
       revenue={financialAuthorized && Array.isArray(data.revenue) ? data.revenue : null}
       overdue={financialAuthorized && Array.isArray(data.overdue) ? data.overdue : null}
       birthdays={Array.isArray(data.birthdays) ? data.birthdays : null}
+      slots={Array.isArray(data.cockpitSlots) ? data.cockpitSlots : null}
+      workouts={Array.isArray(data.cockpitWorkouts) ? data.cockpitWorkouts : null}
       financialAuthorized={financialAuthorized}
       availableModules={authorizedShortcuts}
       onNavigate={(key) => setActive(key)}
