@@ -217,6 +217,7 @@ test('Avaliações apresentam histórico real, evolução e restrições sem tro
   await waitFor(() => expect(view.getByTestId('nav-assessments')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-assessments'));
   await waitFor(() => expect(view.getByText('Histórico de evolução física')).toBeTruthy());
+  await waitFor(() => expect(view.getByTestId('assessment-select-student-1')).toBeTruthy());
   fireEvent.press(view.getByTestId('assessment-select-student-1'));
   await waitFor(() => expect(view.getByTestId('assessment-weight-delta')).toBeTruthy());
   expect(view.getByText(/Variação de peso desde a avaliação anterior: -2.0 kg/)).toBeTruthy();
