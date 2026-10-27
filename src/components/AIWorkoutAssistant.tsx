@@ -55,7 +55,7 @@ export function AIWorkoutAssistant({ visible, onClose, workoutCount, weeklyFrequ
         <View style={styles.panel}>
           <View style={styles.header}>
             <View style={styles.titleRow}><Ionicons name="sparkles" size={19} color="#2BF47A" /><Text style={styles.title}>Assistente de Treino</Text></View>
-            <TouchableOpacity onPress={onClose} accessibilityLabel="Fechar assistente"><Ionicons name="close" size={24} color="#cbd5e1" /></TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" onPress={onClose} accessibilityLabel="Fechar assistente"><Ionicons name="close" size={24} color="#cbd5e1" /></TouchableOpacity>
           </View>
           <Text style={styles.notice}>Orientação complementar. Não substitui avaliação ou prescrição profissional.</Text>
           <ScrollView style={styles.messages} contentContainerStyle={styles.messagesContent}>
@@ -77,7 +77,7 @@ export function AIWorkoutAssistant({ visible, onClose, workoutCount, weeklyFrequ
               multiline
               maxLength={600}
             />
-            <TouchableOpacity style={[styles.send, sending ? styles.sendDisabled : null]} onPress={sendMessage} disabled={sending} accessibilityLabel="Enviar pergunta">
+            <TouchableOpacity accessibilityRole="button" style={[styles.send, sending ? styles.sendDisabled : null]} onPress={sendMessage} disabled={sending} accessibilityLabel="Enviar pergunta">
               <Ionicons name="send" size={18} color="#04140b" />
             </TouchableOpacity>
           </View>

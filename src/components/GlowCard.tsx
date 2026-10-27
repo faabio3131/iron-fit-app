@@ -29,7 +29,7 @@ export function GlowCard({
   const active = hovered || pressed;
 
   return (
-    <Pressable
+    <Pressable accessibilityRole="button"
       testID={testID}
       disabled={disabled}
       onPress={onPress}

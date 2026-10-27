@@ -56,7 +56,7 @@ export function SchedulesScreen() {
       {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? (
         <View style={styles.errorCard}>
           <Text style={styles.errorText}>{loadError}</Text>
-          <TouchableOpacity testID="schedule-retry" onPress={refreshSchedule} style={styles.retryButton}>
+          <TouchableOpacity accessibilityRole="button" testID="schedule-retry" onPress={refreshSchedule} style={styles.retryButton}>
             <Text style={styles.retryText}>Tentar novamente</Text>
           </TouchableOpacity>
         </View>

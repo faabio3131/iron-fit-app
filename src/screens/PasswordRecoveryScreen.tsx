@@ -90,7 +90,7 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
           placeholder="E-mail"
           placeholderTextColor="#64748b"
         />
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button"
           testID="recovery-request"
           style={[styles.primary, (!email.trim() || loading) && styles.disabled]}
           disabled={!email.trim() || loading}
@@ -121,7 +121,7 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
               placeholderTextColor="#64748b"
             />
             <Text style={styles.policy}>{PASSWORD_POLICY_TEXT}</Text>
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               testID="recovery-confirm"
               style={[
                 styles.primary,
@@ -138,7 +138,7 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
 
         {notice ? <Text testID="recovery-notice" style={styles.notice}>{notice}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <TouchableOpacity style={styles.back} onPress={onBack} disabled={loading}>
+        <TouchableOpacity accessibilityRole="button" style={styles.back} onPress={onBack} disabled={loading}>
           <Text style={styles.backText}>Voltar ao login</Text>
         </TouchableOpacity>
       </View>

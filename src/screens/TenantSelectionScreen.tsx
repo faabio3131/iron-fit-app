@@ -66,7 +66,7 @@ export function TenantSelectionScreen() {
           ? pendingTenantSelection.tenants.map((tenant) => {
               const selected = tenant.id === selectedGymId;
               return (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   testID={`tenant-${tenant.id}`}
                   key={tenant.id}
                   style={[styles.option, selected && styles.optionSelected]}
@@ -134,7 +134,7 @@ export function TenantSelectionScreen() {
         ) : null}
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button"
           testID="tenant-confirm"
           style={[
             styles.button,
@@ -159,7 +159,7 @@ export function TenantSelectionScreen() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button"
           style={styles.backButton}
           onPress={cancelTenantSelection}
           disabled={loading}

@@ -23,7 +23,7 @@ export function CheckInScreen({ onCheckedIn }: { onCheckedIn?: () => void } = {}
 
   return (
     <>
-      <TouchableOpacity testID="checkin-submit" style={styles.card} onPress={handleCheckIn} disabled={checkingIn} activeOpacity={0.8}>
+      <TouchableOpacity accessibilityRole="button" testID="checkin-submit" style={styles.card} onPress={handleCheckIn} disabled={checkingIn} activeOpacity={0.8}>
         <View style={styles.iconBox}><Ionicons name="qr-code" size={32} color="#04140b" /></View>
         <View style={styles.content}>
           <Text style={styles.title}>Check-in na academia</Text>
