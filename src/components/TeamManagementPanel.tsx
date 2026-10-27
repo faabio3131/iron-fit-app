@@ -55,10 +55,10 @@ export function TeamManagementPanel({ members, actorRoles, rosterLoaded = true, 
   const [notice, setNotice] = useState('');
   const isOwner = actorRoles.includes('OWNER') || actorRoles.includes('SUPER_ADMIN');
   const isManager = actorRoles.includes('MANAGER') && !isOwner;
-  const allowedRoles: TeamRole[] = isOwner ? ['MANAGER', 'RECEPTION', 'TRAINER'] : ['RECEPTION', 'TRAINER'];
+  const allowedRoles: TeamRole[] = isOwner ? ['MANAGER', 'RECEPTION', 'TRAINER'] : isManager ? ['RECEPTION', 'TRAINER'] : [];
 
   async function perform(action: () => Promise<unknown>, success: string, reset?: () => void) {
-    if (working || !rosterLoaded) return;
+    if (working || !rosterLoaded || allowedRoles.length === 0) return;
     setWorking(true); setError(''); setNotice('');
     try {
       await action();
@@ -72,7 +72,7 @@ export function TeamManagementPanel({ members, actorRoles, rosterLoaded = true, 
     }
   }
 
-  const inviteValid = name.trim().length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const inviteValid = allowedRoles.length > 0 && name.trim().length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
     && allowedRoles.includes(inviteRole);
   return <View>
     {error ? <Text style={styles.error} testID="team-error">{error}</Text> : null}
