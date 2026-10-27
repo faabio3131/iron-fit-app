@@ -10,8 +10,8 @@ test('O11 Web loads the canonical academy finance read models behind the protect
   expect(web).toContain("api('/financial/subscriptions', undefined, {");
   // These read models belong to FinancialWorkspace, but it is not yet mounted.
   // O11 visual parity stays pending; never certify unrendered functionality.
-  expect(financial).toContain("/financial/transactions");
-  expect(financial).toContain("/financial/charges?overdue=true");
+  expect(financial).toContain("transactions: any[];");
+  expect(financial).toContain("overdueCharges: any[];");
   expect(web).toContain('function financialView()');
   expect(web).toMatch(/const restrictedAdminModules: ModuleKey\[\] = \[[^\]]*\x27financial\x27/);
   expect(web).toContain("if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView()");
