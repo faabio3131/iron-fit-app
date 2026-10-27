@@ -98,73 +98,68 @@ beforeEach(() => {
   installApi();
 });
 
-test('botão Adicionar à equipe explica validação e executa cadastro válido', async () => {
+test('Equipe exige identidade válida e envia convite seguro sem senha compartilhada', async () => {
   const view = render(<CommercialWebApp />);
-
   await waitFor(() => expect(view.getByTestId('nav-team')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-team'));
-  await waitFor(() => expect(view.getByTestId('team-add')).toBeTruthy());
+  await waitFor(() => expect(view.getByTestId('team-invite-submit')).toBeTruthy());
 
-  fireEvent.press(view.getByTestId('team-add'));
-  expect(view.getByText('Informe o nome do membro da equipe.')).toBeTruthy();
-
-  fireEvent.changeText(view.getByLabelText('Nome'), 'Professor QA');
-  fireEvent.changeText(view.getByLabelText('E-mail'), 'professor@example.com');
-  fireEvent.changeText(view.getByLabelText('Senha inicial (opcional)'), 'Senha-Forte-2026!');
-  fireEvent.press(view.getByTestId('team-add'));
-
-  await waitFor(() => {
-    const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/users' && options?.method === 'POST');
-    expect(call).toBeTruthy();
-    const body = JSON.parse(String(call?.[2]?.body ?? '{}'));
-    expect(body).toMatchObject({
-      name: 'Professor QA',
-      email: 'professor@example.com',
-      roleName: 'TRAINER',
-    });
-  }, { timeout: 30000 });
-}, 45000);
-
-test('Equipe permite convite seguro e mostra situação e permissões efetivas do membro', async () => {
-  const view = render(<CommercialWebApp />);
-
-  await waitFor(() => expect(view.getByTestId('nav-team')).toBeTruthy());
-  fireEvent.press(view.getByTestId('nav-team'));
-  await waitFor(() => expect(view.getByTestId('team-invite')).toBeTruthy());
-
-  expect(view.getByText('Professor Dois')).toBeTruthy();
-  expect(view.getAllByText('Acesso ativo').length).toBeGreaterThan(0);
-  expect(view.getByText(/Workouts Read/)).toBeTruthy();
-
-  fireEvent.changeText(view.getByLabelText('Nome'), 'Recepção Convite');
-  fireEvent.changeText(view.getByLabelText('E-mail'), 'recepcao.convite@example.com');
-  fireEvent.press(view.getByText('Recepção'));
-  fireEvent.press(view.getByTestId('team-invite'));
+  expect(view.getByTestId('team-invite-submit').props.disabled).toBe(true);
+  fireEvent.changeText(view.getByTestId('team-invite-name'), 'Professor QA');
+  fireEvent.changeText(view.getByTestId('team-invite-email'), 'professor@example.com');
+  expect(view.getByTestId('team-invite-submit').props.disabled).toBe(false);
+  fireEvent.press(view.getByTestId('team-invite-submit'));
 
   await waitFor(() => {
     const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/users/invite' && options?.method === 'POST');
     expect(call).toBeTruthy();
-    expect(JSON.parse(String(call?.[2]?.body ?? '{}'))).toMatchObject({
-      name: 'Recepção Convite',
-      email: 'recepcao.convite@example.com',
-      roleName: 'RECEPTION',
+    const body = JSON.parse(String(call?.[2]?.body ?? '{}'));
+    expect(body).toEqual({ name: 'Professor QA', email: 'professor@example.com', roleName: 'TRAINER' });
+    expect(body).not.toHaveProperty('password');
+    expect(body).not.toHaveProperty('gymId');
+  });
+  expect(mockApi.mock.calls.some(([path, _query, options]) => path === '/users' && options?.method === 'POST')).toBe(false);
+});
+
+test('Equipe apresenta permissões efetivas e permite somente convites governados por função', async () => {
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('nav-team')).toBeTruthy());
+  fireEvent.press(view.getByTestId('nav-team'));
+  await waitFor(() => expect(view.getByTestId('team-invite-submit')).toBeTruthy());
+
+  expect(view.getByText('Professor Dois')).toBeTruthy();
+  expect(view.getByText('workouts.read')).toBeTruthy();
+  expect(view.getAllByText(/Vínculo: Ativo/).length).toBeGreaterThan(0);
+
+  fireEvent.changeText(view.getByTestId('team-invite-name'), 'Recepção Convite');
+  fireEvent.changeText(view.getByTestId('team-invite-email'), 'recepcao.convite@example.com');
+  fireEvent.press(view.getByTestId('team-invite-role-RECEPTION'));
+  fireEvent.press(view.getByTestId('team-invite-submit'));
+
+  await waitFor(() => {
+    const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/users/invite' && options?.method === 'POST');
+    expect(call).toBeTruthy();
+    expect(JSON.parse(String(call?.[2]?.body ?? '{}'))).toEqual({
+      name: 'Recepção Convite', email: 'recepcao.convite@example.com', roleName: 'RECEPTION',
     });
   });
 });
 
-test('Equipe suspende acesso pelo vínculo do tenant sem desativar conta global na UI', async () => {
+test('Equipe exige confirmação humana para suspender somente o vínculo do tenant', async () => {
   const view = render(<CommercialWebApp />);
-
   await waitFor(() => expect(view.getByTestId('nav-team')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-team'));
-  await waitFor(() => expect(view.getByTestId('team-status-member-2')).toBeTruthy());
-  fireEvent.press(view.getByTestId('team-status-member-2'));
+  await waitFor(() => expect(view.getByTestId('team-status-toggle-member-2')).toBeTruthy());
 
+  fireEvent.press(view.getByTestId('team-status-toggle-member-2'));
+  expect(mockApi.mock.calls.some(([path, _query, options]) => path === '/users/member-2/membership/status' && options?.method === 'PATCH')).toBe(false);
+  fireEvent.press(view.getByTestId('team-status-confirm-member-2'));
   await waitFor(() => {
     const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/users/member-2/membership/status' && options?.method === 'PATCH');
     expect(call).toBeTruthy();
     expect(JSON.parse(String(call?.[2]?.body ?? '{}'))).toEqual({ active: false });
   });
+  expect(mockApi.mock.calls.some(([path, _query, options]) => path === '/users/member-2' && options?.method === 'PATCH')).toBe(false);
 });
 
 test('Cockpit mostra agenda, alertas e candidatos da Intelligence com drill-down', async () => {
