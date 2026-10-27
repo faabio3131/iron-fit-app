@@ -532,6 +532,7 @@ export function FinancialWorkspace({
         <View style={styles.chipRow}>
           {students.map((student) => <Chip
             key={student.id}
+            testID={`finance-charge-student-${student.id}`}
             label={studentName(student)}
             selected={chargeDraft.studentId === student.id}
             onPress={() => setChargeDraft((current) => ({ ...current, studentId: student.id }))}
@@ -595,6 +596,7 @@ export function FinancialWorkspace({
         <View style={styles.chipRow}>
           {students.map((student) => <Chip
             key={student.id}
+            testID={`finance-subscription-student-${student.id}`}
             label={studentName(student)}
             selected={subscriptionDraft.studentId === student.id}
             onPress={() => setSubscriptionDraft((current) => ({ ...current, studentId: student.id }))}

@@ -46,13 +46,13 @@ async function finance() {
   await waitFor(() => expect(view.getByTestId('financial-workspace')).toBeTruthy());
   fireEvent.press(view.getByTestId('financial-tab-charges'));
   await waitFor(() => expect(view.getByTestId('finance-create-charge')).toBeTruthy());
-  await waitFor(() => expect(view.getByText('Ana Silva')).toBeTruthy());
+  await waitFor(() => expect(view.getAllByText('Ana Silva').length).toBeGreaterThan(0));
   return view;
 }
 
 test('C05 finance user enters R$ 199,90 and API receives 19990 integer centavos, no gymId', async () => {
   const view = await finance();
-  fireEvent.press(view.getByText('Ana Silva'));
+  fireEvent.press(view.getByTestId('finance-charge-student-student-a'));
   fireEvent.changeText(view.getByTestId('finance-charge-amount'), '199,90');
   fireEvent.changeText(view.getByTestId('finance-charge-due'), '2026-10-27');
   fireEvent.press(view.getByTestId('finance-create-charge'));
@@ -65,7 +65,7 @@ test('C05 finance user enters R$ 199,90 and API receives 19990 integer centavos,
 
 test('C05 invalid monetary and impossible date inputs disable charge creation', async () => {
   const view = await finance();
-  fireEvent.press(view.getByText('Ana Silva'));
+  fireEvent.press(view.getByTestId('finance-charge-student-student-a'));
   fireEvent.changeText(view.getByTestId('finance-charge-amount'), '100.50');
   fireEvent.changeText(view.getByTestId('finance-charge-due'), '2026-02-30');
   expect(view.getByTestId('finance-charge-invalid')).toBeTruthy();
@@ -89,7 +89,7 @@ test('C05 account initial balance converts R$ 1.234,56 into 123456 minor units, 
 test('C05 subscription amount R$ 149,90 is sent as 14990 minor units under the student', async () => {
   const view = await finance();
   fireEvent.press(view.getByTestId('financial-tab-subscriptions'));
-  fireEvent.press(view.getByText('Ana Silva'));
+  fireEvent.press(view.getByTestId('finance-subscription-student-student-a'));
   fireEvent.changeText(view.getByTestId('finance-plan-name'), 'Plano Plus');
   fireEvent.changeText(view.getByTestId('finance-subscription-amount'), '149,90');
   fireEvent.changeText(view.getByTestId('finance-subscription-date'), '2026-11-05');

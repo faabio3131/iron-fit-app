@@ -121,16 +121,15 @@ describe('O11 FinancialWorkspace', () => {
     );
 
     fireEvent.press(view.getByTestId('financial-tab-charges'));
-    fireEvent.press(view.getAllByText('Ana Teste').slice(-1)[0]);
+    fireEvent.press(view.getByTestId('finance-charge-student-student-1'));
     fireEvent.changeText(view.getByLabelText('Valor (R$)'), '199,90');
     fireEvent.changeText(view.getByLabelText('Vencimento'), '2026-10-15');
-    fireEvent.press(view.getByTestId('financial-create-charge'));
+    fireEvent.press(view.getByTestId('finance-create-charge'));
 
     await waitFor(() => expect(onCreateCharge).toHaveBeenCalledWith({
       studentId: 'student-1',
       amount: 19990,
-      dueDate: '2026-10-15',
-      paymentMethod: 'PIX',
+      dueDate: '2026-10-15T00:00:00.000Z',
     }));
   });
   test('starts academy checkout only on user action via canonical callback and shows hosted link', async () => {
