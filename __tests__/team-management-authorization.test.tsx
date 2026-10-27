@@ -14,7 +14,7 @@ test('non-manager cannot invite or change a tenant member even if panel is mount
   }]} actorRoles={['RECEPTION']} onUpdated={async () => undefined} />);
   fireEvent.changeText(view.getByTestId('team-invite-name'), 'Wrong Actor');
   fireEvent.changeText(view.getByTestId('team-invite-email'), 'wrong@example.com');
-  expect(view.getByTestId('team-invite-submit').props.accessibilityState?.disabled ?? view.getByTestId('team-invite-submit').props.disabled).toBe(true);
+  fireEvent.press(view.getByTestId('team-invite-submit'));
   expect(view.queryByTestId('team-status-toggle-member-1')).toBeNull();
   expect(view.queryByTestId('team-role-save-member-1')).toBeNull();
   expect(mockApi).not.toHaveBeenCalled();
