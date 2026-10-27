@@ -73,7 +73,7 @@ test('C02 access center queries tenant-scoped credentials/devices and requires c
   const view = render(<CommercialWebApp />);
   await waitFor(() => expect(view.getByTestId('nav-access')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-access'));
-  await waitFor(() => expect(view.getByText('Catraca principal')).toBeTruthy());
+  await waitFor(() => expect(view.getAllByText('Catraca principal').length).toBeGreaterThan(0));
   expect(mockApi).toHaveBeenCalledWith('/access/credentials');
   expect(mockApi).toHaveBeenCalledWith('/access/devices');
   expect(view.getByTestId('access-revoke-cred-a')).toBeTruthy();

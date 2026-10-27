@@ -97,6 +97,7 @@ export function AccessCenterWorkspace({
   onRotateDeviceToken,
 }: AccessCenterWorkspaceProps) {
   const [credentialFilter, setCredentialFilter] = useState<CredentialFilter>('ALL');
+  const [pendingRevocation, setPendingRevocation] = useState<string | null>(null);
   const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('ALL');
   const [studentFilter, setStudentFilter] = useState('');
   const [deviceFilter, setDeviceFilter] = useState('');
@@ -229,6 +230,7 @@ export function AccessCenterWorkspace({
         <View style={styles.sectionHead}>
           <View>
             <Text style={styles.sectionTitle}>Credenciais</Text>
+            <Text style={styles.sectionSubtitle}>Credenciais dos alunos</Text>
             <Text style={styles.sectionSubtitle}>Ciclo de vida das credenciais emitidas para alunos.</Text>
           </View>
           <View style={styles.filterRow}>
@@ -256,16 +258,35 @@ export function AccessCenterWorkspace({
                 <StatusPill label={credentialStatusLabels[credential.status] ?? credential.status ?? '—'} tone={tone} />
               </View>
               <Text style={styles.cardDetail}>Validade: {displayDate(credential.expiresAt)}</Text>
-              {credential.status === 'ACTIVE' ? <TouchableOpacity
-                testID={`access-credential-revoke-${credential.id}`}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: saving }}
-                disabled={saving}
-                style={[styles.secondaryButton, saving && styles.disabled]}
-                onPress={() => { void onRevokeCredential(credential.id); }}
-              >
-                <Text style={styles.secondaryButtonText}>Revogar credencial</Text>
-              </TouchableOpacity> : null}
+              {credential.status === 'ACTIVE' ? <>
+                <TouchableOpacity
+                  testID={`access-revoke-${credential.id}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: saving }}
+                  disabled={saving}
+                  style={[styles.secondaryButton, saving && styles.disabled]}
+                  onPress={() => setPendingRevocation(credential.id)}
+                >
+                  <Text style={styles.secondaryButtonText}>Revogar credencial</Text>
+                </TouchableOpacity>
+                {pendingRevocation === credential.id ? <View style={styles.confirmRow}>
+                  <Text style={styles.cardDetail}>Confirma a revogação desta credencial?</Text>
+                  <TouchableOpacity
+                    testID={`access-revoke-confirm-${credential.id}`}
+                    accessibilityRole="button"
+                    disabled={saving}
+                    accessibilityState={{ disabled: saving }}
+                    style={[styles.secondaryButton, saving && styles.disabled]}
+                    onPress={() => { void onRevokeCredential(credential.id).then(() => setPendingRevocation(null)); }}
+                  >
+                    <Text style={styles.secondaryButtonText}>Confirmar revogação</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity accessibilityRole="button" style={styles.secondaryButton}
+                    onPress={() => setPendingRevocation(null)}>
+                    <Text style={styles.secondaryButtonText}>Cancelar</Text>
+                  </TouchableOpacity>
+                </View> : null}
+              </> : null}
             </View>;
           }) : <View style={styles.emptyState}><Text style={styles.emptyTitle}>Nenhuma credencial neste filtro</Text><Text style={styles.emptyText}>Emita uma credencial ou ajuste os filtros.</Text></View>}
         </View>
@@ -446,6 +467,7 @@ const styles = StyleSheet.create({
   sectionSubtitle: { color: '#A1A6AE', fontSize: 10, lineHeight: 15, marginTop: 2 },
   credentialList: { gap: 6 },
   credentialCard: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 10, padding: 9 },
+  confirmRow: { padding: 10, gap: 8, borderWidth: 1, borderColor: '#203b55', borderRadius: 10 },
   cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 7 },
   cardText: { flex: 1, minWidth: 0 },
   cardTitle: { color: '#EEF1F5', fontSize: 11, fontWeight: '900' },

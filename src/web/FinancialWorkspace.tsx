@@ -459,7 +459,7 @@ export function FinancialWorkspace({
             onPress={() => setChargeStatus(option.id)}
           />)}
         </View>
-        <Text style={styles.fieldLabel}>Conta para receber pagamento</Text>
+        <Text style={styles.fieldLabel}>Conta para registrar recebimentos</Text>
         <ScrollView horizontal contentContainerStyle={styles.chipRow}>
           {accounts.map((account) => <Chip
             key={account.id}

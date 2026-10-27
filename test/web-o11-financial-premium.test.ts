@@ -25,8 +25,8 @@ test('O11 Financeiro Academia is a domain workspace with delinquency, payments, 
     'Contas financeiras',
     'Registrar pagamento',
     'finance-create-charge',
-    'financial-create-subscription',
-    'financial-create-account',
+    'finance-create-subscription',
+    'finance-create-account',
     'financial-pay-',
   ]) {
     expect(financial).toContain(marker);

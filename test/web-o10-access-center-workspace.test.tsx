@@ -87,7 +87,9 @@ describe('O10 AccessCenterWorkspace', () => {
     await waitFor(() => expect(view.getByTestId('access-credential-one-time')).toBeTruthy());
     expect(view.getByText('one-time-qr-secret')).toBeTruthy();
 
-    fireEvent.press(view.getByTestId('access-credential-revoke-credential-1'));
+    fireEvent.press(view.getByTestId('access-revoke-credential-1'));
+    expect(onRevokeCredential).not.toHaveBeenCalled();
+    fireEvent.press(view.getByTestId('access-revoke-confirm-credential-1'));
     await waitFor(() => expect(onRevokeCredential).toHaveBeenCalledWith('credential-1'));
   });
 
