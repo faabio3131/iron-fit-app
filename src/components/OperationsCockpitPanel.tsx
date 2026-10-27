@@ -21,7 +21,7 @@ type Props = {
   academyName?: string; operatorName?: string; summary: Summary | null; attendance: Attendance[] | null;
   revenue: Revenue[] | null; overdue: Overdue[] | null; birthdays: Birthday[] | null;
   financialAuthorized: boolean; availableModules: readonly CockpitShortcut[];
-  slots: CockpitSlot[] | null; workouts: CockpitWorkout[] | null;
+  slots?: CockpitSlot[] | null; workouts?: CockpitWorkout[] | null;
   onNavigate: (key: CockpitShortcut) => void; onRefresh: () => void; refreshing: boolean;
 };
 const shortcuts: { key: CockpitShortcut; label: string; description: string }[] = [
