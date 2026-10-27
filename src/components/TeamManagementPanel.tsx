@@ -38,10 +38,10 @@ function Field({ label, value, onChangeText, testID }: {
   </View>;
 }
 
-export function TeamManagementPanel({ members, actorRoles, rosterLoaded, onUpdated }: {
+export function TeamManagementPanel({ members, actorRoles, rosterLoaded = true, onUpdated }: {
   members: TeamMember[];
   actorRoles: string[];
-  rosterLoaded: boolean;
+  rosterLoaded?: boolean;
   onUpdated: () => Promise<void>;
 }) {
   const [name, setName] = useState('');
