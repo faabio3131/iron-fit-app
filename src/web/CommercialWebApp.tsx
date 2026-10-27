@@ -6,6 +6,7 @@ import { IronBrand } from '../components/IronBrand';
 import { PASSWORD_POLICY_TEXT } from '../security/password-policy';
 import { SaasBillingPanel } from '../components/SaasBillingPanel';
 import { IntegrationCredentialsPanel } from '../components/IntegrationCredentialsPanel';
+import { CommunicationCenterPanel } from '../components/CommunicationCenterPanel';
 import { CommunicationCenter } from './CommunicationCenter';
 import { Student360Panel } from '../components/Student360Panel';
 import { AssessmentEvolutionPanel } from '../components/AssessmentEvolutionPanel';
@@ -255,9 +256,9 @@ function TenantCommercialWebApp() {
       if (key === 'exercises') next.exercises = await api('/exercises');
       if (key === 'assessments') next.students = await api('/students');
       if (key === 'workouts' || key === 'intelligence') { [next.workouts, next.students] = await Promise.all([api('/workouts'), api('/students')]); }
-      if (key === 'schedule') { [next.slots, next.students, next.bookings] = await Promise.all([api('/schedule-slots'), api('/students'), api('/schedules')]); }
+      if (key === 'schedule') { [next.slots, next.students] = await Promise.all([api('/schedule-slots'), api('/students')]); }
       if (key === 'access') { [next.events, next.students, next.credentials, next.devices] = await Promise.all([api('/access/events'), api('/students'), api('/access/credentials'), can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? api('/access/devices') : Promise.resolve([])]); }
-      if (key === 'financial') { [next.accounts, next.charges, next.students, next.subscriptions, next.transactions, next.overdueCharges] = await Promise.all([api('/financial/accounts'), api('/financial/charges'), api('/students'), api('/financial/subscriptions'), api('/financial/transactions'), api('/financial/charges?overdue=true')]); }
+      if (key === 'financial') { [next.accounts, next.charges, next.students] = await Promise.all([api('/financial/accounts'), api('/financial/charges'), api('/students')]); }
       if (key === 'entitlements') { [next.features, next.configurations] = await Promise.all([api('/product-entitlements/tenant/features'), api('/product-entitlements/tenant/configurations')]); next.subscription = subscription; }
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
       setData(next);
@@ -525,110 +526,135 @@ function TenantCommercialWebApp() {
       onUpdated={() => loadModule('intelligence')} />;
   }
   function scheduleView() {
-    return <ScheduleWorkspace
-      students={list(data.students)}
-      slots={list(data.slots)}
-      bookings={list(data.bookings)}
-      saving={saving}
-      canCreateSlot={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
-      canManageBookings={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')}
-      onCreateSlot={async (payload) => {
-        await mutate(() => api('/schedule-slots', undefined, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        }));
-      }}
-      onBook={async (payload) => {
-        await mutate(() => api('/schedules', undefined, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        }));
-      }}
-      onCheckIn={async (bookingId) => {
-        await mutate(() => api(`/schedules/${bookingId}/check-in`, undefined, {
-          method: 'PATCH',
-        }));
-      }}
-    />;
+    const students = list(data.students);
+    const slots = list(data.slots);
+    return <>
+      <ScheduleCalendarPanel key={activeTenantId ?? 'sem-academia'} slots={slots}
+        canCheckIn={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')}
+        onDateSelected={setBookingDate} refreshToken={scheduleRefresh} />
+      {can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ?
+        <ScheduleManagementPanel key={activeTenantId ?? 'sem-academia'}
+          students={students} slots={slots} bookingDate={bookingDate} onDateChange={setBookingDate}
+          canManageSlots={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
+          onUpdated={async () => {
+            await loadModule('schedule');
+            setScheduleRefresh((current) => current + 1);
+          }} /> : null}
+    </>;
   }
   function accessView() {
-    return <AccessCenterWorkspace
+    return <AccessCenterPanel key={activeTenantId ?? 'sem-academia'}
       students={list(data.students)}
       credentials={list(data.credentials)}
       events={list(data.events)}
       devices={list(data.devices)}
-      saving={saving}
       canManageDevices={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
-      onCreateCredential={async (payload) => {
-        let created: any = null;
-        await mutate(async () => {
-          created = await api('/access/credentials', undefined, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-          });
-          return created;
-        });
-        return created;
-      }}
-      onRevokeCredential={async (credentialId) => {
-        await mutate(() => api(`/access/credentials/${credentialId}/revoke`, undefined, {
-          method: 'PATCH',
-        }));
-      }}
-      onRotateDeviceToken={async (deviceId) => {
-        let created: any = null;
-        await mutate(async () => {
-          created = await api(`/access/devices/${deviceId}/token`, undefined, {
-            method: 'POST',
-          });
-          return created;
-        });
-        return created;
-      }}
+      onUpdated={() => loadModule('access')}
     />;
   }
   function financialView() {
-    return <FinancialWorkspace
-      students={list(data.students)}
-      accounts={list(data.accounts)}
-      subscriptions={list(data.subscriptions)}
-      charges={list(data.charges)}
-      overdueCharges={list(data.overdueCharges)}
-      transactions={list(data.transactions)}
-      saving={saving}
-      onCreateAccount={async (payload) => {
-        await mutate(() => api('/financial/accounts', undefined, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        }));
-      }}
-      onCreateSubscription={async (payload) => {
-        await mutate(() => api('/financial/subscriptions', undefined, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        }));
-      }}
-      onCreateCharge={async (payload) => {
-        await mutate(() => api('/financial/charges', undefined, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        }));
-      }}
-      onPayCharge={async (chargeId, payload) => {
-        await mutate(() => api(`/financial/charges/${chargeId}/pay`, undefined, {
-          method: 'PATCH',
-          body: JSON.stringify(payload),
-        }));
-      }}
-      onCreatePaymentSession={async (chargeId, requestId) => {
-        // Academy -> student checkout uses the existing tenant-scoped API.
-        // Provider configuration and payment confirmation remain server-side.
-        return api(`/financial/charges/${chargeId}/payment-session`, undefined, {
-          method: 'POST',
-          body: JSON.stringify({ requestId }),
-        });
-      }}
-    />;
+    const students = list(data.students);
+    const accounts = list(data.accounts);
+    const charges = list(data.charges);
+    // The IRON finance API stores integer minor units (centavos). The user
+    // enters reais; only the exact parser result is submitted to the backend.
+    const initialMinor = brlToMinor(account.initialBalance);
+    const subscriptionMinor = positiveBrlToMinor(studentPlan.amount);
+    const chargeMinor = positiveBrlToMinor(charge.amount);
+    const subscriptionDate = studentPlan.nextBillingAt.trim()
+      ? financialDateIso(studentPlan.nextBillingAt) : undefined;
+    const dueDate = financialDateIso(charge.dueDate);
+    const accountValid = !!account.name.trim() && initialMinor !== null;
+    const subscriptionValid = !!selectedFinancialStudent && !!studentPlan.planName.trim() &&
+      subscriptionMinor !== null && (!studentPlan.nextBillingAt.trim() || !!subscriptionDate);
+    const chargeValid = !!selectedFinancialStudent && chargeMinor !== null && !!dueDate;
+    return <>
+      <Section title="Contas financeiras" subtitle="Caixa e contas pertencem somente à academia; cobrança da FM Tecnologia é gerida no FM Command.">
+        <View style={styles.form}>
+          <Field testID="finance-account-name" label="Nome da conta" value={account.name}
+            onChangeText={(name) => setAccount((current) => ({ ...current, name }))} />
+          <Field label="Tipo de conta" value={account.type}
+            onChangeText={(type) => setAccount((current) => ({ ...current, type }))} />
+          <Field testID="finance-account-balance" label="Saldo inicial (R$)" value={account.initialBalance}
+            onChangeText={(initialBalance) => setAccount((current) => ({ ...current, initialBalance }))} />
+        </View>
+        {initialMinor === null ? <Text testID="finance-account-invalid" style={styles.error}>Informe o saldo inicial em reais (ex.: 0 ou 100,00), sem valor negativo.</Text> : null}
+        <Button testID="finance-create-account" label="Criar conta" disabled={saving || !accountValid}
+          onPress={() => {
+            if (initialMinor === null) return;
+            void mutate(() => api('/financial/accounts', undefined, {
+              method: 'POST',
+              body: JSON.stringify({ name: account.name.trim(), type: account.type.trim(), initialBalance: initialMinor }),
+            }), () => setAccount({ name: '', type: 'CASH', initialBalance: '0' }));
+          }} />
+        {accounts.length ? accounts.map((item: any) => <View key={item.id} style={styles.row}>
+          <Text style={styles.rowTitle}>{item.name ?? 'Conta financeira'}</Text>
+          <Text style={styles.muted}>Saldo inicial: {brlFromMinor(item.initialBalance)} · {item.active === false ? 'Inativa' : 'Ativa'}</Text>
+        </View>) : <Text style={styles.muted}>Nenhuma conta cadastrada.</Text>}
+        <Text style={styles.label}>Conta para registrar recebimentos</Text>
+        <Chips rows={accounts.filter((item: any) => item.active !== false)} selected={selectedAccount} onSelect={setSelectedAccount} />
+      </Section>
+      <Section title="Assinatura e cobranças do aluno"
+        subtitle="Academia → aluno. Informe valores em reais; o IRON registra os centavos exatos. Não é a assinatura SaaS da FM.">
+        <Text style={styles.label}>Aluno</Text>
+        <Chips rows={students} selected={selectedFinancialStudent} onSelect={setSelectedFinancialStudent} />
+        <View style={styles.form}>
+          <Field testID="finance-plan-name" label="Nome do plano" value={studentPlan.planName}
+            onChangeText={(planName) => setStudentPlan((v) => ({ ...v, planName }))} />
+          <Field testID="finance-subscription-amount" label="Mensalidade ou valor do plano (R$)" value={studentPlan.amount}
+            onChangeText={(amount) => setStudentPlan((v) => ({ ...v, amount }))} />
+          <Field testID="finance-subscription-date" label="Próxima cobrança (AAAA-MM-DD, opcional)" value={studentPlan.nextBillingAt}
+            onChangeText={(nextBillingAt) => setStudentPlan((v) => ({ ...v, nextBillingAt }))} />
+        </View>
+        {studentPlan.amount.trim() && subscriptionMinor === null ?
+          <Text testID="finance-subscription-invalid" style={styles.error}>Informe um valor positivo em reais, por exemplo 149,90.</Text> : null}
+        {studentPlan.nextBillingAt.trim() && !subscriptionDate ?
+          <Text testID="finance-subscription-date-invalid" style={styles.error}>Informe uma data real no formato AAAA-MM-DD.</Text> : null}
+        <Button testID="finance-create-subscription" label="Criar assinatura do aluno"
+          disabled={saving || !subscriptionValid}
+          onPress={() => {
+            if (!subscriptionValid || subscriptionMinor === null) return;
+            void mutate(() => api('/financial/subscriptions', undefined, {
+              method: 'POST',
+              body: JSON.stringify({
+                studentId: selectedFinancialStudent, planName: studentPlan.planName.trim(),
+                amount: subscriptionMinor, ...(subscriptionDate ? { nextBillingAt: subscriptionDate } : {}),
+              }),
+            }));
+          }} />
+        <View style={styles.form}>
+          <Field testID="finance-charge-amount" label="Valor da cobrança (R$)" value={charge.amount}
+            onChangeText={(amount) => setCharge((v) => ({ ...v, amount }))} />
+          <Field testID="finance-charge-due" label="Vencimento (AAAA-MM-DD)" value={charge.dueDate}
+            onChangeText={(dueDateInput) => setCharge((v) => ({ ...v, dueDate: dueDateInput }))} />
+          <Field label="Meio previsto (opcional)" value={charge.paymentMethod}
+            onChangeText={(paymentMethod) => setCharge((v) => ({ ...v, paymentMethod }))} />
+        </View>
+        {charge.amount.trim() && chargeMinor === null ?
+          <Text testID="finance-charge-invalid" style={styles.error}>Informe o valor positivo em reais (ex.: 99,90).</Text> : null}
+        {charge.dueDate.trim() && !dueDate ?
+          <Text testID="finance-charge-date-invalid" style={styles.error}>Vencimento inválido. Utilize AAAA-MM-DD.</Text> : null}
+        <Button testID="finance-create-charge" secondary label="Criar cobrança"
+          disabled={saving || !chargeValid}
+          onPress={() => {
+            if (!chargeValid || chargeMinor === null || !dueDate) return;
+            void mutate(() => api('/financial/charges', undefined, {
+              method: 'POST',
+              body: JSON.stringify({
+                studentId: selectedFinancialStudent, amount: chargeMinor, dueDate,
+                ...(charge.paymentMethod.trim() ? { paymentMethod: charge.paymentMethod.trim() } : {}),
+              }),
+            }));
+          }} />
+      </Section>
+      <AcademyChargesPanel charges={charges} accounts={accounts} selectedAccountId={selectedAccount}
+        saving={saving}
+        onPay={(chargeId, accountId, paymentMethod) => {
+          void mutate(() => api('/financial/charges/' + encodeURIComponent(chargeId) + '/pay', undefined, {
+            method: 'PATCH', body: JSON.stringify({ accountId, paymentMethod }),
+          }));
+        }} />
+    </>;
   }
   function entitlementsView() {
     return <EntitlementsWorkspace
@@ -660,7 +686,7 @@ function TenantCommercialWebApp() {
   }
   function content() {
     if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
-    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'intelligence') return intelligenceView(); if (active === 'aggregator') return <AggregatorHubPanel key={activeTenantId ?? 'sem-academia'} canManage={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenter canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} canInspectIntegrations={can('SUPER_ADMIN', 'OWNER')} />; if (active === 'financial') return financialView(); if (active === 'fiscal') return <FiscalCenter />; if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />; return creatorView();
+    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'intelligence') return intelligenceView(); if (active === 'aggregator') return <AggregatorHubPanel key={activeTenantId ?? 'sem-academia'} canManage={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenterPanel key={activeTenantId ?? 'sem-academia'} canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'financial') return financialView(); if (active === 'fiscal') return <FiscalCenter />; if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />; return creatorView();
   }
 
   const topBar = <View style={[styles.top, narrow && styles.topNarrow]}><IronBrand compact mobile={narrow} /><View style={[styles.actions, narrow && styles.actionsNarrow]}><Text numberOfLines={1} style={[styles.muted, narrow && styles.userNameNarrow]}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
