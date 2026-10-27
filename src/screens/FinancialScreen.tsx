@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '../components/EmptyState';
 import { api } from '../services/api';
@@ -27,6 +27,17 @@ function fmtMoney(value: unknown) {
   return result === 'Valor não informado' ? 'Valor indisponível' : result;
 }
 
+function safePaymentUrl(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const target = new URL(value.trim());
+    if (target.protocol !== 'https:' || !target.hostname || target.username || target.password) return null;
+    return target.toString();
+  } catch {
+    return null;
+  }
+}
+
 function chargeStatusInfo(status?: string | null) {
   const normalized = (status || '').toUpperCase();
   if (normalized === 'PAID') return { label: 'Pago', color: '#2BF47A' };
@@ -40,6 +51,7 @@ export function FinancialScreen() {
   const [charges, setCharges] = useState<StudentCharge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [paymentError, setPaymentError] = useState('');
   const [reloadVersion, setReloadVersion] = useState(0);
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'PAID'>('ALL');
 
@@ -89,6 +101,7 @@ export function FinancialScreen() {
         <Text style={styles.refreshText}>{loading ? 'Atualizando…' : 'Atualizar'}</Text>
       </TouchableOpacity>
     </View>
+    {paymentError ? <Text testID="student-payment-error" style={styles.errorText}>{paymentError}</Text> : null}
     {loading ? <View testID="student-charges-loading" style={styles.loading}>
       <ActivityIndicator size="large" color="#2BF47A" />
       <Text style={styles.sub}>Consultando suas cobranças…</Text>
@@ -127,6 +140,17 @@ export function FinancialScreen() {
             <Text style={styles.amount}>{fmtMoney(charge.amount ?? charge.value)}</Text>
             <Text style={[styles.status, { color: status.color }]}>{status.label}</Text>
           </View>
+          {status.label !== 'Pago' && safePaymentUrl(charge.paymentLink) ? (
+            <TouchableOpacity accessibilityRole="button" testID={'student-charge-payment-' + charge.id}
+              style={styles.paymentButton} onPress={() => {
+                const checkoutUrl = safePaymentUrl(charge.paymentLink);
+                if (!checkoutUrl) return;
+                setPaymentError('');
+                void Linking.openURL(checkoutUrl).catch(() => setPaymentError('Não foi possível abrir a página segura de pagamento.'));
+              }}>
+              <Text style={styles.paymentButtonText}>Abrir pagamento seguro</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>;
       })}
       <Text style={styles.disclaimer}>Informações financeiras fornecidas pela academia. A visualização não confirma um pagamento nem cria uma transação.</Text>
@@ -156,6 +180,8 @@ const styles = StyleSheet.create({
   filterActive: { borderColor: '#2BF47A', backgroundColor: '#18372c' },
   filterText: { color: '#d9e8dd', fontWeight: '700', fontSize: 12 },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1a2035', borderRadius: 14, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#252d47' },
+  paymentButton: { paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#0E345C', borderRadius: 9, marginTop: 8 },
+  paymentButtonText: { color: '#D7EAFF', fontSize: 12, fontWeight: '800' },
   cardContent: { flex: 1 },
   cardTitle: { color: '#f1f5f9', fontSize: 15, fontWeight: '700' },
   meta: { color: '#94a3b8', fontSize: 12, marginTop: 2 },

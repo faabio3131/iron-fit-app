@@ -4,6 +4,7 @@ import { TabItem } from '../components/TabItem';
 import { useAuth } from '../context/AuthContext';
 import { EvolutionScreen } from '../screens/EvolutionScreen';
 import { FinancialScreen } from '../screens/FinancialScreen';
+import { IntelligenceScreen } from '../screens/IntelligenceScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { PasswordRecoveryScreen } from '../screens/PasswordRecoveryScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
@@ -13,7 +14,7 @@ import { WorkoutsScreen } from '../screens/WorkoutsScreen';
 import { CommercialWebApp } from '../web/CommercialWebApp';
 import { WebAuthEntry } from '../web/WebAuthEntry';
 
-type Tab = 'treino' | 'agenda' | 'progresso' | 'financeiro' | 'perfil';
+type Tab = 'treino' | 'intelligence' | 'agenda' | 'progresso' | 'financeiro' | 'perfil';
 
 const operationalRoles = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION', 'TRAINER'];
 
@@ -91,6 +92,7 @@ export function RootNavigator() {
       <StatusBar barStyle="light-content" backgroundColor="#0a0e1a" />
       <View style={styles.screen}>
         {tab === 'treino' ? <WorkoutsScreen /> : null}
+        {tab === 'intelligence' ? <IntelligenceScreen /> : null}
         {tab === 'agenda' ? <SchedulesScreen /> : null}
         {tab === 'progresso' ? <EvolutionScreen /> : null}
         {tab === 'financeiro' ? <FinancialScreen /> : null}
@@ -98,6 +100,7 @@ export function RootNavigator() {
       </View>
       <View style={styles.tabBar}>
         <TabItem active={tab === 'treino'} icon="barbell" label="Treino" onPress={() => setTab('treino')} />
+        <TabItem active={tab === 'intelligence'} icon="sparkles" label="Intelligence" onPress={() => setTab('intelligence')} />
         <TabItem active={tab === 'agenda'} icon="calendar" label="Agenda" onPress={() => setTab('agenda')} />
         <TabItem active={tab === 'progresso'} icon="trending-up" label="Evolução" onPress={() => setTab('progresso')} />
         <TabItem active={tab === 'financeiro'} icon="wallet" label="Plano" onPress={() => setTab('financeiro')} />
