@@ -10,6 +10,7 @@ const insight = fs.readFileSync('src/components/AIInsightCard.tsx', 'utf8');
 const assistant = fs.readFileSync('src/components/AIWorkoutAssistant.tsx', 'utf8');
 const projection = fs.readFileSync('src/components/AIProjectionCard.tsx', 'utf8');
 const checkin = fs.readFileSync('src/screens/CheckInScreen.tsx', 'utf8');
+const academyMoney = fs.readFileSync('src/utils/academy-money.ts', 'utf8');
 
 test('O19A removes legacy purple and obsolete exposed mobile version', () => {
   for (const source of [workout, schedule, evolution, plan, profile, security, insight, assistant, projection, checkin]) {
@@ -35,5 +36,7 @@ test('O19B plan surface removes fake payment promise and uses real HTTPS payment
   expect(plan).toContain('safePaymentUrl');
   expect(plan).toContain("charge.paymentLink");
   expect(plan).toContain('Linking.openURL(checkoutUrl)');
-  expect(plan).toContain('/ 100');
+  expect(plan).toContain('brlFromMinor(value)');
+  expect(academyMoney).toContain('value / 100');
+  expect(academyMoney).toContain('Number.isSafeInteger(value)');
 });
