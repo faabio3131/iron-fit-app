@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   name: { color: '#EEF1F5', fontSize: 32, fontWeight: '900', letterSpacing: 0.5 },
   nameCompact: { fontSize: 15, letterSpacing: 0.2 },
   nameMobile: { fontSize: 12, letterSpacing: 0.1 },
-  accent: { color: '#2BF47A' },
+  accent: { color: '#2F91FF' },
   attribution: { marginTop: 4, color: '#A1A6AE', fontSize: 11, fontWeight: '700', letterSpacing: 2.4 },
   attributionCompact: { marginTop: 2, fontSize: 8, letterSpacing: 1.4 },
   attributionMobile: { fontSize: 7, letterSpacing: 1.1 },

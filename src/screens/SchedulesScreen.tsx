@@ -57,7 +57,7 @@ export function SchedulesScreen() {
       </View>
       <CheckInScreen onCheckedIn={refreshSchedule} />
       <Text style={styles.sectionTitle}>Horários reservados</Text>
-      {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? (
+      {loading ? <ActivityIndicator size="large" color="#2F91FF" style={styles.loading} /> : loadError ? (
         <RequestErrorState retryTestID="schedule-retry" message={`Sem conexão ou serviço indisponível. ${loadError}`} onRetry={refreshSchedule} />
       ) : schedules.length === 0 ? (
         <EmptyState icon="calendar-outline" title="Nenhum horário reservado" subtitle="Quando sua academia abrir a agenda, suas reservas aparecem aqui." />
@@ -87,13 +87,13 @@ const styles = StyleSheet.create({
   sectionTitle: { color: '#f1f5f9', fontSize: 18, fontWeight: '700', marginBottom: 12 },
   loading: { marginTop: 40 },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1a2035', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#252d47', gap: 12 },
-  dateBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#2BF47A20', alignItems: 'center', justifyContent: 'center' },
-  dateText: { color: '#2BF47A', fontWeight: '800', fontSize: 13 },
+  dateBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#2F91FF20', alignItems: 'center', justifyContent: 'center' },
+  dateText: { color: '#2F91FF', fontWeight: '800', fontSize: 13 },
   cardContent: { flex: 1 },
   cardTitle: { color: '#f1f5f9', fontSize: 15, fontWeight: '700' },
   meta: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
   errorCard: { padding: 16, borderRadius: 12, borderColor: '#ef444450', borderWidth: 1, marginTop: 8 },
   errorText: { color: '#fca5a5', fontSize: 13 },
   retryButton: { paddingVertical: 10, marginTop: 8, alignSelf: 'flex-start' },
-  retryText: { color: '#2BF47A', fontSize: 13, fontWeight: '700' },
+  retryText: { color: '#2F91FF', fontSize: 13, fontWeight: '700' },
 });

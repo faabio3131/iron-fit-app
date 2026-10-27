@@ -26,7 +26,8 @@ test('O10 Access Center exposes credentials, decisions, timeline, revocation and
     'Rotacionar token',
     'EXIBIÇÃO ÚNICA',
     'access-credential-create',
-    'access-credential-revoke-',
+    'access-revoke-confirm-',
+    'pendingRevocation',
     'access-device-rotate-',
   ]) {
     expect(access).toContain(marker);

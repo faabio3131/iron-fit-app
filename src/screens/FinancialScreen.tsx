@@ -41,7 +41,7 @@ function safePaymentUrl(value: unknown): string | null {
 
 function chargeStatusInfo(status?: string | null) {
   const normalized = (status || '').toUpperCase();
-  if (normalized === 'PAID') return { label: 'Pago', color: '#2BF47A' };
+  if (normalized === 'PAID') return { label: 'Pago', color: '#10b981' };
   if (normalized === 'PENDING') return { label: 'Pendente', color: '#f59e0b' };
   if (normalized === 'CANCELED' || normalized === 'CANCELLED') return { label: 'Cancelado', color: '#94a3b8' };
   if (normalized === 'OVERDUE') return { label: 'Vencido', color: '#ef4444' };
@@ -93,7 +93,7 @@ export function FinancialScreen() {
         <Text style={styles.heading}>Meu Plano</Text>
         <Text style={styles.sub}>Cobranças e histórico da sua academia</Text>
       </View>
-      <Ionicons name="wallet" size={24} color="#2BF47A" />
+      <Ionicons name="wallet" size={24} color="#2F91FF" />
     </View>
     <View style={styles.toolbar}>
       <Text style={styles.sectionTitle}>Minhas cobranças</Text>
@@ -104,12 +104,15 @@ export function FinancialScreen() {
     </View>
     {paymentError ? <Text testID="student-payment-error" style={styles.errorText}>{paymentError}</Text> : null}
     {loading ? <View testID="student-charges-loading" style={styles.loading}>
-      <ActivityIndicator size="large" color="#2BF47A" />
+      <ActivityIndicator size="large" color="#2F91FF" />
       <Text style={styles.sub}>Consultando suas cobranças…</Text>
     </View> : null}
-    {error ? <RequestErrorState testID="student-charges-error" retryTestID="student-charges-retry"
-      title="Não foi possível consultar suas cobranças"
-      message={`Sem conexão ou serviço indisponível. ${error}`} onRetry={reload} /> : null}
+    {error ? <>
+      <RequestErrorState testID="student-charges-error" retryTestID="student-charges-retry"
+        title="Não foi possível consultar suas cobranças"
+        message="Sem conexão ou serviço indisponível. Confira sua conexão e tente novamente." onRetry={reload} />
+      <Text style={styles.errorText}>{error}</Text>
+    </> : null}
     {!loading && !error ? <>
       {charges.length ? <View style={styles.filters}>
         <TouchableOpacity testID="student-charges-filter-all" accessibilityRole="button"
@@ -163,7 +166,7 @@ const styles = StyleSheet.create({
   heading: { color: '#f1f5f9', fontSize: 24, fontWeight: '800' },
   sub: { color: '#94a3b8', fontSize: 13, marginTop: 3 },
   toolbar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sectionTitle: { color: '#2BF47A', fontSize: 17, fontWeight: '800' },
+  sectionTitle: { color: '#2F91FF', fontSize: 17, fontWeight: '800' },
   refreshButton: { backgroundColor: '#172a23', borderColor: '#285640', borderWidth: 1, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 8 },
   refreshText: { color: '#c7f5d6', fontWeight: '800', fontSize: 12 },
   loading: { marginVertical: 28, alignItems: 'center', gap: 10 },
@@ -171,11 +174,11 @@ const styles = StyleSheet.create({
   errorCard: { backgroundColor: '#31191b', borderColor: '#7f2a35', borderWidth: 1, borderRadius: 12, padding: 16, gap: 9 },
   errorTitle: { color: '#fecaca', fontWeight: '800', fontSize: 15 },
   errorText: { color: '#fecaca', fontSize: 12 },
-  retryButton: { backgroundColor: '#2BF47A', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, alignSelf: 'flex-start' },
+  retryButton: { backgroundColor: '#2F91FF', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, alignSelf: 'flex-start' },
   retryText: { color: '#052012', fontWeight: '800', fontSize: 12 },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   filter: { borderColor: '#34445b', backgroundColor: '#192333', borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9 },
-  filterActive: { borderColor: '#2BF47A', backgroundColor: '#18372c' },
+  filterActive: { borderColor: '#2F91FF', backgroundColor: '#18372c' },
   filterText: { color: '#d9e8dd', fontWeight: '700', fontSize: 12 },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1a2035', borderRadius: 14, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#252d47' },
   paymentButton: { paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#0E345C', borderRadius: 9, marginTop: 8 },

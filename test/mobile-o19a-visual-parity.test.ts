@@ -21,12 +21,13 @@ test('O19A removes legacy purple and obsolete exposed mobile version', () => {
   expect(profile).not.toContain('Iron Fit v0.2.0');
 });
 
-test('O19A uses the canonical graphite and green palette on updated mobile screens', () => {
-  expect(schedule).toContain('color="#2BF47A"');
-  expect(evolution).toContain('color="#2BF47A"');
-  expect(plan).toContain('color="#2BF47A"');
-  expect(checkin).toContain("okText: { color: '#7DFFB1'");
-  expect(security).toContain("backgroundColor: '#08080A'");
+test('O19A uses the canonical blue IRON palette on updated mobile screens', () => {
+  expect(schedule).toContain('color="#2F91FF"');
+  expect(evolution).toContain('color="#2F91FF"');
+  expect(plan).toContain('color="#2F91FF"');
+  expect(checkin).toContain("backgroundColor: '#2F91FF'");
+  expect(checkin).toContain("okText: { color: '#10b981'");
+  expect(security).toContain("backgroundColor: '#050B14'");
 });
 
 test('O19B plan surface removes fake payment promise and uses real HTTPS paymentLink only', () => {
@@ -35,5 +36,6 @@ test('O19B plan surface removes fake payment promise and uses real HTTPS payment
   expect(plan).toContain('safePaymentUrl');
   expect(plan).toContain("charge.paymentLink");
   expect(plan).toContain('Linking.openURL(checkoutUrl)');
-  expect(plan).toContain('/ 100');
+  expect(plan).toContain("import { brlFromMinor } from '../utils/academy-money';");
+  expect(plan).toContain('brlFromMinor(value)');
 });

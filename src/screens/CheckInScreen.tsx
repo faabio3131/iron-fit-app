@@ -41,7 +41,7 @@ export function CheckInScreen({ onCheckedIn }: { onCheckedIn?: () => void } = {}
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2BF47A', borderRadius: 16, padding: 18, marginBottom: 16, gap: 14 },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2F91FF', borderRadius: 16, padding: 18, marginBottom: 16, gap: 14 },
   iconBox: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#04140b1f', alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1 },
   title: { color: '#04140b', fontSize: 16, fontWeight: '800' },
