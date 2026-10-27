@@ -21,7 +21,6 @@ export function EvolutionScreen() {
 
   useEffect(() => {
     let active = true;
-    setLoadError('');
     api('/me/assessments')
       .then((data) => { if (active) { if (!Array.isArray(data)) throw new Error('As avaliações retornadas são inválidas.'); setAssessments(data); } })
       .catch((reason: unknown) => { if (active) setLoadError(reason instanceof Error ? reason.message : 'Não foi possível consultar avaliações.'); })
@@ -34,7 +33,7 @@ export function EvolutionScreen() {
       <View style={styles.header}><View><Text style={styles.heading}>Sua evolução</Text><Text style={styles.sub}>Acompanhe seu progresso 📈</Text></View><Ionicons name="trending-up" size={24} color="#f59e0b" /></View>
       {!loadError ? <AIProjectionCard assessmentCount={assessments.length} latestAssessmentDate={assessments[0]?.createdAt} /> : null}
       <Text style={styles.sectionTitle}>Avaliações Físicas</Text>
-      {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? <RequestErrorState message={`Sem conexão ou serviço indisponível. ${loadError}`} onRetry={() => { setLoading(true); setReloadVersion((n) => n + 1); }} /> : assessments.length === 0 ? (
+      {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? <RequestErrorState message={`Sem conexão ou serviço indisponível. ${loadError}`} onRetry={() => { setLoadError(''); setLoading(true); setReloadVersion((n) => n + 1); }} /> : assessments.length === 0 ? (
         <EmptyState icon="analytics-outline" title="Nenhuma avaliação" subtitle="Peça ao seu instrutor para fazer sua avaliação física." />
       ) : assessments.map((assessment) => (
         <View key={assessment.id} style={styles.card}>
