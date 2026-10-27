@@ -76,6 +76,6 @@ test('C06 a failed refresh hides previously loaded names and messages until retr
 
 test('C06 tenant-scoped communication remounts with canonical active tenant, not a global cache', () => {
   const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
-  expect(web).toMatch(/<CommunicationCenterPanel key=\{activeTenantId \?\? 'sem-academia'\}/);
+  expect(web).toMatch(/<CommunicationCenter key=\{activeTenantId \?\? 'sem-academia'\}/);
   expect(web).not.toMatch(/communication\/messages\?gymId=/);
 });

@@ -1,5 +1,8 @@
 import fs from 'node:fs';
 
+const premiumSchedule = fs.readFileSync('src/web/ScheduleWorkspace.tsx', 'utf8');
+const premiumAccess = fs.readFileSync('src/web/AccessCenterWorkspace.tsx', 'utf8');
+
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
 const composer = fs.readFileSync('src/components/WorkoutComposer.tsx', 'utf8');
 const accessCenter = fs.readFileSync('src/components/AccessCenterPanel.tsx', 'utf8');
@@ -13,10 +16,14 @@ test('commercial Web exposes canonical mutation paths for remaining operational 
   expect(composer).toContain('manual-workout-create');
   expect(composer).toContain("api('/workouts'");
   expect(scheduleManagement).toContain('schedule-book');
-  expect(web).toContain('<ScheduleManagementPanel');
+  expect(web).toContain('<ScheduleWorkspace');
+  expect(premiumSchedule).toContain('onBook');
+  expect(web).toContain("api('/schedules'");
   expect(accessCenter).toContain("api('/access/credentials'");
   expect(accessCenter).toContain('access-credential-create');
-  expect(web).toContain('<AccessCenterPanel');
+  expect(web).toContain('<AccessCenterWorkspace');
+  expect(premiumAccess).toContain('onRevokeCredential');
+  expect(web).toContain("api('/access/credentials'");
   expect(web).not.toMatch(/JSON\.stringify\([^\n]*gymId/);
 });
 

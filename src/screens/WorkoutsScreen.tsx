@@ -60,7 +60,7 @@ export function WorkoutsScreen() {
                       <Text style={styles.exerciseName}>{item.exercise?.name}</Text>
                       <Text style={styles.exerciseMeta}>{item.sets && item.reps ? `${item.sets}x${item.reps}` : ''}{item.restSeconds ? ` · ${item.restSeconds}s` : ''}{item.suggestedLoad ? ` · ${item.suggestedLoad}` : ''}</Text>
                       {item.exercise?.videoUrl ? (
-                        <TouchableOpacity style={styles.videoButton} onPress={() => Linking.openURL(item.exercise.videoUrl)}>
+                        <TouchableOpacity accessibilityRole="button" style={styles.videoButton} onPress={() => Linking.openURL(item.exercise.videoUrl)}>
                           <Ionicons name="play-circle" size={16} color="#2BF47A" /><Text style={styles.videoText}>Ver vídeo</Text>
                         </TouchableOpacity>
                       ) : null}

@@ -25,6 +25,7 @@ type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; v
 type ModuleDefinition = { key: ModuleKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name']; roles?: string[]; entitlement?: string[] };
 const restrictedAdminModules: ModuleKey[] = ['financial', 'fiscal', 'saasBilling', 'entitlements', 'integrations'];
 
+const FAIL_CLOSED_DEFAULT = false;
 const operational = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION'];
 const staff = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION', 'TRAINER'];
 const modules: ModuleDefinition[] = [
@@ -123,7 +124,7 @@ export function CommercialWebApp() {
   const [studentSearch, setStudentSearch] = useState('');
   const [student, setStudent] = useState({ name: '', email: '', phone: '' });
   const [lastStudentInvite, setLastStudentInvite] = useState<any>(null);
-  const [member, setMember] = useState({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' });
+  const [member, setMember] = useState({ name: '', email: '', initialPassword: '', phone: '', roleName: 'TRAINER' });
   const [equipmentSearch, setEquipmentSearch] = useState('');
   const [equipmentCategory, setEquipmentCategory] = useState('');
   const [selectedEquipmentExercise, setSelectedEquipmentExercise] = useState('');
@@ -156,7 +157,7 @@ export function CommercialWebApp() {
   const moduleRequestRevision = useRef(0);
 
   const entitlementMap = useMemo(() => new Map(entitlements.map((item) => [item.featureKey, item])), [entitlements]);
-  const enabled = useCallback((key: string) => entitlementMap.get(key)?.value === true, [entitlementMap]);
+  const enabled = useCallback((key: string) => (entitlementMap.get(key)?.value ?? FAIL_CLOSED_DEFAULT) === true, [entitlementMap]);
   const allowed = useCallback((item: ModuleDefinition) => (!item.roles || item.roles.some((role) => roles.includes(role))) && (!item.entitlement || item.entitlement.some(enabled)), [enabled, roles]);
   const can = useCallback((...targets: string[]) => targets.some((role) => roles.includes(role)), [roles]);
   const isRestrictedAdminModule = useCallback((key: ModuleKey) => restrictedAdminModules.includes(key), []);
@@ -518,14 +519,14 @@ export function CommercialWebApp() {
         : !roleOk
           ? 'Selecione uma função permitida.'
           : '';
-    const passwordIssue = member.password && !strongPassword(member.password) ? PASSWORD_POLICY_TEXT : '';
-    const directIssue = inviteIssue || (!member.password ? 'Informe a senha inicial ou use Enviar convite.' : passwordIssue);
+    const passwordIssue = member.initialPassword && !strongPassword(member.initialPassword) ? PASSWORD_POLICY_TEXT : '';
+    const directIssue = inviteIssue || (!member.initialPassword ? 'Informe a senha inicial ou use Enviar convite.' : passwordIssue);
     const roleLabel = (value: string) => ownerTeamRoleOptions.find((option) => option.id === value)?.name ?? value;
     const permissionLabel = (value: string) => value
       .replace(/[._-]+/g, ' ')
       .replace(/\b\w/g, (char) => char.toUpperCase());
 
-    const resetMember = () => setMember({ name: '', email: '', password: '', phone: '', roleName: 'TRAINER' });
+    const resetMember = () => setMember({ name: '', email: '', initialPassword: '', phone: '', roleName: 'TRAINER' });
 
     return <>
       <Section compact title="Adicionar membro à equipe" subtitle="Envie um convite para o membro definir a própria senha ou, se necessário, cadastre uma senha inicial forte.">
@@ -533,7 +534,7 @@ export function CommercialWebApp() {
           <Field label="Nome" value={member.name} onChangeText={(name) => setMember((v) => ({ ...v, name }))} />
           <Field label="E-mail" value={member.email} onChangeText={(email) => setMember((v) => ({ ...v, email }))} />
           <Field label="Telefone (opcional)" value={member.phone} onChangeText={(phone) => setMember((v) => ({ ...v, phone }))} />
-          <Field label="Senha inicial (opcional)" value={member.password} secureTextEntry onChangeText={(password) => setMember((v) => ({ ...v, password }))} />
+          <Field label="Senha inicial (opcional)" value={member.initialPassword} secureTextEntry onChangeText={(initialPassword) => setMember((v) => ({ ...v, initialPassword }))} />
         </View>
         <Text style={styles.label}>Função</Text>
         <Chips rows={teamRoleOptions} selected={member.roleName} onSelect={(roleName) => setMember((v) => ({ ...v, roleName }))} />
@@ -576,7 +577,7 @@ export function CommercialWebApp() {
                   body: JSON.stringify({
                     name: member.name.trim(),
                     email: member.email.trim().toLowerCase(),
-                    password: member.password,
+                    password: member.initialPassword,
                     ...(member.phone.trim() ? { phone: member.phone.trim() } : {}),
                     roleName: member.roleName,
                   }),
@@ -1321,12 +1322,12 @@ export function CommercialWebApp() {
   }
   function content() {
     if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
-    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenter canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} canInspectIntegrations={can('SUPER_ADMIN', 'OWNER')} />; if (active === 'financial') return financialView(); if (active === 'fiscal') return <FiscalCenter />; if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />; return creatorView();
+    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenter key={activeTenantId ?? 'sem-academia'} canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} canInspectIntegrations={can('SUPER_ADMIN', 'OWNER')} />; if (active === 'financial') return financialView(); if (active === 'fiscal') return <FiscalCenter />; if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />; return creatorView();
   }
 
-  const topBar = <View style={[styles.top, narrow && styles.topNarrow]}><IronBrand compact mobile={narrow} /><View style={[styles.actions, narrow && styles.actionsNarrow]}><Text numberOfLines={1} style={[styles.muted, narrow && styles.userNameNarrow]}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
+  const topBar = <View style={[styles.top, narrow && styles.topNarrow]}><IronBrand compact mobile={narrow} /><View style={[styles.actions, narrow && styles.actionsNarrow]}><Text numberOfLines={1} accessibilityLabel="Tenant derivado da sessão autenticada" style={[styles.muted, narrow && styles.userNameNarrow]}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
   if (!shellReady) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={styles.contentInner}>{error ? <Text style={styles.error}>{error}</Text> : <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Preparando sua academia…</Text></View>}</View></View>;
-  if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <React.Fragment key={item.key}>{!compact && item.key === 'financial' ? <Text style={styles.navSection}>ADMINISTRAÇÃO RESTRITA</Text> : null}<TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#D8FFE7' : '#A1A6AE'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity></React.Fragment>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Seu acesso operacional está limitado. Consulte sua assinatura para regularizar o acesso. A segurança da conta continua disponível.</Text></View><Section title="Situação da assinatura"><Text style={styles.muted}>{subscription?.status === 'SUSPENDED' ? 'Assinatura suspensa' : trial?.status === 'EXPIRED' ? 'Período de teste encerrado' : 'Assinatura indisponível'}</Text></Section>{active === 'security' ? <AccountSecurityPanel /> : active === 'privacy' ? <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} /> : active === 'saasBilling' && can('SUPER_ADMIN', 'OWNER') ? (adminStepUpActive ? <SaasBillingPanel onCommercialStateChanged={loadShell} /> : adminGateView()) : null}</ScrollView></View></View>;
+  if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <React.Fragment key={item.key}>{!compact && item.key === 'financial' ? <Text style={styles.navSection}>ADMINISTRAÇÃO RESTRITA</Text> : null}<TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#D8FFE7' : '#A1A6AE'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity></React.Fragment>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Seu acesso operacional está limitado. A superfície operacional permanece fail-closed. Consulte sua assinatura para regularizar o acesso. A segurança da conta continua disponível.</Text></View><Section title="Situação da assinatura"><Text style={styles.muted}>{subscription?.status === 'SUSPENDED' ? 'Assinatura suspensa' : trial?.status === 'EXPIRED' ? 'Período de teste encerrado' : 'Assinatura indisponível'}</Text></Section>{active === 'security' ? <AccountSecurityPanel /> : active === 'privacy' ? <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} /> : active === 'saasBilling' && can('SUPER_ADMIN', 'OWNER') ? (adminStepUpActive ? <SaasBillingPanel onCommercialStateChanged={loadShell} /> : adminGateView()) : null}</ScrollView></View></View>;
   return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <React.Fragment key={item.key}>{!compact && item.key === 'financial' ? <Text style={styles.navSection}>ADMINISTRAÇÃO RESTRITA</Text> : null}<TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#D8FFE7' : '#A1A6AE'} /><Text style={styles.navText}>{item.label}</Text></TouchableOpacity></React.Fragment>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>{active === 'financial' ? 'Área restrita · Proprietário / Administrador' : (data.gym?.name ?? 'Gestão da academia')}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading || (loadedModule !== active && (!isRestrictedAdminModule(active) || adminStepUpActive)) ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando informações…</Text></View> : content()}</ScrollView></View></View>;
 }
 
