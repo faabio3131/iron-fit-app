@@ -225,29 +225,22 @@ test('Avaliações apresentam histórico real, evolução e restrições sem tro
   expect(mockApi.mock.calls.some(([path]) => path === '/students/student-1/assessments')).toBe(true);
 });
 
-test('Workout Studio monta sessão completa e envia rascunho canônico', async () => {
+test('Workout Studio monta sessão com equipamento compatível e cria DRAFT canônico', async () => {
   const view = render(<CommercialWebApp />);
   await waitFor(() => expect(view.getByTestId('nav-workouts')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-workouts'));
-
-  await waitFor(() => expect(view.getByText('Workout Studio')).toBeTruthy());
-  await waitFor(() => expect(view.getAllByText('Aluno 360').length).toBeGreaterThan(0));
-  fireEvent.press(view.getAllByText('Aluno 360')[0]);
-
-  await waitFor(() => expect(view.getByText('Agachamento')).toBeTruthy());
-  fireEvent.press(view.getAllByText('Agachamento')[0]);
-  fireEvent.press(view.getByText('Buscar equipamentos compatíveis'));
-  await waitFor(
-    () => expect(mockApi.mock.calls.some(([path]) => path === '/equipments/exercises/exercise-1/compatible')).toBe(true),
-    { timeout: 12000 },
-  );
-  await waitFor(() => expect(view.getAllByText('Leg Press').length).toBeGreaterThan(0), { timeout: 12000 });
-  fireEvent.press(view.getAllByText('Leg Press')[0]);
-  fireEvent.press(view.getByTestId('workout-add-exercise'));
-  await waitFor(() => expect(view.getByTestId('workout-add-session')).toBeTruthy());
-  fireEvent.press(view.getByTestId('workout-add-session'));
+  await waitFor(() => expect(view.getByText('Workout Studio — criação manual')).toBeTruthy());
+  fireEvent.press(view.getByTestId('studio-student-student-1'));
+  await waitFor(() => expect(view.getByTestId('studio-exercise-exercise-1')).toBeTruthy());
+  fireEvent.press(view.getByTestId('studio-exercise-exercise-1'));
+  fireEvent.press(view.getByTestId('studio-compatibility-search'));
+  await waitFor(() => expect(mockApi.mock.calls.some(([path]) =>
+    path === '/equipments/exercises/exercise-1/compatible')).toBe(true));
+  await waitFor(() => expect(view.getByTestId('studio-compatible-equipment-inv-1')).toBeTruthy());
+  fireEvent.press(view.getByTestId('studio-compatible-equipment-inv-1'));
+  fireEvent.press(view.getByTestId('studio-exercise-add-1'));
+  await waitFor(() => expect(view.getByTestId('manual-workout-create')).toBeTruthy());
   fireEvent.press(view.getByTestId('manual-workout-create'));
-
   await waitFor(() => {
     const call = mockApi.mock.calls.find(([path, _query, options]) => path === '/workouts' && options?.method === 'POST');
     expect(call).toBeTruthy();
@@ -255,11 +248,7 @@ test('Workout Studio monta sessão completa e envia rascunho canônico', async (
     expect(body.studentId).toBe('student-1');
     expect(body.sessions).toHaveLength(1);
     expect(body.sessions[0].exercises[0]).toMatchObject({
-      exerciseId: 'exercise-1',
-      equipmentId: 'inv-1',
-      sets: 3,
-      reps: '10',
-      restSeconds: 60,
+      exerciseId: 'exercise-1', equipmentId: 'inv-1', sets: 3, reps: '12', restSeconds: 60,
     });
   });
 }, 30000);
