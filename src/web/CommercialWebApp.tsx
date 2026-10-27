@@ -38,6 +38,8 @@ type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' |
 type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; value: boolean | number | string[] | null; source?: string; reason?: string | null };
 type ModuleDefinition = { key: ModuleKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name']; roles?: string[]; entitlement?: string[] };
 const restrictedAdminModules: ModuleKey[] = ['financial', 'fiscal', 'saasBilling', 'entitlements', 'integrations'];
+// Missing or unspecified grants must never unlock a feature.
+const FAIL_CLOSED_DEFAULT = false;
 
 const operational = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION'];
 const staff = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION', 'TRAINER'];
@@ -194,7 +196,6 @@ function TenantCommercialWebApp() {
   const [studentPlan, setStudentPlan] = useState({ planName: '', amount: '', nextBillingAt: '' });
   const [charge, setCharge] = useState({ amount: '', dueDate: '', paymentMethod: '' });
   const [academy, setAcademy] = useState({ name: '', timezone: 'America/Sao_Paulo' });
-  const [configDraft, setConfigDraft] = useState<Record<string, string>>({});
   const [reviewWorkoutId, setReviewWorkoutId] = useState<string | null>(null);
   const [bookingDate, setBookingDate] = useState('');
   const [scheduleRefresh, setScheduleRefresh] = useState(0);
@@ -207,7 +208,7 @@ function TenantCommercialWebApp() {
   const [adminGateError, setAdminGateError] = useState('');
 
   const entitlementMap = useMemo(() => new Map(entitlements.map((item) => [item.featureKey, item])), [entitlements]);
-  const enabled = useCallback((key: string) => entitlementMap.get(key)?.value === true, [entitlementMap]);
+  const enabled = useCallback((key: string) => (entitlementMap.get(key)?.value ?? FAIL_CLOSED_DEFAULT) === true, [entitlementMap]);
   const allowed = useCallback((item: ModuleDefinition) => (!item.roles || item.roles.some((role) => roles.includes(role))) && (!item.entitlement || item.entitlement.some(enabled)), [enabled, roles]);
   const can = useCallback((...targets: string[]) => targets.some((role) => roles.includes(role)), [roles]);
   const isRestrictedAdminModule = useCallback((key: ModuleKey) => restrictedAdminModules.includes(key), []);
@@ -438,6 +439,7 @@ function TenantCommercialWebApp() {
       key={activeTenantId ?? 'sem-academia'}
       members={list(data.users)}
       actorRoles={roles}
+      rosterLoaded={Array.isArray(data.users) || Array.isArray(data.users?.items)}
       onUpdated={() => loadModule('team')}
     />;
   }
