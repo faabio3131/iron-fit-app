@@ -27,6 +27,7 @@ export function LoginScreen({
   const { login } = useAuth();
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [requiresMfa, setRequiresMfa] = useState(false);
@@ -140,10 +141,18 @@ export function LoginScreen({
               value={password}
               onChangeText={setPassword}
               editable={!requiresMfa}
-              secureTextEntry
+              secureTextEntry={!passwordVisible}
               placeholder="Senha"
               placeholderTextColor="#64748b"
             />
+                      <TouchableOpacity testID="login-password-toggle"
+              style={styles.passwordToggle} disabled={requiresMfa}
+              onPress={() => setPasswordVisible((value) => !value)}
+              accessibilityRole="button"
+              accessibilityLabel={passwordVisible ? "Ocultar senha" : "Mostrar senha"}
+              accessibilityState={{ disabled: requiresMfa, expanded: passwordVisible }}>
+              <Ionicons name={passwordVisible ? "eye-off-outline" : "eye-outline"} size={22} color="#94a3b8" />
+            </TouchableOpacity>
           </View>
 
           {requiresMfa ? (
@@ -316,6 +325,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   inputIcon: { marginRight: 10 },
+  passwordToggle: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   input: { flex: 1, color: '#f1f5f9', paddingVertical: 14, fontSize: 15 },
   or: { color: '#64748b', textAlign: 'center', marginBottom: 10, fontSize: 12 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
