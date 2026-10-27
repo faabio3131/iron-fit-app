@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
 const mockApi = jest.fn(async () => ({ invitation: { accepted: true } }));
-jest.mock('../src/services/api', () => ({ api: (...args: unknown[]) => mockApi(...args) }));
+jest.mock('../src/services/api', () => ({ api: (...args: unknown[]) => mockApi(args[0], args[1], args[2]) }));
 import { TeamManagementPanel } from '../src/components/TeamManagementPanel';
 
 beforeEach(() => { mockApi.mockClear(); });
