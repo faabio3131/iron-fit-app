@@ -43,6 +43,8 @@ async function finance() {
   const view = render(<CommercialWebApp />);
   await waitFor(() => expect(view.getByTestId('nav-financial')).toBeTruthy());
   fireEvent.press(view.getByTestId('nav-financial'));
+  await waitFor(() => expect(view.getByTestId('financial-workspace')).toBeTruthy());
+  fireEvent.press(view.getByTestId('financial-tab-charges'));
   await waitFor(() => expect(view.getByTestId('finance-create-charge')).toBeTruthy());
   await waitFor(() => expect(view.getByText('Ana Silva')).toBeTruthy());
   return view;
@@ -74,6 +76,7 @@ test('C05 invalid monetary and impossible date inputs disable charge creation', 
 
 test('C05 account initial balance converts R$ 1.234,56 into 123456 minor units, not 1234', async () => {
   const view = await finance();
+  fireEvent.press(view.getByTestId('financial-tab-accounts'));
   fireEvent.changeText(view.getByTestId('finance-account-name'), 'Banco');
   fireEvent.changeText(view.getByTestId('finance-account-balance'), '1.234,56');
   fireEvent.press(view.getByTestId('finance-create-account'));
@@ -85,6 +88,7 @@ test('C05 account initial balance converts R$ 1.234,56 into 123456 minor units, 
 
 test('C05 subscription amount R$ 149,90 is sent as 14990 minor units under the student', async () => {
   const view = await finance();
+  fireEvent.press(view.getByTestId('financial-tab-subscriptions'));
   fireEvent.press(view.getByText('Ana Silva'));
   fireEvent.changeText(view.getByTestId('finance-plan-name'), 'Plano Plus');
   fireEvent.changeText(view.getByTestId('finance-subscription-amount'), '149,90');

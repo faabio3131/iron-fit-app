@@ -1,3 +1,4 @@
+import { brlToMinor, positiveBrlToMinor } from '../utils/academy-money';
 import React, { useMemo, useRef, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { IronInput as TextInput } from '../components/IronInput';
@@ -94,15 +95,15 @@ function money(value: unknown) {
   }).format(Number.isFinite(minor) ? minor / 100 : 0);
 }
 
-function toMinorUnits(value: string) {
-  const raw = value.trim().replace(/^R\$\s*/i, '');
-  if (!raw) return null;
-  const normalized = raw.includes(',')
-    ? raw.replace(/\./g, '').replace(',', '.')
-    : raw;
-  const parsed = Number(normalized);
-  if (!Number.isFinite(parsed)) return null;
-  return Math.round(parsed * 100);
+function toMinorUnits(value: string): number | null {
+  return brlToMinor(value);
+}
+
+function validIsoDate(value: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) return null;
+  const candidate = value.trim() + 'T00:00:00.000Z';
+  const date = new Date(candidate);
+  return Number.isNaN(date.getTime()) || date.toISOString() !== candidate ? null : candidate;
 }
 
 function dateLabel(value: unknown) {
@@ -140,16 +141,19 @@ function Field({
   onChangeText,
   placeholder,
   numeric,
+  testID,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   placeholder?: string;
   numeric?: boolean;
+  testID?: string;
 }) {
   return <View style={styles.field}>
     <Text style={styles.fieldLabel}>{label}</Text>
     <TextInput
+      testID={testID}
       accessibilityLabel={label}
       style={styles.input}
       value={value}
@@ -266,7 +270,7 @@ export function FinancialWorkspace({
   }
   const [accountDraft, setAccountDraft] = useState({
     name: '',
-    type: 'BANK',
+    type: 'CASH',
     initialBalance: '',
   });
   const [subscriptionDraft, setSubscriptionDraft] = useState({
@@ -279,7 +283,7 @@ export function FinancialWorkspace({
     studentId: '',
     amount: '',
     dueDate: '',
-    paymentMethod: 'PIX',
+    paymentMethod: '',
   });
 
   const overdueIds = useMemo(
@@ -347,8 +351,10 @@ export function FinancialWorkspace({
   }, [historyAccount, historySearch, studentFilter, students, transactions]);
 
   const accountInitialBalance = toMinorUnits(accountDraft.initialBalance);
-  const subscriptionAmount = toMinorUnits(subscriptionDraft.amount);
-  const chargeAmount = toMinorUnits(chargeDraft.amount);
+  const subscriptionAmount = positiveBrlToMinor(subscriptionDraft.amount);
+  const chargeAmount = positiveBrlToMinor(chargeDraft.amount);
+  const chargeDueDate = validIsoDate(chargeDraft.dueDate);
+  const subscriptionNextDate = subscriptionDraft.nextBillingAt.trim() ? validIsoDate(subscriptionDraft.nextBillingAt) : undefined;
 
   const studentFilterRow = <ScrollView horizontal contentContainerStyle={styles.chipRow}>
     <Chip label="Todos os alunos" selected={!studentFilter} onPress={() => setStudentFilter('')} />
@@ -531,19 +537,21 @@ export function FinancialWorkspace({
             onPress={() => setChargeDraft((current) => ({ ...current, studentId: student.id }))}
           />)}
         </View>
-        <Field label="Valor (R$)" value={chargeDraft.amount} numeric onChangeText={(amount) => setChargeDraft((current) => ({ ...current, amount }))} placeholder="149,90" />
-        <Field label="Vencimento" value={chargeDraft.dueDate} onChangeText={(dueDate) => setChargeDraft((current) => ({ ...current, dueDate }))} placeholder="AAAA-MM-DD" />
+        <Field testID="finance-charge-amount" label="Valor (R$)" value={chargeDraft.amount} numeric onChangeText={(amount) => setChargeDraft((current) => ({ ...current, amount }))} placeholder="149,90" />
+        <Field testID="finance-charge-due" label="Vencimento" value={chargeDraft.dueDate} onChangeText={(dueDate) => setChargeDraft((current) => ({ ...current, dueDate }))} placeholder="AAAA-MM-DD" />
         <Field label="Meio de pagamento" value={chargeDraft.paymentMethod} onChangeText={(paymentMethodValue) => setChargeDraft((current) => ({ ...current, paymentMethod: paymentMethodValue }))} />
+        {chargeDraft.amount.trim() && chargeAmount === null ? <Text testID="finance-charge-invalid" style={styles.badgeAlert}>Valor inválido: informe reais com vírgula decimal.</Text> : null}
+        {chargeDraft.dueDate.trim() && !chargeDueDate ? <Text testID="finance-charge-date-invalid" style={styles.badgeAlert}>Data de vencimento inválida.</Text> : null}
         <PrimaryButton
-          testID="financial-create-charge"
+          testID="finance-create-charge"
           label={saving ? 'Salvando…' : 'Criar cobrança'}
-          disabled={saving || !chargeDraft.studentId || chargeAmount === null || chargeAmount <= 0 || !chargeDraft.dueDate.trim()}
+          disabled={saving || !chargeDraft.studentId || chargeAmount === null || !chargeDueDate}
           onPress={() => {
-            if (chargeAmount === null) return;
+            if (chargeAmount === null || !chargeDueDate || !chargeDraft.studentId) return;
             void onCreateCharge({
               studentId: chargeDraft.studentId,
               amount: chargeAmount,
-              dueDate: chargeDraft.dueDate.trim(),
+              dueDate: chargeDueDate,
               ...(chargeDraft.paymentMethod.trim() ? { paymentMethod: chargeDraft.paymentMethod.trim() } : {}),
             });
           }}
@@ -592,20 +600,20 @@ export function FinancialWorkspace({
             onPress={() => setSubscriptionDraft((current) => ({ ...current, studentId: student.id }))}
           />)}
         </View>
-        <Field label="Nome do plano" value={subscriptionDraft.planName} onChangeText={(planName) => setSubscriptionDraft((current) => ({ ...current, planName }))} placeholder="Plano mensal" />
-        <Field label="Valor (R$)" value={subscriptionDraft.amount} numeric onChangeText={(amount) => setSubscriptionDraft((current) => ({ ...current, amount }))} placeholder="149,90" />
-        <Field label="Próxima cobrança" value={subscriptionDraft.nextBillingAt} onChangeText={(nextBillingAt) => setSubscriptionDraft((current) => ({ ...current, nextBillingAt }))} placeholder="AAAA-MM-DD" />
+        <Field testID="finance-plan-name" label="Nome do plano" value={subscriptionDraft.planName} onChangeText={(planName) => setSubscriptionDraft((current) => ({ ...current, planName }))} placeholder="Plano mensal" />
+        <Field testID="finance-subscription-amount" label="Valor (R$)" value={subscriptionDraft.amount} numeric onChangeText={(amount) => setSubscriptionDraft((current) => ({ ...current, amount }))} placeholder="149,90" />
+        <Field testID="finance-subscription-date" label="Próxima cobrança" value={subscriptionDraft.nextBillingAt} onChangeText={(nextBillingAt) => setSubscriptionDraft((current) => ({ ...current, nextBillingAt }))} placeholder="AAAA-MM-DD" />
         <PrimaryButton
-          testID="financial-create-subscription"
+          testID="finance-create-subscription"
           label={saving ? 'Salvando…' : 'Criar plano do aluno'}
-          disabled={saving || !subscriptionDraft.studentId || !subscriptionDraft.planName.trim() || subscriptionAmount === null || subscriptionAmount <= 0}
+          disabled={saving || !subscriptionDraft.studentId || !subscriptionDraft.planName.trim() || subscriptionAmount === null || (subscriptionDraft.nextBillingAt.trim() && !subscriptionNextDate)}
           onPress={() => {
-            if (subscriptionAmount === null) return;
+            if (subscriptionAmount === null || (subscriptionDraft.nextBillingAt.trim() && !subscriptionNextDate)) return;
             void onCreateSubscription({
               studentId: subscriptionDraft.studentId,
               planName: subscriptionDraft.planName.trim(),
               amount: subscriptionAmount,
-              ...(subscriptionDraft.nextBillingAt.trim() ? { nextBillingAt: subscriptionDraft.nextBillingAt.trim() } : {}),
+              ...(subscriptionNextDate ? { nextBillingAt: subscriptionNextDate } : {}),
             });
           }}
         />
@@ -652,7 +660,7 @@ export function FinancialWorkspace({
           return <View key={account.id} style={styles.row}>
             <View style={styles.rowMain}>
               <Text style={styles.rowTitle}>{account.name}</Text>
-              <Text style={styles.rowMeta}>{account.type} · saldo inicial {money(account.initialBalance)}</Text>
+              <Text style={styles.rowMeta}>{account.type} · Saldo inicial: {money(account.initialBalance)}</Text>
             </View>
             <Text style={styles.amount}>{money(current)}</Text>
           </View>;
@@ -662,11 +670,11 @@ export function FinancialWorkspace({
       <View style={styles.panel}>
         <Text style={styles.panelTitle}>Nova conta</Text>
         <Text style={styles.panelSubtitle}>Cadastre uma conta operacional da academia.</Text>
-        <Field label="Nome da conta" value={accountDraft.name} onChangeText={(name) => setAccountDraft((current) => ({ ...current, name }))} placeholder="Conta principal" />
+        <Field testID="finance-account-name" label="Nome da conta" value={accountDraft.name} onChangeText={(name) => setAccountDraft((current) => ({ ...current, name }))} placeholder="Conta principal" />
         <Field label="Tipo" value={accountDraft.type} onChangeText={(type) => setAccountDraft((current) => ({ ...current, type }))} placeholder="BANK" />
-        <Field label="Saldo inicial (R$)" value={accountDraft.initialBalance} numeric onChangeText={(initialBalance) => setAccountDraft((current) => ({ ...current, initialBalance }))} placeholder="0,00" />
+        <Field testID="finance-account-balance" label="Saldo inicial (R$)" value={accountDraft.initialBalance} numeric onChangeText={(initialBalance) => setAccountDraft((current) => ({ ...current, initialBalance }))} placeholder="0,00" />
         <PrimaryButton
-          testID="financial-create-account"
+          testID="finance-create-account"
           label={saving ? 'Salvando…' : 'Criar conta'}
           disabled={saving || !accountDraft.name.trim() || accountInitialBalance === null}
           onPress={() => {
