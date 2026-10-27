@@ -606,9 +606,9 @@ export function FinancialWorkspace({
         <PrimaryButton
           testID="finance-create-subscription"
           label={saving ? 'Salvando…' : 'Criar plano do aluno'}
-          disabled={saving || !subscriptionDraft.studentId || !subscriptionDraft.planName.trim() || subscriptionAmount === null || (subscriptionDraft.nextBillingAt.trim() && !subscriptionNextDate)}
+          disabled={saving || !subscriptionDraft.studentId || !subscriptionDraft.planName.trim() || subscriptionAmount === null || (!!subscriptionDraft.nextBillingAt.trim() && !subscriptionNextDate)}
           onPress={() => {
-            if (subscriptionAmount === null || (subscriptionDraft.nextBillingAt.trim() && !subscriptionNextDate)) return;
+            if (subscriptionAmount === null || (!!subscriptionDraft.nextBillingAt.trim() && !subscriptionNextDate)) return;
             void onCreateSubscription({
               studentId: subscriptionDraft.studentId,
               planName: subscriptionDraft.planName.trim(),
