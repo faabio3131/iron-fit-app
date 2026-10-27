@@ -83,7 +83,6 @@ export function FinancialScreen() {
 
   const reload = useCallback(() => {
     setLoading(true);
-    setError('');
     setReloadVersion((current) => current + 1);
   }, []);
 
@@ -138,7 +137,7 @@ export function FinancialScreen() {
             <Text style={styles.amount}>{fmtMoney(charge.amount ?? charge.value)}</Text>
             <Text style={[styles.status, { color: status.color }]}>{status.label}</Text>
           </View>
-          {status.label !== 'Pago' && safePaymentUrl(charge.paymentLink) ? (
+          {(charge.status === 'PENDING' || charge.status === 'OVERDUE') && safePaymentUrl(charge.paymentLink) ? (
             <TouchableOpacity accessibilityRole="button" testID={'student-charge-payment-' + charge.id}
               style={styles.paymentButton} onPress={() => {
                 const checkoutUrl = safePaymentUrl(charge.paymentLink);

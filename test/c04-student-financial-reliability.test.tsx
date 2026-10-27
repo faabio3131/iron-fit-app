@@ -29,10 +29,12 @@ test('C04 failed API never misrepresents an outage as empty/no charges and can r
   mockApi.mockRejectedValueOnce(new Error('Falha de rede')).mockResolvedValueOnce([]);
   const view = render(<FinancialScreen />);
   await waitFor(() => expect(view.getByTestId('student-charges-error')).toBeTruthy());
-  expect(view.getByText('Falha de rede')).toBeTruthy();
+  expect(view.getByText(/Falha de rede/)).toBeTruthy();
   expect(view.queryByText('Nenhuma cobrança')).toBeNull();
   fireEvent.press(view.getByTestId('student-charges-retry'));
-  await waitFor(() => expect(view.queryByTestId('student-charges-error')).toBeNull());
+  await waitFor(() => expect(mockApi).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(view.getByText('Nenhuma cobrança')).toBeTruthy());
+  expect(view.queryByTestId('student-charges-error')).toBeNull();
   expect(view.getByText('Nenhuma cobrança')).toBeTruthy();
   expect(mockApi).toHaveBeenCalledTimes(2);
 });

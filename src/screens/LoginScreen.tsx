@@ -193,7 +193,7 @@ export function LoginScreen({
           ) : null}
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             testID="login-submit"
             style={[styles.button, disabled && styles.disabled]}
             onPress={handleLogin}
@@ -209,7 +209,7 @@ export function LoginScreen({
           </TouchableOpacity>
 
           {requiresMfa ? (
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={styles.linkButton}
               onPress={() => {
                 setRequiresMfa(false);
@@ -223,7 +223,7 @@ export function LoginScreen({
           ) : (
             <>
               {onForgotPassword ? (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   testID="forgot-password"
                   style={styles.linkButton}
                   onPress={onForgotPassword}
@@ -233,7 +233,7 @@ export function LoginScreen({
                 </TouchableOpacity>
               ) : null}
               {onStartTrial ? (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   testID="start-trial"
                   style={styles.trialButton}
                   onPress={onStartTrial}
