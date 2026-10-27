@@ -104,10 +104,10 @@ test('Equipe exige identidade válida e envia convite seguro sem senha compartil
   fireEvent.press(view.getByTestId('nav-team'));
   await waitFor(() => expect(view.getByTestId('team-invite-submit')).toBeTruthy());
 
-  expect(view.getByTestId('team-invite-submit').props.disabled).toBe(true);
+  fireEvent.press(view.getByTestId('team-invite-submit')); expect(mockApi.mock.calls.some(([path]) => path === '/users/invite')).toBe(false);
   fireEvent.changeText(view.getByTestId('team-invite-name'), 'Professor QA');
   fireEvent.changeText(view.getByTestId('team-invite-email'), 'professor@example.com');
-  expect(view.getByTestId('team-invite-submit').props.disabled).toBe(false);
+  expect(view.getByTestId('team-invite-submit')).toBeTruthy();
   fireEvent.press(view.getByTestId('team-invite-submit'));
 
   await waitFor(() => {
@@ -391,11 +391,11 @@ test('gerente acessa equipe operacional sem poder criar outro gerente ou abrir a
   expect(view.queryByTestId('nav-integrations')).toBeNull();
 
   fireEvent.press(view.getByTestId('nav-team'));
-  await waitFor(() => expect(view.getByTestId('team-add')).toBeTruthy());
+  await waitFor(() => expect(view.getByTestId('team-invite-submit')).toBeTruthy());
 
-  expect(view.getByText('Professor')).toBeTruthy();
-  expect(view.getByText('Recepção')).toBeTruthy();
-  expect(view.queryByText('Gerente')).toBeNull();
+  expect(view.getByTestId('team-invite-role-TRAINER')).toBeTruthy();
+  expect(view.getByTestId('team-invite-role-RECEPTION')).toBeTruthy();
+  expect(view.queryByTestId('team-invite-role-MANAGER')).toBeNull();
 });
 
 test('perfil de recepção não recebe superfícies administrativas sensíveis', async () => {
