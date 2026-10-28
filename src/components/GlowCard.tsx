@@ -3,8 +3,8 @@ import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { colors, glow, glowRest } from '../theme/colors';
 
 /**
- * Bloco/card com o mesmo efeito do site: borda neutra em repouso e
- * brilho verde neon ao passar o mouse (web). Em touch (mobile), fica
+ * Bloco/card com o mesmo efeito do site: borda verde neon em repouso e
+ * brilho verde neon pleno ao passar o mouse (web). Em touch (mobile), fica
  * só no estilo de repouso, já que não existe hover — o toque em si
  * é o feedback (onPressIn/onPressOut aplicam um aceno rápido).
  *
@@ -17,12 +17,14 @@ export function GlowCard({
   onPress,
   disabled,
   testID,
+  accessibilityRole,
 }: {
   children: React.ReactNode;
   style?: ViewStyle | ViewStyle[];
   onPress?: () => void;
   disabled?: boolean;
   testID?: string;
+  accessibilityRole?: 'button' | 'link';
 }) {
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
@@ -31,6 +33,7 @@ export function GlowCard({
   return (
     <Pressable
       testID={testID}
+      accessibilityRole={onPress ? accessibilityRole ?? 'button' : undefined}
       disabled={disabled}
       onPress={onPress}
       onHoverIn={() => setHovered(true)}
@@ -54,9 +57,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.accentEdge,
   },
   cardActive: {
-    borderColor: colors.accentBorder,
+    borderColor: colors.accent,
   },
 });

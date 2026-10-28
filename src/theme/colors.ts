@@ -22,6 +22,8 @@ export const colors = {
   accentSoft: 'rgba(43, 244, 122, 0.12)',
   accentSofter: 'rgba(43, 244, 122, 0.08)',
   accentBorder: 'rgba(43, 244, 122, 0.35)',
+  // Borda neon em repouso nos cards (acende para o verde pleno no hover)
+  accentEdge: 'rgba(43, 244, 122, 0.6)',
   accentGlow: 'rgba(43, 244, 122, 0.55)',
   // Texto/ícone sobre preenchimento sólido do verde (contraste AA)
   onAccent: '#04140b',
