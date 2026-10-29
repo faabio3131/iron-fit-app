@@ -612,3 +612,17 @@ Quando todos os deltas estiverem concluídos, executar uma **auditoria final pro
 Objetivo final:
 
 **IRON FIT CORE V1.0.0 — GO-LIVE CERTIFIED**
+
+
+## Checkpoint vigente — ALERTAS-1 / W01 / A9 (29/10/2026)
+
+- CURRENT visual comprovado: PR #56 já MERGED na main `3eacb6217fd89f41b0c57a9646224b905d178fc2`. Não tratar #56 como pendente nem reverter sua marca, responsividade, Fiscal, Privacidade, OAuth ou módulos premium.
+- Backend: PR faabio3131/iron-fit-backend#186 MERGED após CI integral `40903399389` SUCCESS; main `51e54d9aa911b08609c49459fb5311d0f01f2e73`; pós-merge `40904429721` em execução na última consulta. Local 820/820 PASS. Dez tipos iniciais conectados a fatos canônicos; manutenção com API real, dedupe/concorrência, autoridade atual de destinatários, quiet hours/DST, lease recovery, DLQ e escalação crítica sem loop. Push DISABLED/OUT_OF_LAUNCH; homologação física Evolution/e-mail segue PENDING_EXTERNAL.
+- App vigente: PR #60 / branch `feat/manager-alerts-premium-reconciled`, criada sobre a main premium. Substitui a PR #58 antiga/conflitante. Preservar #58 até certificar #60; depois encerrá-la como superseded, nunca mesclar a versão antiga.
+- Diferença funcional: sino/inbox OWNER/MANAGER; leitura/reconhecimento/resolução; preferências e-mail/WhatsApp; Evolution QR/status/logout governados pelo backend; situação operacional e manutenção no inventário real para OWNER/MANAGER com entitlement. Sem status conhecido retornado pela API, sem ações e sem estado OPERATIONAL inventado.
+- Equipamento: POST /equipments/:id/operational-status com payload apenas status; tenant/actor vêm da sessão. Recarrega fonte canônica após sucesso; não anuncia sucesso em caso de erro. Demais perfis somente leitura.
+- Push explicitamente indisponível e inativável na UI e API, sem falso SENT. Credenciais da Evolution nunca expostas ao tenant.
+- Correções verificadas: datas civis no cockpit preservam o dia informado; vencimentos do read model de billing respeitam o calendário UTC canônico; controles de preferência preservam semântica acessível de botão selecionável.
+- Gates da árvore reconciliada executados: typecheck PASS; lint 0 erros/24 warnings herdados; Jest integral 80 suítes/348 testes PASS, sem skips; exports Web/Android/iOS PASS; diff sem erros. Uma falha local por timeout durante primeira rodada não se repetiu no reteste dirigido e na suíte integral; nenhuma assertion removida ou relaxada.
+- Candidate de código atual: `c6ba956`; aguardar CI integral do HEAD após este checkpoint antes de merge. Não declarar CI verde com base apenas nos testes locais. Nenhum deploy, alteração de ambiente ou homologação externa executado nesta retomada.
+- Próximo passo: CI #60 → corrigir falhas → merge autorizado apenas se todos os gates verdes e sem conflitos → verificar pós-merge → fechar #58 como substituída → continuar cronograma C/W/I e P→Q→R→S→T pelos gaps reais. Teste físico Evolution continua adiado conforme decisão do usuário.
