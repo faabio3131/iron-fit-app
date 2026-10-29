@@ -38,7 +38,8 @@ function number(value: number | undefined) {
 function date(value?: string) {
   if (!value) return 'Não informado';
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? 'Não informado' : parsed.toLocaleDateString('pt-BR');
+  return Number.isNaN(parsed.getTime()) ? 'Não informado' : parsed.toLocaleDateString('pt-BR',
+    /^\d{4}-\d{2}-\d{2}$/.test(value) ? { timeZone: 'UTC' } : undefined);
 }
 function Kpi({ label, value, note, testID }: { label: string; value: number | undefined; note: string; testID?: string }) {
   return <GlowCard style={styles.kpi} testID={testID}><Text style={styles.kpiLabel}>{label}</Text>
