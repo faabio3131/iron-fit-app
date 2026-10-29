@@ -94,3 +94,10 @@ test('unpaid provider result does not book receipt or refresh financial ledger',
   expect(onUpdated).not.toHaveBeenCalled();
   expect(props.onPay).not.toHaveBeenCalled();
 });
+
+test('manual receipt action is hidden when charge is already bound to provider checkout', async () => {
+  mockApi.mockResolvedValue([]);
+  const screen = render(<AcademyChargesPanel {...props} charges={[{ ...charge, gatewayConnectionId: 'connection-a' }]} />);
+  await waitFor(() => expect(screen.getByTestId('academy-charge-verify-gateway-' + charge.id)).toBeTruthy());
+  expect(screen.queryByTestId('academy-charge-prepare-' + charge.id)).toBeNull();
+});
