@@ -30,6 +30,7 @@ describe('O13 Integration Center interactions', () => {
           }],
         };
       }
+      if (path === '/integrations/evolution/status') return { configured: false, status: 'DISCONNECTED' };
       if (path === '/integrations/connections') return [];
       if (path === '/integrations/oauth/meta/start') {
         return { authorizationUrl: 'https://provider.example.com/authorize' };
@@ -74,16 +75,17 @@ describe('O13 Integration Center interactions', () => {
         return {
           environment: 'HOMOLOG',
           providers: [{
-            providerCode: 'fm-fiscal-core',
+            providerCode: 'tenant-fiscal',
             capabilities: ['fiscal.bridge'],
             authModels: ['ACCESS_TOKEN'],
             environments: ['HOMOLOG', 'PROD'],
             supportsWebhook: true,
             supportsOAuth: false,
-            tenantEntitlementFeatureKey: null,
+            tenantEntitlementFeatureKey: 'integration.fiscal',
           }],
         };
       }
+      if (path === '/integrations/evolution/status') return { configured: false, status: 'DISCONNECTED' };
       if (path === '/integrations/connections' && !options) return [];
       if (path === '/integrations/connections' && options?.method === 'POST') {
         return { id: 'connection-a' };
@@ -94,7 +96,7 @@ describe('O13 Integration Center interactions', () => {
     const view = render(<IntegrationCredentialsPanel canStartOAuth />);
 
     await waitFor(() => expect(view.getByTestId('integration-create')).toBeTruthy());
-    expect(view.getByText('FM Fiscal Core')).toBeTruthy();
+    expect(view.getByText('Tenant Fiscal')).toBeTruthy();
 
     fireEvent.changeText(view.getByTestId('integration-create-secret'), 'test-write-only-value');
     fireEvent.changeText(
@@ -115,7 +117,7 @@ describe('O13 Integration Center interactions', () => {
       ([path, _legacy, options]) => path === '/integrations/connections' && options?.method === 'POST',
     );
     const body = JSON.parse(String(call?.[2]?.body ?? '{}'));
-    expect(body.providerCode).toBe('fm-fiscal-core');
+    expect(body.providerCode).toBe('tenant-fiscal');
     expect(body.authModel).toBe('ACCESS_TOKEN');
     expect(body.capabilities).toEqual(['fiscal.bridge']);
     expect(body.secret).toBe('test-write-only-value');
@@ -123,5 +125,48 @@ describe('O13 Integration Center interactions', () => {
     expect(body.publicConfiguration).toEqual({});
     expect(body).not.toHaveProperty('environment');
     expect(body).not.toHaveProperty('gymId');
+  });
+
+  test('never offers FM-owned providers or an API-key form for Evolution to the academy', async () => {
+    const base = {
+      capabilities: ['x.y'],
+      authModels: ['API_KEY'],
+      environments: ['DEV', 'HOMOLOG', 'PROD'],
+      supportsWebhook: false,
+      supportsOAuth: false,
+    };
+    mockApi.mockImplementation(async (path: string) => {
+      if (path === '/integrations/providers') {
+        return {
+          environment: 'HOMOLOG',
+          providers: [
+            { ...base, providerCode: 'openai_compatible', tenantEntitlementFeatureKey: null },
+            { ...base, providerCode: 'gemini_native', tenantEntitlementFeatureKey: null },
+            { ...base, providerCode: 'fm-fiscal-core', tenantEntitlementFeatureKey: null },
+            { ...base, providerCode: 'evolution', tenantEntitlementFeatureKey: 'integration.meta' },
+            {
+              ...base,
+              providerCode: 'meta',
+              capabilities: ['meta.whatsapp'],
+              authModels: ['OAUTH2'],
+              supportsOAuth: true,
+              tenantEntitlementFeatureKey: 'integration.meta',
+            },
+          ],
+        };
+      }
+      if (path === '/integrations/evolution/status') return { configured: false, status: 'DISCONNECTED' };
+      if (path === '/integrations/connections') return [];
+      throw new Error('Unexpected API path: ' + path);
+    });
+
+    const view = render(<IntegrationCredentialsPanel canStartOAuth />);
+
+    await waitFor(() => expect(view.getByTestId('integration-provider-meta')).toBeTruthy());
+    expect(view.queryByTestId('integration-provider-openai_compatible')).toBeNull();
+    expect(view.queryByTestId('integration-provider-gemini_native')).toBeNull();
+    expect(view.queryByTestId('integration-provider-fm-fiscal-core')).toBeNull();
+    expect(view.queryByTestId('integration-provider-evolution')).toBeNull();
+    expect(view.getByTestId('whatsapp-connect')).toBeTruthy();
   });
 });

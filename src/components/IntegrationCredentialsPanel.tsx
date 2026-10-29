@@ -11,6 +11,7 @@ import {
 import { API_URL } from '../config/env';
 import { api } from '../services/api';
 import { IronInput as TextInput } from './IronInput';
+import { WhatsAppConnectCard } from './WhatsAppConnectCard';
 
 type Provider = {
   providerCode: string;
@@ -86,8 +87,17 @@ function commercialCapabilities(provider: Provider) {
   return provider.capabilities;
 }
 
+// Provedores de IA e o fiscal da FM não têm permissão comercial de tenant (são da FM Tecnologia),
+// e o WhatsApp por QR Code (Evolution) tem card próprio: nenhum deles vira credencial da academia.
+const TENANT_HIDDEN_PROVIDERS = new Set(['evolution']);
+
 function commercialProviders(providers: Provider[]) {
-  return providers.filter((provider) => commercialCapabilities(provider).length > 0);
+  return providers.filter(
+    (provider) =>
+      !!provider.tenantEntitlementFeatureKey &&
+      !TENANT_HIDDEN_PROVIDERS.has(provider.providerCode) &&
+      commercialCapabilities(provider).length > 0,
+  );
 }
 
 const authModelLabels: Record<string, string> = {
@@ -527,6 +537,8 @@ export function IntegrationCredentialsPanel({
           <Text style={styles.environmentMeta}>Definido pelo servidor</Text>
         </View>
       </View>
+
+      <WhatsAppConnectCard />
 
       <View style={styles.section}>
         <Text style={styles.title}>Escolha um provedor</Text>
