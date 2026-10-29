@@ -148,7 +148,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
         disabled={saving || !!reconcileBusy}
         onPress={() => { void reconcileGatewayReceipt(item.id); }} /> : null}
       {reconcileNotice ? <Text testID="academy-charge-reconciliation-notice" style={styles.notice}>{reconcileNotice}</Text> : null}
-      {item.status === 'PENDING' ? <Btn
+      {item.status === 'PENDING' && !item.gatewayConnectionId && !checkoutResults[item.id] ? <Btn
         label="Registrar pagamento recebido" testID={'academy-charge-prepare-' + item.id}
         disabled={saving || !account} onPress={() => {
           setConfirmId(item.id);
