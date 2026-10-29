@@ -19,14 +19,14 @@ function Action({ label, onPress, disabled, secondary, testID }: { label: string
 }
 
 export function ManagerAlertBell({ onOpen }: { onOpen: () => void }) {
-  const [unread, setUnread] = useState(0);
+  const [unread, setUnread] = useState<number | null>(null);
   useEffect(() => {
     let mounted = true;
-    const load = async () => { try { const value = await api('/manager-alerts/counters'); if (mounted) setUnread(Number.isInteger(value?.unread) ? value.unread : 0); } catch { if (mounted) setUnread(0); } };
+    const load = async () => { try { const value = await api('/manager-alerts/counters'); if (mounted) setUnread(Number.isInteger(value?.unread) && value.unread >= 0 ? value.unread : null); } catch { if (mounted) setUnread(null); } };
     void load(); const timer = setInterval(() => void load(), 60_000);
     return () => { mounted = false; clearInterval(timer); };
   }, []);
-  return <TouchableOpacity accessibilityRole="button" accessibilityLabel={unread ? `${unread} alertas não lidos` : 'Alertas'} testID="manager-alert-bell" onPress={onOpen} style={styles.bell}><Ionicons name="notifications-outline" size={21} color="#d8f9e5" />{unread ? <View style={styles.badge}><Text style={styles.badgeText}>{unread > 99 ? '99+' : unread}</Text></View> : null}</TouchableOpacity>;
+  return <TouchableOpacity accessibilityRole="button" accessibilityLabel={unread === null ? 'Alertas: contagem indisponível' : unread ? `${unread} alertas não lidos` : 'Alertas'} testID="manager-alert-bell" onPress={onOpen} style={styles.bell}><Ionicons name="notifications-outline" size={21} color="#d8f9e5" />{unread === null || unread > 0 ? <View style={styles.badge}><Text style={styles.badgeText}>{unread === null ? '!' : unread > 99 ? '99+' : unread}</Text></View> : null}</TouchableOpacity>;
 }
 
 export function ManagerAlertsPanel() {
@@ -34,23 +34,35 @@ export function ManagerAlertsPanel() {
   const owner = Array.isArray(profile?.roles) && profile.roles.includes('OWNER');
   const [items, setItems] = useState<Alert[]>([]);
   const [preferences, setPreferences] = useState<Preference[]>([]);
-  const [unread, setUnread] = useState(0);
+  const [unread, setUnread] = useState<number | null>(null);
   const [filter, setFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState('');
   const [error, setError] = useState('');
+  const [inboxError, setInboxError] = useState('');
+  const [preferenceError, setPreferenceError] = useState('');
+  const [connectionError, setConnectionError] = useState('');
   const [notice, setNotice] = useState('');
-  const [evolution, setEvolution] = useState<any>({ configured: false, status: 'DISCONNECTED' });
+  const [evolution, setEvolution] = useState<any>({ status: 'UNKNOWN' });
   const [qr, setQr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true); setError('');
+    setLoading(true); setInboxError(''); setPreferenceError(''); setConnectionError('');
+    // Optional channels never hold the mandatory inbox hostage, including slow requests.
+    void api('/manager-alerts/preferences').then((prefs) => {
+      if (!Array.isArray(prefs)) throw new Error('Preferências temporariamente indisponíveis.');
+      setPreferences(prefs);
+    }).catch((reason) => setPreferenceError(errorMessage(reason)));
+    void api('/integrations/evolution/status').then((connection) => {
+      if (!connection || typeof connection.status !== 'string') throw new Error('Situação do WhatsApp indisponível.');
+      setEvolution(connection);
+    }).catch((reason) => { setConnectionError(errorMessage(reason)); setEvolution({ status: 'UNKNOWN' }); });
     try {
       const suffix = filter ? `?status=${filter}&limit=50` : '?limit=50';
-      const [inbox, prefs, connection] = await Promise.all([api(`/manager-alerts${suffix}`), api('/manager-alerts/preferences'), api('/integrations/evolution/status')]);
-      setItems(Array.isArray(inbox?.items) ? inbox.items : []); setUnread(Number.isInteger(inbox?.page?.unread) ? inbox.page.unread : 0);
-      setPreferences(Array.isArray(prefs) ? prefs : []); setEvolution(connection ?? { configured: false, status: 'DISCONNECTED' });
-    } catch (reason) { setError(errorMessage(reason)); } finally { setLoading(false); }
+      const inbox = await api(`/manager-alerts${suffix}`);
+      if (!Array.isArray(inbox?.items) || !Number.isInteger(inbox?.page?.unread) || inbox.page.unread < 0) throw new Error('Não foi possível confirmar os alertas. Tente atualizar.');
+      setItems(inbox.items); setUnread(inbox.page.unread);
+    } catch (reason) { setInboxError(errorMessage(reason)); setUnread(null); } finally { setLoading(false); }
   }, [filter]);
   useEffect(() => {
     const timer = setTimeout(() => void load(), 0);
@@ -80,12 +92,12 @@ export function ManagerAlertsPanel() {
   }
 
   return <View testID="manager-alerts-panel" style={styles.container}>
-    <View style={styles.header}><View><Text style={styles.title}>Centro de Alertas</Text><Text style={styles.muted}>{unread ? `${unread} não lido(s)` : 'Nenhum alerta não lido'} · fonte canônica do IRON</Text></View><Action label="Atualizar" secondary disabled={loading} onPress={() => void load()} /></View>
-    {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}{notice ? <Text style={styles.notice}>{notice}</Text> : null}
+    <View style={styles.header}><View><Text style={styles.title}>Centro de Alertas</Text><Text style={styles.muted}>{unread === null ? 'Contagem indisponível' : unread ? `${unread} não lido(s)` : 'Nenhum alerta não lido'} · fonte canônica do IRON</Text></View><Action label="Atualizar" secondary disabled={loading} onPress={() => void load()} /></View>
+    {inboxError ? <Text accessibilityRole="alert" style={styles.error}>{inboxError}</Text> : null}{preferenceError ? <Text style={styles.error}>Preferências: {preferenceError}</Text> : null}{connectionError ? <Text style={styles.error}>WhatsApp: {connectionError}</Text> : null}{error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}{notice ? <Text style={styles.notice}>{notice}</Text> : null}
     <View style={styles.chips}>{[['', 'Todos'], ['OPEN', 'Abertos'], ['ACKNOWLEDGED', 'Reconhecidos'], ['RESOLVED', 'Resolvidos']].map(([value, label]) => <TouchableOpacity accessibilityRole="button" key={value || 'all'} onPress={() => setFilter(value)} style={[styles.chip, filter === value && styles.chipActive]}><Text style={[styles.chipText, filter === value && styles.green]}>{label}</Text></TouchableOpacity>)}</View>
-    {loading ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando alertas autorizados…</Text></View> : items.length === 0 ? <GlowCard style={styles.empty}><Ionicons name="checkmark-circle-outline" size={30} color="#2BF47A" /><Text style={styles.cardTitle}>Tudo em ordem por aqui</Text><Text style={styles.muted}>Nenhum alerta corresponde ao filtro.</Text></GlowCard> : <View style={styles.list}>{items.map((item) => <GlowCard key={item.id} style={[styles.card, ...(!item.recipient?.readAt ? [styles.unread] : [])]}><View style={styles.meta}><Text style={[styles.pill, item.severity === 'CRITICAL' && styles.critical]}>{severity[item.severity] ?? item.severity}</Text><Text style={styles.muted}>{category[item.category] ?? item.category}</Text><Text style={styles.date}>{new Date(item.occurredAt).toLocaleString('pt-BR')}</Text></View><Text style={styles.cardTitle}>{item.title}</Text><Text style={styles.body}>{item.message}</Text><View style={styles.actions}>{!item.recipient?.readAt ? <Action label="Marcar como lido" secondary disabled={saving === item.id} onPress={() => void alertAction(item.id, 'read')} /> : null}{item.status === 'OPEN' ? <Action label="Reconhecer" disabled={saving === item.id} onPress={() => void alertAction(item.id, 'acknowledge')} /> : null}{['OPEN', 'ACKNOWLEDGED'].includes(item.status) ? <Action label="Resolver" secondary disabled={saving === item.id} onPress={() => void alertAction(item.id, 'resolve')} /> : null}</View></GlowCard>)}</View>}
+    {loading ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando alertas autorizados…</Text></View> : inboxError && items.length === 0 ? <Text style={styles.muted}>Alertas indisponíveis. Use Atualizar para tentar novamente.</Text> : items.length === 0 ? <GlowCard style={styles.empty}><Ionicons name="checkmark-circle-outline" size={30} color="#2BF47A" /><Text style={styles.cardTitle}>Tudo em ordem por aqui</Text><Text style={styles.muted}>Nenhum alerta corresponde ao filtro.</Text></GlowCard> : <View style={styles.list}>{items.map((item) => <GlowCard key={item.id} style={[styles.card, ...(!item.recipient?.readAt ? [styles.unread] : [])]}><View style={styles.meta}><Text style={[styles.pill, item.severity === 'CRITICAL' && styles.critical]}>{severity[item.severity] ?? item.severity}</Text><Text style={styles.muted}>{category[item.category] ?? item.category}</Text><Text style={styles.date}>{new Date(item.occurredAt).toLocaleString('pt-BR')}</Text></View><Text style={styles.cardTitle}>{item.title}</Text><Text style={styles.body}>{item.message}</Text><View style={styles.actions}>{!item.recipient?.readAt ? <Action label="Marcar como lido" secondary disabled={saving === item.id} onPress={() => void alertAction(item.id, 'read')} /> : null}{item.status === 'OPEN' ? <Action label="Reconhecer" disabled={saving === item.id} onPress={() => void alertAction(item.id, 'acknowledge')} /> : null}{['OPEN', 'ACKNOWLEDGED'].includes(item.status) ? <Action label="Resolver" secondary disabled={saving === item.id} onPress={() => void alertAction(item.id, 'resolve')} /> : null}</View></GlowCard>)}</View>}
     <GlowCard style={styles.section}><Text style={styles.sectionTitle}>Canais pessoais</Text><Text style={styles.muted}>E-mail e WhatsApp dependem da configuração da academia. Push indisponível nesta versão.</Text>{preferences.map((item) => <View key={item.category} style={styles.preference}><View><Text style={styles.cardTitle}>{category[item.category] ?? item.category}</Text><Text style={styles.muted}>Mínimo: {severity[item.minimumSeverity] ?? item.minimumSeverity}</Text></View><View style={styles.actions}>{(['emailEnabled', 'pushEnabled', 'whatsappEnabled'] as const).map((key) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: key !== 'pushEnabled' && item[key], disabled: key === 'pushEnabled' || saving === item.category }} key={key} disabled={key === 'pushEnabled' || saving === item.category} onPress={() => void toggle(item, key)} style={[styles.channel, key !== 'pushEnabled' && item[key] && styles.channelOn, key === 'pushEnabled' && styles.disabled]}><Text style={[styles.channelText, key !== 'pushEnabled' && item[key] && styles.green]}>{key === 'emailEnabled' ? 'E-mail' : key === 'pushEnabled' ? 'Push indisponível' : 'WhatsApp'}</Text></TouchableOpacity>)}</View></View>)}</GlowCard>
-    {owner ? <GlowCard style={styles.section}><Text style={styles.sectionTitle}>WhatsApp da academia</Text><Text style={styles.muted}>Instância isolada na Evolution central da FM; a chave nunca é exibida.</Text><Text style={styles.connection}>Situação: {evolution?.status === 'CONNECTED' ? 'Conectado' : evolution?.status === 'QR_PENDING' ? 'Aguardando QR' : 'Desconectado'}</Text>{qr ? <Image accessibilityLabel="QR Code para conectar o WhatsApp" source={{ uri: qr }} style={styles.qr} /> : null}<View style={styles.actions}><Action testID="evolution-connect" label="Conectar por QR Code" disabled={saving === 'evolution'} onPress={() => void connect()} />{evolution?.configured ? <Action label="Desconectar" secondary disabled={saving === 'evolution'} onPress={() => void disconnect()} /> : null}</View><Text style={styles.hint}>A operação exige confirmação recente de identidade.</Text></GlowCard> : null}
+    {owner ? <GlowCard style={styles.section}><Text style={styles.sectionTitle}>WhatsApp da academia</Text><Text style={styles.muted}>Instância isolada na Evolution central da FM; a chave nunca é exibida.</Text><Text style={styles.connection}>Situação: {evolution?.status === 'UNKNOWN' ? 'Indisponível' : evolution?.status === 'CONNECTED' ? 'Conectado' : evolution?.status === 'QR_PENDING' ? 'Aguardando QR' : 'Desconectado'}</Text>{qr ? <Image accessibilityLabel="QR Code para conectar o WhatsApp" source={{ uri: qr }} style={styles.qr} /> : null}<View style={styles.actions}><Action testID="evolution-connect" label="Conectar por QR Code" disabled={saving === 'evolution'} onPress={() => void connect()} />{evolution?.configured ? <Action label="Desconectar" secondary disabled={saving === 'evolution'} onPress={() => void disconnect()} /> : null}</View><Text style={styles.hint}>A operação exige confirmação recente de identidade.</Text></GlowCard> : null}
   </View>;
 }
 
