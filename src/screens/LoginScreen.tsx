@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   linkText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
   trialButton: {
     borderWidth: 1,
-    borderColor: '#4c3b78',
+    borderColor: '#166534',
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: 'center',

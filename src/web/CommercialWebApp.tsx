@@ -719,7 +719,7 @@ const styles = StyleSheet.create({
   brand: { color: '#f8fafc', fontSize: 22, fontWeight: '900', letterSpacing: 3 },
   body: { flex: 1, flexDirection: 'row' },
   bodyCompact: { flexDirection: 'column' },
-  nav: { width: 240, backgroundColor: '#0d1321', paddingVertical: 10 },
+  nav: { width: 240, flexGrow: 0, flexShrink: 0, backgroundColor: '#0d1321', paddingVertical: 10 },
   navCompact: { width: '100%', maxWidth: '100%', minWidth: 0, maxHeight: 72 },
   navHorizontal: { alignItems: 'center' },
   navItem: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, margin: 4, borderRadius: 9 },
