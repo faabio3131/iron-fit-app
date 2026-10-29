@@ -34,6 +34,7 @@ import { useAuth } from '../context/AuthContext';
 import { brlFromMinor, brlToMinor, positiveBrlToMinor } from '../utils/academy-money';
 import { api } from '../services/api';
 import { ManagerAlertBell, ManagerAlertsPanel } from '../components/ManagerAlertsPanel';
+import { PlatformAdminWorkspace } from './PlatformAdminWorkspace';
 
 type ModuleKey = 'overview' | 'alerts' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'intelligence' | 'aggregator' | 'schedule' | 'access' | 'communication' | 'financial' | 'fiscal' | 'saasBilling' | 'security' | 'privacy' | 'entitlements' | 'integrations' | 'creator';
 type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; value: boolean | number | string[] | null; source?: string; reason?: string | null };
@@ -166,6 +167,10 @@ export function CommercialWebApp() {
   const authorityKey = JSON.stringify([
     activeTenantId, profile?.id, profile?.roles, profile?.permissions,
   ]);
+  // SUPER_ADMIN global (sem academia ativa) não tem plano nem entitlements de tenant:
+  // vê somente a área de plataforma da FM, sem consultar dados de academia.
+  const platformOperator = !activeTenantId && Array.isArray(profile?.roles) && profile.roles.includes('SUPER_ADMIN');
+  if (platformOperator) return <PlatformAdminWorkspace key={authorityKey} />;
   return <TenantCommercialWebApp key={authorityKey} />;
 }
 
