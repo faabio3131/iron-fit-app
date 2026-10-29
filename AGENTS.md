@@ -623,6 +623,8 @@ Cronograma mestre e domínio canônico: backend `faabio3131/iron-fit-backend`, b
 - entrega: sino/badge para OWNER/MANAGER, inbox, filtros, leitura, reconhecimento, resolução, preferências de canais, QR/status/logout Evolution e estados loading/error/empty;
 - arquivos isolados: `src/components/ManagerAlertsPanel.tsx` e teste dedicado; montagem mínima em `CommercialWebApp.tsx`;
 - segurança: chave da Evolution nunca aparece; ações de QR/logout dependem do step-up do backend; painel interno não é desativável;
-- estado: `IMPLEMENTED/CI_PENDING`;
+- estado: `IMPLEMENTED/CI_GREEN` — CI `40802475567` aprovou typecheck, lint, Jest, regressão Web, readiness, build, exports Android/iOS/Web e container;
+- PR: #58 (draft), head remoto validado `917d4cf`; depende da backend PR #186;
+- homologação externa: `PENDING_EXTERNAL` para QR/WhatsApp real, provider de e-mail e push/dispositivo;
 - blocker: PR #56 continua draft e proibida de merge sem aprovação visual explícita; eventual conflito de montagem deve preservar ambos os trabalhos;
-- próximo passo: publicar PR app separada, certificar typecheck/lint/Jest/exports e somente depois avaliar reconciliação com o Macro O.
+- próximo passo: manter a PR separada e sem merge até autorização; instrumentar os eventos reais restantes no backend e, depois, reconciliar a montagem com o Macro O preservando os dois trabalhos.
