@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GlowCard } from './GlowCard';
 import { api } from '../services/api';
+import { EquipmentOperationControl } from './EquipmentOperationControl';
 
 type CatalogItem = {
   id: string; name: string; category?: string; slug?: string; selected?: boolean;
   manufacturerName?: string; modelName?: string; aliases?: string[];
   metadata?: { manufacturerName?: string; modelName?: string };
 };
-type InventoryItem = { id: string; name?: string; catalogItemId?: string | null; catalogItem?: CatalogItem };
+type InventoryItem = { id: string; name?: string; catalogItemId?: string | null; catalogItem?: CatalogItem; operationalStatus?: string };
 type Candidate = {
   id: string; proposedName: string; proposedCategory?: string; status?: string;
   manufacturerName?: string; modelName?: string; reviewNotes?: string;
@@ -27,9 +28,10 @@ function Block({ title, subtitle, children }: { title: string; subtitle?: string
     {subtitle ? <Text style={styles.muted}>{subtitle}</Text> : null}<View style={styles.body}>{children}</View></GlowCard>;
 }
 
-export function EquipmentIntelligencePanel({ inventory, catalog, canManage, canSuggest, canGovern, catalogEnabled, onUpdated }: {
+export function EquipmentIntelligencePanel({ inventory, catalog, canManage, canManageOperations = false, canSuggest, canGovern, catalogEnabled, onUpdated }: {
   inventory: InventoryItem[]; catalog: CatalogItem[];
   canManage: boolean; canSuggest: boolean; canGovern: boolean; catalogEnabled: boolean;
+  canManageOperations?: boolean;
   onUpdated: () => Promise<void>;
 }) {
   const [search, setSearch] = useState('');
@@ -120,6 +122,7 @@ export function EquipmentIntelligencePanel({ inventory, catalog, canManage, canS
       {inventory.length ? inventory.map((i) => <View key={i.id} style={styles.entry}>
         <Text style={styles.white}>{i.catalogItem?.name ?? i.name ?? 'Equipamento'}</Text>
         <Text style={styles.muted}>{i.catalogItem?.category ?? 'Categoria não informada'}</Text>
+        <EquipmentOperationControl id={i.id} status={i.operationalStatus} canManage={canManageOperations} onUpdated={onUpdated} />
         {canManage && i.catalogItemId ? pendingDeselect === i.catalogItemId ?
           <View style={styles.actions}><Text style={styles.muted}>Confirma retirar este equipamento do inventário?</Text>
             <Action testID={`equipment-remove-confirm-${i.catalogItemId}`} label="Confirmar retirada" disabled={busy}

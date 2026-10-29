@@ -37,7 +37,8 @@ function statusLabel(value?: string) {
 function readableDate(value?: string | null) {
   if (!value) return 'Não informado';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Não informado' : date.toLocaleDateString('pt-BR');
+  // Billing read-model dates use the canonical UTC calendar day, including ISO midnight.
+  return Number.isNaN(date.getTime()) ? 'Não informado' : date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
 function money(amountMinor?: number | null, currency?: string | null) {
   if (typeof amountMinor !== 'number' || !Number.isSafeInteger(amountMinor) ||
