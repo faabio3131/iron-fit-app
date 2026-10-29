@@ -23,7 +23,7 @@ function date(value?: string | null) {
 }
 function recordedAmount(value?: number) { return brlFromMinor(value); }
 const statusLabels: Record<string,string> = {
-  PENDING: 'Pendente', PAID: 'Paga', CANCELED: 'Cancelada', CANCELLED: 'Cancelada',
+  PENDING: 'Pendente', PAID: 'Paga', REFUNDED: 'Estornada', CANCELED: 'Cancelada', CANCELLED: 'Cancelada',
 };
 function Btn({ label, onPress, disabled = false, testID, danger = false }: {
   label: string; onPress: () => void; disabled?: boolean; testID?: string; danger?: boolean;
@@ -88,10 +88,15 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
       const result = await api('/financial/charges/' + encodeURIComponent(chargeId) + '/reconcile-payment', undefined, {
         method: 'POST',
         body: JSON.stringify({ accountId: selectedAccountId }),
-      }) as { status?: string; booked?: boolean };
+      }) as { status?: string; booked?: boolean; reversalBooked?: boolean; requiresReview?: boolean };
       if (result?.status === 'PAID' && result.booked === true) {
         setReconcileNotice('Pagamento confirmado pelo gateway e registrado no financeiro da academia.');
         onUpdated?.();
+      } else if (result?.status === 'REFUNDED' && result.reversalBooked === true) {
+        setReconcileNotice('Estorno integral confirmado pelo gateway e contabilizado. A revisão fiscal permanece separada.');
+        onUpdated?.();
+      } else if (result?.requiresReview === true) {
+        setReconcileNotice('Divergência, estorno parcial ou contestação detectada. Revisão financeira humana obrigatória; nenhuma reversão integral automática.');
       } else {
         setReconcileNotice('O gateway ainda não confirmou o pagamento. Nenhuma baixa financeira foi realizada.');
       }
@@ -142,9 +147,10 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
         onPress={() => { void generateCheckout(item.id); }} /> : null}
       {checkoutResults[item.id]?.checkoutUrl ? <Text selectable style={styles.detail} testID={'academy-charge-checkout-link-' + item.id}>Link de pagamento: {checkoutResults[item.id].checkoutUrl}</Text> : null}
       {checkoutResults[item.id]?.pixQrCode ? <Text selectable style={styles.detail} testID={'academy-charge-pix-' + item.id}>Pix copia e cola: {checkoutResults[item.id].pixQrCode}</Text> : null}
-      {item.status === 'PENDING' && (item.gatewayConnectionId || checkoutResults[item.id]) && account ? <Btn
+      {['PENDING', 'PAID', 'REFUNDED'].includes(item.status ?? '') &&
+        (item.gatewayConnectionId || checkoutResults[item.id]) && account ? <Btn
         testID={'academy-charge-verify-gateway-' + item.id}
-        label={reconcileBusy === item.id ? 'Conferindo gateway…' : 'Conferir recebimento no gateway'}
+        label={reconcileBusy === item.id ? 'Conferindo gateway…' : 'Conferir situação no gateway'}
         disabled={saving || !!reconcileBusy}
         onPress={() => { void reconcileGatewayReceipt(item.id); }} /> : null}
       {reconcileNotice ? <Text testID="academy-charge-reconciliation-notice" style={styles.notice}>{reconcileNotice}</Text> : null}
