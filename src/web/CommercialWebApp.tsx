@@ -374,6 +374,7 @@ export function CommercialWebApp() {
       catalog={list(data.catalog)}
       catalogEnabled={enabled('equipment.catalog')}
       canManage={enabled('equipment.inventory') && enabled('equipment.catalog') && can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
+      canManageOperations={enabled('equipment.inventory') && can('OWNER', 'MANAGER')}
       canSuggest={enabled('equipment.catalog') && can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER')}
       canGovern={can('SUPER_ADMIN')}
       onUpdated={() => loadModule('equipment')}
