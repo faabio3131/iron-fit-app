@@ -60,6 +60,7 @@ describe('Plataforma FM (SUPER_ADMIN sem academia)', () => {
       currentPassword: 'SenhaDoAdmin#2026',
     });
     expect(body.publicConfiguration.baseUrl).toBe('https://api.atendevendeia.com.br');
+    expect(body.publicConfiguration).not.toHaveProperty('webhookUrl'); // Nenhum endpoint não homologado é presumido.
     expect(view.getByTestId('platform-evolution-key').props.value).toBe('');
     expect(view.getByTestId('platform-evolution-password').props.value).toBe('');
     expect(view.getByTestId('platform-evolution-key').props.secureTextEntry).toBe(true);
