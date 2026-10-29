@@ -44,8 +44,8 @@ function date(value?: string) {
   return Number.isNaN(parsed.getTime()) ? 'Não informado' : parsed.toLocaleDateString('pt-BR');
 }
 function Kpi({ label, value, note, testID }: { label: string; value: number | undefined; note: string; testID?: string }) {
-  return <View style={styles.kpi} testID={testID}><Text style={styles.kpiLabel}>{label}</Text>
-    <Text style={styles.kpiValue}>{number(value)}</Text><Text style={styles.kpiNote}>{note}</Text></View>;
+  return <GlowCard style={styles.kpi} testID={testID}><Text style={styles.kpiLabel}>{label}</Text>
+    <Text style={styles.kpiValue}>{number(value)}</Text><Text style={styles.kpiNote}>{note}</Text></GlowCard>;
 }
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return <GlowCard style={styles.card}><Text style={styles.title}>{title}</Text>
@@ -159,11 +159,11 @@ export function OperationsCockpitPanel({ academyName, operatorName, summary, att
     </> : null}
     {shortcutsAvailable.length ? <Section title="Acesso rápido" description="Atalhos apenas para módulos permitidos ao seu perfil e plano.">
       <View style={styles.shortcuts}>
-        {shortcutsAvailable.map((item) => <TouchableOpacity key={item.key} accessibilityRole="button"
+        {shortcutsAvailable.map((item) => <GlowCard key={item.key} accessibilityRole="button"
           testID={'cockpit-shortcut-' + item.key} onPress={() => onNavigate(item.key)} style={styles.shortcut}>
           <Text style={styles.shortcutTitle}>{item.label}</Text>
           <Text style={styles.hint}>{item.description}</Text>
-        </TouchableOpacity>)}
+        </GlowCard>)}
       </View>
     </Section> : null}
   </View>;
@@ -180,8 +180,8 @@ const styles = StyleSheet.create({
   title: { color: '#2BF47A', fontSize: 17, fontWeight: '800' },
   subtitle: { color: '#f1f5f9', fontSize: 13, fontWeight: '800' },
   kpis: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  kpi: { padding: 14, flexGrow: 1, flexBasis: 164, backgroundColor: '#101d2a', borderColor: '#2a3f47', borderWidth: 1, borderRadius: 12, gap: 4 },
-  kpiLabel: { color: '#b8c8d8', fontWeight: '700', fontSize: 12 },
+  kpi: { padding: 14, flexGrow: 1, flexBasis: 164, borderRadius: 12, gap: 4 },
+  kpiLabel: { color: '#2BF47A', fontWeight: '700', fontSize: 12 },
   kpiValue: { color: '#eefcf3', fontWeight: '900', fontSize: 27 },
   kpiNote: { color: '#8497aa', fontSize: 11 },
   bars: { minHeight: 124, flexDirection: 'row', alignItems: 'flex-end', gap: 7, paddingVertical: 8 },
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   record: { paddingVertical: 9, borderBottomColor: '#29394a', borderBottomWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 },
   recordName: { color: '#f1f5f9', fontWeight: '700', fontSize: 13 },
   shortcuts: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
-  shortcut: { minWidth: 158, flexBasis: 185, flexGrow: 1, backgroundColor: '#14222a', borderColor: '#29463b', borderWidth: 1, borderRadius: 10, padding: 12, gap: 4 },
+  shortcut: { minWidth: 158, flexBasis: 185, flexGrow: 1, borderRadius: 10, padding: 12, gap: 4 },
   shortcutTitle: { color: '#2BF47A', fontWeight: '800', fontSize: 13 },
   button: { backgroundColor: '#2BF47A', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 9, alignSelf: 'flex-start' },
   buttonText: { color: '#051609', fontWeight: '800', fontSize: 12 },
