@@ -10,6 +10,7 @@ type Charge = {
 };
 type Account = { id: string; name?: string; active?: boolean };
 type PaymentProvider = { connectionId: string; providerCode: string };
+type ProviderEvent = { id: string; providerCode: string; eventType: string; status: string; chargeId?: string | null; receivedAt?: string };
 type CheckoutResult = { checkoutUrl?: string | null; pixQrCode?: string | null; idempotent?: boolean };
 type Props = {
   charges: Charge[]; accounts: Account[]; selectedAccountId: string;
@@ -41,6 +42,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
   const [receivedVia, setReceivedVia] = useState('');
   const [paymentProviders, setPaymentProviders] = useState<PaymentProvider[]>([]);
   const [providerError, setProviderError] = useState('');
+  const [providerEvents, setProviderEvents] = useState<ProviderEvent[]>([]);
   const [selectedProvider, setSelectedProvider] = useState('');
   const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
   const [checkoutResults, setCheckoutResults] = useState<Record<string, CheckoutResult>>({});
@@ -60,6 +62,16 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
       .catch(() => {
         if (active) setProviderError('Não foi possível carregar os gateways habilitados desta academia.');
       });
+    void Promise.resolve(api('/financial/gateway-events'))
+      .then((value: unknown) => {
+        if (!active || !Array.isArray(value)) return;
+        setProviderEvents(value.filter((item): item is ProviderEvent =>
+          !!item && typeof item.id === 'string' &&
+          typeof item.providerCode === 'string' &&
+          typeof item.eventType === 'string' &&
+          typeof item.status === 'string').slice(0, 10));
+      })
+      .catch(() => undefined);
     return () => { active = false; };
   }, []);
 
@@ -137,6 +149,16 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
       </View>
       {checkoutError ? <Text style={styles.notice} testID="academy-checkout-error">{checkoutError}</Text> : null}
     </View>
+    {providerEvents.length ? <View style={styles.confirm} testID="academy-gateway-events">
+      <Text style={styles.heading}>Notificações dos gateways</Text>
+      <Text style={styles.muted}>Eventos recebidos e autenticados são apenas avisos. A confirmação do dinheiro continua dependendo da conciliação com o provedor.</Text>
+      {providerEvents.map((event) => <View key={event.id} style={styles.row}>
+        <Text style={styles.detail}>{event.providerCode.replace(/_/g, ' ')} · {event.eventType}</Text>
+        <Text style={styles.muted}>Situação: {event.status === 'RECEIVED' ? 'Recebido — conferir cobrança' :
+          event.status === 'UNMATCHED' ? 'Aguardando associação à cobrança' :
+          event.status === 'IGNORED' ? 'Fora do escopo financeiro' : 'Revisão necessária'}</Text>
+      </View>)}
+    </View> : null}
     {rows.length ? rows.slice(0, 150).map((item) => <View key={item.id} style={styles.row} testID={'academy-charge-' + item.id}>
       <Text style={styles.heading}>{item.student?.user?.name ?? 'Aluno'}</Text>
       <Text style={styles.muted}>Situação: {statusLabels[item.status ?? ''] ?? 'Não informada'} · Valor registrado: {recordedAmount(item.amount)} · Vencimento: {date(item.dueDate)}</Text>
@@ -195,7 +217,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
 }
 const styles = StyleSheet.create({
   card: { padding: 16, marginBottom: 12, gap: 10 },
-  title: { color: '#2BF47A', fontSize: 17, fontWeight: '800' },
+  title: { color: '#2f91ff', fontSize: 17, fontWeight: '800' },
   muted: { color: '#b0bfd2', fontSize: 12, lineHeight: 18 },
   notice: { color: '#f5c48b', fontSize: 12, lineHeight: 18 },
   heading: { color: '#f8fafc', fontSize: 14, fontWeight: '800' },
@@ -204,7 +226,7 @@ const styles = StyleSheet.create({
   confirm: { backgroundColor: '#2a1b1c', borderWidth: 1, borderColor: '#975044', padding: 12, borderRadius: 10, gap: 7 },
   dangerTitle: { color: '#ffcab0', fontSize: 14, fontWeight: '800' },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  button: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 9, backgroundColor: '#1f3b31', borderWidth: 1, borderColor: '#35694d', alignSelf: 'flex-start' },
+  button: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 9, backgroundColor: '#123452', borderWidth: 1, borderColor: '#2f91ff', alignSelf: 'flex-start' },
   danger: { backgroundColor: '#ae443a', borderColor: '#e67b71' },
   buttonText: { fontSize: 12, fontWeight: '800', color: '#f2faf5' },
   disabled: { opacity: 0.45 },
