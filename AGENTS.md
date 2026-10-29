@@ -612,3 +612,17 @@ Quando todos os deltas estiverem concluídos, executar uma **auditoria final pro
 Objetivo final:
 
 **IRON FIT CORE V1.0.0 — GO-LIVE CERTIFIED**
+
+---
+
+## Checkpoint ALERTAS-1 — superfície Web/Mobile (29/10/2026)
+
+Cronograma mestre e domínio canônico: backend `faabio3131/iron-fit-backend`, branch `feat/alertas-gestor-v1`, PR #186. Este app somente consome as APIs; não criar estado paralelo.
+
+- branch: `feat/manager-alerts-v1`, baseada na `main` para não alterar a PR visual #56 concorrente;
+- entrega: sino/badge para OWNER/MANAGER, inbox, filtros, leitura, reconhecimento, resolução, preferências de canais, QR/status/logout Evolution e estados loading/error/empty;
+- arquivos isolados: `src/components/ManagerAlertsPanel.tsx` e teste dedicado; montagem mínima em `CommercialWebApp.tsx`;
+- segurança: chave da Evolution nunca aparece; ações de QR/logout dependem do step-up do backend; painel interno não é desativável;
+- estado: `IMPLEMENTED/CI_PENDING`;
+- blocker: PR #56 continua draft e proibida de merge sem aprovação visual explícita; eventual conflito de montagem deve preservar ambos os trabalhos;
+- próximo passo: publicar PR app separada, certificar typecheck/lint/Jest/exports e somente depois avaliar reconciliação com o Macro O.
