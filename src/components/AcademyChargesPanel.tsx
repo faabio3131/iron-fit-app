@@ -6,7 +6,7 @@ import { brlFromMinor } from '../utils/academy-money';
 
 type Charge = {
   id: string; studentId?: string; amount?: number; status?: string;
-  dueDate?: string | null; student?: { user?: { name?: string } };
+  dueDate?: string | null; gatewayConnectionId?: string | null; student?: { user?: { name?: string } };
 };
 type Account = { id: string; name?: string; active?: boolean };
 type PaymentProvider = { connectionId: string; providerCode: string };
@@ -14,6 +14,7 @@ type CheckoutResult = { checkoutUrl?: string | null; pixQrCode?: string | null; 
 type Props = {
   charges: Charge[]; accounts: Account[]; selectedAccountId: string;
   saving: boolean; onPay: (chargeId: string, accountId: string, paymentMethod: string) => void;
+  onUpdated?: () => void;
 };
 function date(value?: string | null) {
   if (!value) return 'Não informado';
@@ -33,7 +34,7 @@ function Btn({ label, onPress, disabled = false, testID, danger = false }: {
   </TouchableOpacity>;
 }
 
-export function AcademyChargesPanel({ charges, accounts, selectedAccountId, saving, onPay }: Props) {
+export function AcademyChargesPanel({ charges, accounts, selectedAccountId, saving, onPay, onUpdated }: Props) {
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'PAID'>('ALL');
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [confirmAccountId, setConfirmAccountId] = useState('');
@@ -44,6 +45,8 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
   const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
   const [checkoutResults, setCheckoutResults] = useState<Record<string, CheckoutResult>>({});
   const [checkoutError, setCheckoutError] = useState('');
+  const [reconcileBusy, setReconcileBusy] = useState<string | null>(null);
+  const [reconcileNotice, setReconcileNotice] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -74,6 +77,28 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
       setCheckoutError('Não foi possível criar a cobrança online. Confira o gateway e o status da cobrança.');
     } finally {
       setCheckoutBusy(null);
+    }
+  }
+
+  async function reconcileGatewayReceipt(chargeId: string) {
+    if (reconcileBusy || !selectedAccountId) return;
+    setReconcileNotice('');
+    setReconcileBusy(chargeId);
+    try {
+      const result = await api('/financial/charges/' + encodeURIComponent(chargeId) + '/reconcile-payment', undefined, {
+        method: 'POST',
+        body: JSON.stringify({ accountId: selectedAccountId }),
+      }) as { status?: string; booked?: boolean };
+      if (result?.status === 'PAID' && result.booked === true) {
+        setReconcileNotice('Pagamento confirmado pelo gateway e registrado no financeiro da academia.');
+        onUpdated?.();
+      } else {
+        setReconcileNotice('O gateway ainda não confirmou o pagamento. Nenhuma baixa financeira foi realizada.');
+      }
+    } catch {
+      setReconcileNotice('Não foi possível validar o recebimento no gateway. Nenhuma confirmação foi presumida.');
+    } finally {
+      setReconcileBusy(null);
     }
   }
 
@@ -117,6 +142,12 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
         onPress={() => { void generateCheckout(item.id); }} /> : null}
       {checkoutResults[item.id]?.checkoutUrl ? <Text selectable style={styles.detail} testID={'academy-charge-checkout-link-' + item.id}>Link de pagamento: {checkoutResults[item.id].checkoutUrl}</Text> : null}
       {checkoutResults[item.id]?.pixQrCode ? <Text selectable style={styles.detail} testID={'academy-charge-pix-' + item.id}>Pix copia e cola: {checkoutResults[item.id].pixQrCode}</Text> : null}
+      {item.status === 'PENDING' && (item.gatewayConnectionId || checkoutResults[item.id]) && account ? <Btn
+        testID={'academy-charge-verify-gateway-' + item.id}
+        label={reconcileBusy === item.id ? 'Conferindo gateway…' : 'Conferir recebimento no gateway'}
+        disabled={saving || !!reconcileBusy}
+        onPress={() => { void reconcileGatewayReceipt(item.id); }} /> : null}
+      {reconcileNotice ? <Text testID="academy-charge-reconciliation-notice" style={styles.notice}>{reconcileNotice}</Text> : null}
       {item.status === 'PENDING' ? <Btn
         label="Registrar pagamento recebido" testID={'academy-charge-prepare-' + item.id}
         disabled={saving || !account} onPress={() => {
