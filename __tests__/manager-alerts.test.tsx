@@ -41,3 +41,10 @@ test('owner can inspect, acknowledge and opt into channels without exposing a ke
   await waitFor(() => expect(view.getByLabelText('QR Code para conectar o WhatsApp')).toBeTruthy());
   expect(view.queryByText(/api.?key/i)).toBeNull();
 });
+
+test('unavailable push is explicit and cannot promise activation', async () => {
+  const view = render(<ManagerAlertsPanel />);
+  await waitFor(() => expect(view.getByText('Push indisponível')).toBeTruthy());
+  fireEvent.press(view.getByText('Push indisponível'));
+  expect(mockApi.mock.calls.some(([, , options]) => options?.body?.includes('pushEnabled'))).toBe(false);
+});
