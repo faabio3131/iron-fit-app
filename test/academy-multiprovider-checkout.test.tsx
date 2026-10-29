@@ -137,3 +137,19 @@ test('partial reversal warning requires human review and never books full expens
   expect(onUpdated).not.toHaveBeenCalled();
   expect(props.onPay).not.toHaveBeenCalled();
 });
+
+test('signed webhook inbox is advisory and cannot book payment by itself', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/financial/payment-providers') return [];
+    if (path === '/financial/gateway-events') return [{
+      id: 'event-a', providerCode: 'stripe', eventType: 'checkout.session.completed',
+      status: 'RECEIVED', chargeId: 'charge-a', receivedAt: '2026-10-29T12:00:00Z',
+    }];
+    throw new Error('Unexpected request');
+  });
+  const screen = render(<AcademyChargesPanel {...props} />);
+  await waitFor(() => expect(screen.getByTestId('academy-gateway-events')).toBeTruthy());
+  expect(screen.getByText(/Eventos recebidos e autenticados são apenas avisos/)).toBeTruthy();
+  expect(props.onPay).not.toHaveBeenCalled();
+  expect(mockApi.mock.calls.every((call) => call[2]?.method !== 'PATCH')).toBe(true);
+});
