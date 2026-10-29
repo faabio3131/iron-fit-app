@@ -101,3 +101,39 @@ test('manual receipt action is hidden when charge is already bound to provider c
   await waitFor(() => expect(screen.getByTestId('academy-charge-verify-gateway-' + charge.id)).toBeTruthy());
   expect(screen.queryByTestId('academy-charge-prepare-' + charge.id)).toBeNull();
 });
+
+test('verified full refund updates the real charge workspace without manual receipt', async () => {
+  const onUpdated = jest.fn();
+  mockApi.mockImplementation(async (path: string, _locale: unknown, options?: { method?: string }) => {
+    if (path === '/financial/payment-providers') return [];
+    if (path === '/financial/charges/' + charge.id + '/reconcile-payment' && options?.method === 'POST') {
+      return { status: 'REFUNDED', reversalBooked: true };
+    }
+    throw new Error('Unexpected API path');
+  });
+  const screen = render(<AcademyChargesPanel {...props}
+    charges={[{ ...charge, status: 'PAID', gatewayConnectionId: 'connection-a' }]}
+    onUpdated={onUpdated} />);
+  fireEvent.press(screen.getByTestId('academy-charge-verify-gateway-' + charge.id));
+  await waitFor(() => expect(screen.getByText(/Estorno integral confirmado/)).toBeTruthy());
+  expect(onUpdated).toHaveBeenCalledTimes(1);
+  expect(props.onPay).not.toHaveBeenCalled();
+});
+
+test('partial reversal warning requires human review and never books full expense in UI', async () => {
+  const onUpdated = jest.fn();
+  mockApi.mockImplementation(async (path: string, _locale: unknown, options?: { method?: string }) => {
+    if (path === '/financial/payment-providers') return [];
+    if (path === '/financial/charges/' + charge.id + '/reconcile-payment' && options?.method === 'POST') {
+      return { status: 'MANUAL_REVIEW', requiresReview: true };
+    }
+    throw new Error('Unexpected API path');
+  });
+  const screen = render(<AcademyChargesPanel {...props}
+    charges={[{ ...charge, status: 'PAID', gatewayConnectionId: 'connection-a' }]}
+    onUpdated={onUpdated} />);
+  fireEvent.press(screen.getByTestId('academy-charge-verify-gateway-' + charge.id));
+  await waitFor(() => expect(screen.getByText(/Revisão financeira humana obrigatória/)).toBeTruthy());
+  expect(onUpdated).not.toHaveBeenCalled();
+  expect(props.onPay).not.toHaveBeenCalled();
+});
