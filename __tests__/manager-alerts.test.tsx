@@ -48,3 +48,41 @@ test('unavailable push is explicit and cannot promise activation', async () => {
   fireEvent.press(view.getByText('Push indisponível'));
   expect(mockApi.mock.calls.some(([, , options]) => options?.body?.includes('pushEnabled'))).toBe(false);
 });
+
+test('optional Evolution and preference failures cannot hide the canonical inbox', async () => {
+  const baseline = mockApi.getMockImplementation()!;
+  mockApi.mockImplementation((path: string, ...args: unknown[]) => {
+    if (path === '/integrations/evolution/status' || path === '/manager-alerts/preferences') return Promise.reject(new Error('Canal indisponível'));
+    return baseline(path, ...args);
+  });
+  const view = render(<ManagerAlertsPanel />);
+  await waitFor(() => expect(view.getByText('Acesso suspeito')).toBeTruthy());
+  expect(view.queryByText('Tudo em ordem por aqui')).toBeNull();
+  expect(view.getByText(/Situação: Indisponível/)).toBeTruthy();
+});
+
+test('a pending provider request does not hold the mandatory inbox in loading state', async () => {
+  const baseline = mockApi.getMockImplementation()!;
+  mockApi.mockImplementation((path: string, ...args: unknown[]) => path === '/integrations/evolution/status' ? new Promise(() => {}) : baseline(path, ...args));
+  const view = render(<ManagerAlertsPanel />);
+  await waitFor(() => expect(view.getByText('Acesso suspeito')).toBeTruthy());
+  expect(view.queryByText('Carregando alertas autorizados…')).toBeNull();
+});
+
+test('failed inbox is unavailable rather than a false empty success', async () => {
+  const baseline = mockApi.getMockImplementation()!;
+  mockApi.mockImplementation((path: string, ...args: unknown[]) => path.startsWith('/manager-alerts?') ? Promise.reject(new Error('Falha no inbox')) : baseline(path, ...args));
+  const view = render(<ManagerAlertsPanel />);
+  await waitFor(() => expect(view.getByText('Falha no inbox')).toBeTruthy());
+  expect(view.getByText(/Contagem indisponível/)).toBeTruthy();
+  expect(view.queryByText('Tudo em ordem por aqui')).toBeNull();
+  expect(view.queryByText(/Nenhum alerta não lido/)).toBeNull();
+});
+
+test('counter failure is unknown and never presented as zero alerts', async () => {
+  mockApi.mockRejectedValue(new Error('Sem conexão'));
+  const view = render(<ManagerAlertBell onOpen={jest.fn()} />);
+  await waitFor(() => expect(mockApi).toHaveBeenCalledWith('/manager-alerts/counters'));
+  expect(view.getByLabelText('Alertas: contagem indisponível')).toBeTruthy();
+  expect(view.getByText('!')).toBeTruthy();
+});
