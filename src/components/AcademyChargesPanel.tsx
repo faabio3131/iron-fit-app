@@ -47,7 +47,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
 
   useEffect(() => {
     let active = true;
-    void api('/financial/payment-providers')
+    void Promise.resolve(api('/financial/payment-providers'))
       .then((value: unknown) => {
         if (!active) return;
         const items = Array.isArray(value) ? value : [];
