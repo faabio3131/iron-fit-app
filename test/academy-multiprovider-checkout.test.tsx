@@ -58,3 +58,46 @@ test('no gateway means no online checkout action and no false payment', async ()
   expect(mockApi.mock.calls.some((call) => call[2]?.method === 'POST')).toBe(false);
   expect(props.onPay).not.toHaveBeenCalled();
 });
+
+test('provider reconciliation updates financial workspace only after verified PAID receipt', async () => {
+  const onUpdated = jest.fn();
+  mockApi.mockImplementation(async (path: string, _locale: unknown, options?: { method?: string; body?: string }) => {
+    if (path === '/financial/payment-providers') return [{ connectionId: 'connection-a', providerCode: 'stripe' }];
+    if (path === '/financial/charges/' + charge.id + '/reconcile-payment' && options?.method === 'POST') {
+      return { status: 'PAID', booked: true };
+    }
+    throw new Error('Unexpected API path');
+  });
+  const screen = render(<AcademyChargesPanel {...props}
+    charges={[{ ...charge, gatewayConnectionId: 'connection-a' }]}
+    onUpdated={onUpdated} />);
+  fireEvent.press(screen.getByTestId('academy-charge-verify-gateway-' + charge.id));
+  await waitFor(() => expect(screen.getByText(/Pagamento confirmado pelo gateway/)).toBeTruthy());
+  expect(onUpdated).toHaveBeenCalledTimes(1);
+  expect(props.onPay).not.toHaveBeenCalled();
+});
+
+test('unpaid provider result does not book receipt or refresh financial ledger', async () => {
+  const onUpdated = jest.fn();
+  mockApi.mockImplementation(async (path: string, _locale: unknown, options?: { method?: string }) => {
+    if (path === '/financial/payment-providers') return [];
+    if (path === '/financial/charges/' + charge.id + '/reconcile-payment' && options?.method === 'POST') {
+      return { status: 'PENDING', booked: false };
+    }
+    throw new Error('Unexpected API path');
+  });
+  const screen = render(<AcademyChargesPanel {...props}
+    charges={[{ ...charge, gatewayConnectionId: 'connection-a' }]}
+    onUpdated={onUpdated} />);
+  fireEvent.press(screen.getByTestId('academy-charge-verify-gateway-' + charge.id));
+  await waitFor(() => expect(screen.getByText(/gateway ainda não confirmou/)).toBeTruthy());
+  expect(onUpdated).not.toHaveBeenCalled();
+  expect(props.onPay).not.toHaveBeenCalled();
+});
+
+test('manual receipt action is hidden when charge is already bound to provider checkout', async () => {
+  mockApi.mockResolvedValue([]);
+  const screen = render(<AcademyChargesPanel {...props} charges={[{ ...charge, gatewayConnectionId: 'connection-a' }]} />);
+  await waitFor(() => expect(screen.getByTestId('academy-charge-verify-gateway-' + charge.id)).toBeTruthy());
+  expect(screen.queryByTestId('academy-charge-prepare-' + charge.id)).toBeNull();
+});

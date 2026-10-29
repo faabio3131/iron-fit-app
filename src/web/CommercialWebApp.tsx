@@ -663,7 +663,8 @@ function TenantCommercialWebApp() {
             }));
           }} />
       </Section>
-      <AcademyChargesPanel charges={charges} accounts={accounts} selectedAccountId={selectedAccount}
+      <AcademyChargesPanel key={activeTenantId ?? 'sem-academia'} charges={charges} accounts={accounts} selectedAccountId={selectedAccount}
+        onUpdated={() => { void loadModule('financial'); }}
         saving={saving}
         onPay={(chargeId, accountId, paymentMethod) => {
           void mutate(() => api('/financial/charges/' + encodeURIComponent(chargeId) + '/pay', undefined, {
