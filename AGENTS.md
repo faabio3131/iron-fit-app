@@ -628,3 +628,16 @@ Cronograma mestre e domínio canônico: backend `faabio3131/iron-fit-backend`, b
 - homologação externa: `PENDING_EXTERNAL` para QR/WhatsApp real, provider de e-mail e push/dispositivo;
 - blocker: PR #56 continua draft e proibida de merge sem aprovação visual explícita; eventual conflito de montagem deve preservar ambos os trabalhos;
 - próximo passo: manter a PR separada e sem merge até autorização; instrumentar os eventos reais restantes no backend e, depois, reconciliar a montagem com o Macro O preservando os dois trabalhos.
+
+
+## Checkpoint W01 / ALERTAS-1 — manutenção operacional (29/10/2026)
+
+- PR #58 / `feat/manager-alerts-v1`, dependente da backend PR #186. Código publicado no candidate `f2bda37`; sem merge/deploy e sem modificar a PR visual #56.
+- Inventário real agora monta `EquipmentOperationControl`: situação operacional e ações de manutenção, indisponibilidade e liberação, somente OWNER/MANAGER com entitlement de inventário. Demais perfis somente leitura. Sem status retornado pelo backend, não inventar OPERATIONAL nem mostrar ações.
+- API canônica `POST /equipments/:id/operational-status`; payload contém apenas status, sem tenant/actor livre. Após confirmação recarrega o inventário; erro permanece visível e não anuncia sucesso nem altera estado local de negócio.
+- Push explicitamente indisponível nesta versão, switch desabilitado. E-mail/WhatsApp continuam pelas preferências canônicas e dependem de configuração/homologação externa.
+- Regressão encontrou data civil de vencimento exibida no dia anterior por conversão de fuso; correção preserva YYYY-MM-DD no dia informado e mantém timestamps na conversão normal. Sem alteração de layout do cockpit.
+- Gates locais executados: typecheck PASS; lint 0 erros/14 warnings preexistentes; 12 testes focados PASS; suíte completa 216 PASS/1 SKIP (teste live depende do backend real, não inventar PASS).
+- Export Web/Android/iOS inicial passou; export final após a correção de data em execução. CI do novo head pendente de consulta.
+- Backend: fontes dos dez tipos implementadas, autoridade atual na leitura/entrega, recuperação de leases, quiet hours/DST e escalação crítica sem loop. Regressão backend mais recente: 820/820 PASS. Homologação física Evolution permanece PENDING_EXTERNAL por decisão do usuário.
+- Próximo passo: concluir exports e CI de ambos os repositórios; tratar falhas; reconciliar a montagem com main/trabalho visual antes de qualquer merge. Não declarar visual aprovado nem integração externa live por estes testes.
