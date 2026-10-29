@@ -42,9 +42,10 @@ export function GlowCard({
   );
 
   return (
-    <Pressable accessibilityRole="button"
+    <Pressable
+      accessibilityRole="button"
       testID={testID}
-      accessibilityRole={onPress ? accessibilityRole ?? 'button' : undefined}
+      {...(accessibilityRole === 'link' ? { accessibilityRole: 'link' as const } : {})}
       disabled={disabled}
       onPress={onPress}
       onHoverIn={() => setHovered(true)}
