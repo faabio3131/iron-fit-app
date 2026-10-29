@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GlowCard } from './GlowCard';
+import { api } from '../services/api';
 import { brlFromMinor } from '../utils/academy-money';
 
 type Charge = {
@@ -8,6 +9,8 @@ type Charge = {
   dueDate?: string | null; student?: { user?: { name?: string } };
 };
 type Account = { id: string; name?: string; active?: boolean };
+type PaymentProvider = { connectionId: string; providerCode: string };
+type CheckoutResult = { checkoutUrl?: string | null; pixQrCode?: string | null; idempotent?: boolean };
 type Props = {
   charges: Charge[]; accounts: Account[]; selectedAccountId: string;
   saving: boolean; onPay: (chargeId: string, accountId: string, paymentMethod: string) => void;
@@ -35,6 +38,45 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [confirmAccountId, setConfirmAccountId] = useState('');
   const [receivedVia, setReceivedVia] = useState('');
+  const [paymentProviders, setPaymentProviders] = useState<PaymentProvider[]>([]);
+  const [providerError, setProviderError] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('');
+  const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
+  const [checkoutResults, setCheckoutResults] = useState<Record<string, CheckoutResult>>({});
+  const [checkoutError, setCheckoutError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    void api('/financial/payment-providers')
+      .then((value: unknown) => {
+        if (!active) return;
+        const items = Array.isArray(value) ? value : [];
+        setPaymentProviders(items.filter((item): item is PaymentProvider =>
+          !!item && typeof item.connectionId === 'string' && typeof item.providerCode === 'string'));
+      })
+      .catch(() => {
+        if (active) setProviderError('Não foi possível carregar os gateways habilitados desta academia.');
+      });
+    return () => { active = false; };
+  }, []);
+
+  async function generateCheckout(chargeId: string) {
+    if (checkoutBusy || !selectedProvider) return;
+    setCheckoutError('');
+    setCheckoutBusy(chargeId);
+    try {
+      const result = await api('/financial/charges/' + encodeURIComponent(chargeId) + '/payment-session', undefined, {
+        method: 'POST',
+        body: JSON.stringify({ requestId: chargeId, providerConnectionId: selectedProvider }),
+      }) as CheckoutResult;
+      setCheckoutResults((current) => ({ ...current, [chargeId]: result }));
+    } catch {
+      setCheckoutError('Não foi possível criar a cobrança online. Confira o gateway e o status da cobrança.');
+    } finally {
+      setCheckoutBusy(null);
+    }
+  }
+
   const account = accounts.find((item) => item.id === selectedAccountId && item.active !== false);
   const pendingCharge = charges.find((item) => item.id === confirmId && item.status === 'PENDING');
   const accountApproved = Boolean(account && pendingCharge && confirmAccountId === account?.id);
@@ -51,9 +93,30 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
       <Btn testID="academy-charges-paid" label="Pagas" onPress={() => { reset(); setFilter('PAID'); }} />
     </View>
     {!account ? <Text style={styles.notice}>Selecione uma conta financeira ativa na seção Contas antes de registrar um recebimento.</Text> : null}
+    <View style={styles.confirm} testID="academy-payment-provider-choices">
+      <Text style={styles.heading}>Recebimento online por gateway</Text>
+      <Text style={styles.muted}>Escolha uma conexão habilitada da academia. O checkout é criado pelo backend; a cobrança só pode ser considerada paga após confirmação e conciliação, nunca ao gerar o link.</Text>
+      {providerError ? <Text style={styles.notice}>{providerError}</Text> : null}
+      {!paymentProviders.length ? <Text style={styles.notice}>Nenhum gateway de pagamento habilitado para esta academia.</Text> : null}
+      <View style={styles.filters}>
+        {paymentProviders.map((provider) => <Btn key={provider.connectionId}
+          testID={'academy-payment-provider-' + provider.connectionId}
+          label={provider.providerCode.replace(/_/g, ' ') + (selectedProvider === provider.connectionId ? ' ✓' : '')}
+          disabled={!!checkoutBusy || saving}
+          onPress={() => setSelectedProvider(provider.connectionId)} />)}
+      </View>
+      {checkoutError ? <Text style={styles.notice} testID="academy-checkout-error">{checkoutError}</Text> : null}
+    </View>
     {rows.length ? rows.slice(0, 150).map((item) => <View key={item.id} style={styles.row} testID={'academy-charge-' + item.id}>
       <Text style={styles.heading}>{item.student?.user?.name ?? 'Aluno'}</Text>
       <Text style={styles.muted}>Situação: {statusLabels[item.status ?? ''] ?? 'Não informada'} · Valor registrado: {recordedAmount(item.amount)} · Vencimento: {date(item.dueDate)}</Text>
+      {item.status === 'PENDING' && selectedProvider ? <Btn
+        testID={'academy-charge-online-' + item.id}
+        label={checkoutBusy === item.id ? 'Gerando checkout…' : 'Gerar link de pagamento'}
+        disabled={saving || !!checkoutBusy}
+        onPress={() => { void generateCheckout(item.id); }} /> : null}
+      {checkoutResults[item.id]?.checkoutUrl ? <Text selectable style={styles.detail} testID={'academy-charge-checkout-link-' + item.id}>Link de pagamento: {checkoutResults[item.id].checkoutUrl}</Text> : null}
+      {checkoutResults[item.id]?.pixQrCode ? <Text selectable style={styles.detail} testID={'academy-charge-pix-' + item.id}>Pix copia e cola: {checkoutResults[item.id].pixQrCode}</Text> : null}
       {item.status === 'PENDING' ? <Btn
         label="Registrar pagamento recebido" testID={'academy-charge-prepare-' + item.id}
         disabled={saving || !account} onPress={() => {
