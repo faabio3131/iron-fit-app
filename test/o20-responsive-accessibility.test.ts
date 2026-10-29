@@ -31,8 +31,9 @@ function touchableOpenings(source: string) {
 test('O20 Web has a compact breakpoint and no rigid 300+px minimum on flexible workspaces', () => {
   expect(webShell).toContain('const compact = viewportWidth < 980;');
   expect(webShell).toContain("navCompact: { width: '100%', maxWidth: '100%', minWidth: 0");
-  expect(webShell).toContain('compactPane: { flexGrow: 1, flexBasis: 330, minWidth: 0');
-  expect(webShell).toContain('compactPaneWide: { flexGrow: 1, flexBasis: 480, minWidth: 0');
+  expect(webShell).toContain("bodyCompact: { flexDirection: 'column' }");
+  expect(webShell).toContain("fieldWrap: { minWidth: 180, flexGrow: 1");
+  expect(webShell).toContain("contentInner: { padding: 22, width: '100%'");
   expect(schedule).toContain("dayColumnSingle: { flex: 1, width: '100%', minWidth: 0");
   expect(schedule).toContain('operationCard: { flexGrow: 1, flexBasis: 380, minWidth: 0');
   expect(creator).toContain('column: { flexGrow: 1, flexBasis: 380, minWidth: 0');
@@ -43,7 +44,7 @@ test('O20 Web has a compact breakpoint and no rigid 300+px minimum on flexible w
 test('O20 common Web actions and compact selectors have explicit target sizes', () => {
   expect(webShell).toContain('button: { minHeight: 44');
   expect(webShell).toContain('navItem: { minHeight: 44');
-  expect(webShell).toContain('chip: { minHeight: 36');
+  expect(webShell).toContain('chip: { minHeight: 44');
   expect(webShell).toContain('input: { minHeight: 44');
   expect(integration).toContain('button: { minHeight: 44');
   expect(security).toContain('button: { minHeight: 44');

@@ -77,16 +77,15 @@ describe('O12 Billing IRON premium workspace', () => {
 
     await waitFor(() => expect(view.getByTestId('saas-billing-command-authority')).toBeTruthy());
     expect(view.getAllByText('IRON Pro').length).toBeGreaterThan(0);
-    expect(view.getAllByText('Mensal').length).toBeGreaterThan(0);
-    expect(view.getByText('27/09/2026')).toBeTruthy();
-    expect(view.getByText('Período de tolerância: 7 dias')).toBeTruthy();
-    expect(view.getByTestId('saas-billing-dunning-state')).toBeTruthy();
+    expect(view.getByText('Pagamento em atraso')).toBeTruthy();
+    expect(view.getByText('05/10/2026')).toBeTruthy();
+    expect(view.getAllByText(/149,90/).length).toBeGreaterThan(0);
     expect(view.queryByText('IRON_PRO_MONTHLY_INTERNAL')).toBeNull();
     expect(view.queryByText('Reembolsar')).toBeNull();
   });
 
-  test('FM Command authority suppresses local refund even for SUPER_ADMIN', async () => {
-    const view = render(<SaasBillingPanel canAdministerBilling />);
+  test('FM Command authority suppresses local refunds regardless of viewer', async () => {
+    const view = render(<SaasBillingPanel />);
 
     await waitFor(() => expect(view.getByTestId('saas-billing-command-authority')).toBeTruthy());
 

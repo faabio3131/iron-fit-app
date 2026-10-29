@@ -1,11 +1,11 @@
-import { AuthFrame } from '../components/AuthFrame';
-import { IronInput as TextInput } from '../components/IronInput';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -52,9 +52,9 @@ export function TenantSelectionScreen() {
   }
 
   return (
-    <AuthFrame>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
-        <Ionicons name="business-outline" size={36} color="#2f91ff" />
+        <Ionicons name="business-outline" size={36} color="#2BF47A" />
         <Text style={styles.title}>Escolha sua unidade</Text>
         <Text style={styles.hint}>
           {mfaRequired
@@ -66,8 +66,7 @@ export function TenantSelectionScreen() {
           ? pendingTenantSelection.tenants.map((tenant) => {
               const selected = tenant.id === selectedGymId;
               return (
-                <TouchableOpacity
-              accessibilityRole="button"
+                <TouchableOpacity accessibilityRole="button"
                   testID={`tenant-${tenant.id}`}
                   key={tenant.id}
                   style={[styles.option, selected && styles.optionSelected]}
@@ -87,7 +86,7 @@ export function TenantSelectionScreen() {
                   <Ionicons
                     name={selected ? 'radio-button-on' : 'radio-button-off'}
                     size={20}
-                    color={selected ? '#2f91ff' : '#9fb0c5'}
+                    color={selected ? '#2BF47A' : '#64748b'}
                   />
                 </TouchableOpacity>
               );
@@ -100,7 +99,7 @@ export function TenantSelectionScreen() {
               <Ionicons
                 name="shield-checkmark-outline"
                 size={20}
-                color="#9fb0c5"
+                color="#64748b"
               />
               <TextInput
                 testID="tenant-mfa-code"
@@ -112,12 +111,12 @@ export function TenantSelectionScreen() {
                 }}
                 keyboardType="number-pad"
                 placeholder="Código MFA de 6 dígitos"
-                placeholderTextColor="#9fb0c5"
+                placeholderTextColor="#64748b"
               />
             </View>
             <Text style={styles.or}>ou</Text>
             <View style={styles.inputGroup}>
-              <Ionicons name="key-outline" size={20} color="#9fb0c5" />
+              <Ionicons name="key-outline" size={20} color="#64748b" />
               <TextInput
                 testID="tenant-recovery-code"
                 style={styles.input}
@@ -128,15 +127,14 @@ export function TenantSelectionScreen() {
                 }}
                 autoCapitalize="characters"
                 placeholder="Recovery code"
-                placeholderTextColor="#9fb0c5"
+                placeholderTextColor="#64748b"
               />
             </View>
           </>
         ) : null}
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <TouchableOpacity
-              accessibilityRole="button"
+        <TouchableOpacity accessibilityRole="button"
           testID="tenant-confirm"
           style={[
             styles.button,
@@ -153,7 +151,7 @@ export function TenantSelectionScreen() {
           }
         >
           {loading ? (
-            <ActivityIndicator color="#eef7ff" />
+            <ActivityIndicator color="#04140b" />
           ) : (
             <Text style={styles.buttonText}>
               {mfaRequired ? 'Confirmar MFA e entrar' : 'Continuar'}
@@ -161,8 +159,7 @@ export function TenantSelectionScreen() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-              accessibilityRole="button"
+        <TouchableOpacity accessibilityRole="button"
           style={styles.backButton}
           onPress={cancelTenantSelection}
           disabled={loading}
@@ -170,26 +167,32 @@ export function TenantSelectionScreen() {
           <Text style={styles.backText}>Voltar ao login</Text>
         </TouchableOpacity>
       </View>
-    </AuthFrame>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    backgroundColor: '#0a0e1a',
+    padding: 24,
+  },
   card: {
-    backgroundColor: '#071528',
+    backgroundColor: '#1a2035',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#203b55',
+    borderColor: '#252d47',
   },
   title: {
-    color: '#eef7ff',
+    color: '#f1f5f9',
     fontSize: 22,
     fontWeight: '800',
     marginTop: 14,
   },
   hint: {
-    color: '#9fb0c5',
+    color: '#94a3b8',
     fontSize: 13,
     lineHeight: 19,
     marginTop: 6,
@@ -199,41 +202,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#203b55',
-    backgroundColor: '#050b14',
+    borderColor: '#252d47',
+    backgroundColor: '#131826',
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
   },
   optionSelected: {
-    borderColor: '#2f91ff',
-    backgroundColor: '#2f91ff12',
+    borderColor: '#2BF47A',
+    backgroundColor: '#2BF47A12',
   },
-  optionText: { flex: 1, color: '#9fb0c5', fontWeight: '600' },
-  optionTextSelected: { color: '#eef7ff' },
+  optionText: { flex: 1, color: '#94a3b8', fontWeight: '600' },
+  optionTextSelected: { color: '#f1f5f9' },
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#050b14',
+    backgroundColor: '#131826',
     borderWidth: 1,
-    borderColor: '#203b55',
+    borderColor: '#252d47',
     borderRadius: 12,
     paddingHorizontal: 12,
     marginBottom: 10,
   },
-  input: { flex: 1, color: '#eef7ff', paddingVertical: 13 },
-  or: { color: '#9fb0c5', textAlign: 'center', marginBottom: 10 },
+  input: { flex: 1, color: '#f1f5f9', paddingVertical: 13 },
+  or: { color: '#64748b', textAlign: 'center', marginBottom: 10 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
   button: {
-    backgroundColor: '#176bc1',
+    backgroundColor: '#2BF47A',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
     marginTop: 4,
   },
   disabled: { opacity: 0.55 },
-  buttonText: { color: '#eef7ff', fontWeight: '700' },
+  buttonText: { color: '#04140b', fontWeight: '700' },
   backButton: { alignItems: 'center', paddingVertical: 14 },
-  backText: { color: '#9fb0c5', fontWeight: '600' },
+  backText: { color: '#94a3b8', fontWeight: '600' },
 });

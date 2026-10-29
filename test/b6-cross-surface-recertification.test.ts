@@ -4,6 +4,13 @@ const api = fs.readFileSync('src/services/api.ts', 'utf8');
 const auth = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
 const navigator = fs.readFileSync('src/navigation/RootNavigator.tsx', 'utf8');
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
+const student360 = fs.readFileSync('src/components/Student360Panel.tsx', 'utf8');
+const assessmentEvolution = fs.readFileSync('src/components/AssessmentEvolutionPanel.tsx', 'utf8');
+const equipmentIntelligence = fs.readFileSync('src/components/EquipmentIntelligencePanel.tsx', 'utf8');
+const teamPanel = fs.readFileSync('src/components/TeamManagementPanel.tsx', 'utf8');
+const exerciseLibrary = fs.readFileSync('src/components/ExercisesLibraryPanel.tsx', 'utf8');
+const scheduleManagement = fs.readFileSync('src/components/ScheduleManagementPanel.tsx', 'utf8');
+const operationalWeb = web + student360 + assessmentEvolution + equipmentIntelligence + exerciseLibrary + scheduleManagement;
 const trial = fs.readFileSync('src/web/TrialSignupScreen.tsx', 'utf8');
 const workouts = fs.readFileSync('src/screens/WorkoutsScreen.tsx', 'utf8');
 const schedules = fs.readFileSync('src/screens/SchedulesScreen.tsx', 'utf8');
@@ -30,7 +37,9 @@ test('B6 routing preserves one app architecture while splitting role-appropriate
   expect(navigator).toContain('<CommercialWebApp />');
   expect(navigator).toContain('<WebAuthEntry />');
   expect(navigator).toContain('<WorkoutsScreen />');
-  expect(navigator).toContain("profile.roles.includes('STUDENT')");
+  expect(navigator).toContain("roles.includes('STUDENT')");
+  expect(navigator).toContain("!isStudentProfile(profile)");
+  expect(navigator).not.toContain("Platform.OS === 'web' && profile && !isStudentProfile(profile)");
 });
 
 test('B6 commercial Web consumes canonical backend domains and entitlement resolution', () => {
@@ -48,20 +57,22 @@ test('B6 commercial Web consumes canonical backend domains and entitlement resol
     '/product-entitlements/tenant/current',
     '/product-entitlements/tenant/features',
   ]) {
-    expect(web).toContain(route);
+    expect(operationalWeb).toContain(route);
   }
   expect(web).toContain('equipment.inventory');
   expect(web).toContain('equipment.catalog');
-  expect(web).toContain("subscription?.status === 'SUSPENDED'");
-  expect(web).toContain('subscription-blocked');
+  expect(web).toContain('FAIL_CLOSED_DEFAULT');
   expect(web).not.toMatch(/plan\s*===|planName\s*===/);
   expect(web).not.toMatch(/api\('\/equipments', undefined, \{ method: 'POST'/);
 });
 
 test('B6 Web operational mutations follow current security and EQ5 contracts', () => {
-  expect(web).toContain('strongPassword(member.password)');
-  expect(web).toContain('equipment-catalog-select');
-  expect(web).toContain('catalogItemIds: [item.id]');
+  expect(teamPanel).toContain("api('/users/invite'");
+  expect(teamPanel).toContain('/membership/status');
+  expect(teamPanel).toContain('/membership/role');
+  expect(web).not.toContain('member.password');
+  expect(equipmentIntelligence).toContain('equipment-catalog-select');
+  expect(equipmentIntelligence).toContain('catalogItemIds: [selectedCatalogEquipment]');
   expect(web).not.toContain('member.password.length < 6');
 });
 

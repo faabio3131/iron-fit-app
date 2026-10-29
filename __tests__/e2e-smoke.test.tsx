@@ -75,6 +75,16 @@ function installFetchScenario({
       });
     }
 
+    // JWT identity supplies the roles; /me/profile only enriches the student.
+    if (path === '/auth/me') {
+      const authenticatedGymId = loginMode === 'multi' ? 'gym-b' : 'gym-a';
+      return response(200, {
+        id: 'student-1', name: 'Ana Silva', email: 'ana@example.com',
+        roles: ['STUDENT'], permissions: [], activeGymId: authenticatedGymId,
+        gymId: authenticatedGymId, isSuperAdmin: false,
+      });
+    }
+
     if (path === '/me/profile') {
       return response(200, {
         id: 'student-1',

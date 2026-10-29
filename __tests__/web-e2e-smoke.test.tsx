@@ -2,6 +2,10 @@ import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Platform } from 'react-native';
 
+// Full Web trial/login journey can exceed Jest's 5s default when CI runs
+// Android/iOS/Web tests in parallel; retain assertions and allow completion.
+jest.setTimeout(20000);
+
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(),

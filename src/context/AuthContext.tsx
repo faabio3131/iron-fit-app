@@ -5,6 +5,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { SafeAreaView, StyleSheet } from 'react-native';
@@ -70,8 +71,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [activeTenantId, setActiveTenantId] = useState<string | null>(null);
   const [pendingTenantSelection, setPendingTenantSelection] =
     useState<PendingTenantSelection | null>(null);
+  // A session boundary makes delayed /auth/me replies ineligible to restore old
+  // roles or tenant after logout, invalidation or a different login.
+  const profileRequestVersion = useRef(0);
 
   const clearAuthState = useCallback(() => {
+    profileRequestVersion.current += 1;
     setSession(null);
     setProfile(null);
     setActiveTenantId(null);
@@ -79,8 +84,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
+    const requestVersion = ++profileRequestVersion.current;
     try {
       const authProfile = await api('/auth/me');
+      if (!Array.isArray(authProfile?.roles) || authProfile.roles.length === 0) {
+        throw new Error('O servidor não retornou um perfil de acesso válido.');
+      }
       let nextProfile = authProfile;
 
       if (hasStudentRole(authProfile)) {
@@ -105,14 +114,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
             emailVerified: authProfile.emailVerified,
           };
         } catch {
-          // A identidade JWT continua sendo a autoridade; enriquecimento de aluno é opcional.
+          // Optional student data must never override or forge the JWT identity.
         }
       }
 
+      // A slower request cannot reinstate a former user's profile or tenant
+      // when another auth check, logout or session invalidation has started.
+      if (requestVersion !== profileRequestVersion.current) return;
       setProfile(nextProfile);
       setActiveTenantId(tenantIdFrom(nextProfile));
-    } catch {
-      // 401 é tratado pelo cliente HTTP. Falhas não inventam perfil local.
+    } catch (reason: unknown) {
+      // A rejected/invalid authority check revokes local UI authority.
+      // HTTP 401 invalidation is handled separately by the session client.
+      if (requestVersion === profileRequestVersion.current) {
+        setProfile(null);
+        setActiveTenantId(null);
+      }
+      throw reason;
     }
   }, []);
 
@@ -127,6 +145,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (!mounted || !restored) return;
         setSession(restored);
         await refreshProfile();
+      })
+      .catch(() => {
+        // A failed authority lookup is already fail-closed; show recovery UI.
       })
       .finally(() => {
         if (mounted) setSessionReady(true);
@@ -203,12 +224,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
       };
+      // Do not reuse roles/tenant from a previous login while this session is
+      // being established. /auth/me is the only local UI authority.
+      profileRequestVersion.current += 1;
+      setProfile(null);
+      setActiveTenantId(null);
       await saveSession(nextSession);
       setSession(nextSession);
       setPendingTenantSelection(null);
-      setProfile(data?.user ?? null);
-      setActiveTenantId(tenantIdFrom(data?.user) ?? gymId ?? null);
-      await refreshProfile();
+      try {
+        await refreshProfile();
+      } catch {
+        // The valid session stays available for explicit, fail-closed retry.
+      }
       return { requiresTenantSelection: false, requiresMfa: false };
     },
     [refreshProfile],

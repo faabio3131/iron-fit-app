@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '../components/EmptyState';
 import { RequestErrorState } from '../components/RequestErrorState';
@@ -12,39 +12,53 @@ function fmtDate(value?: string) {
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString('pt-BR');
 }
 
+const bookingStatusLabels: Record<string, string> = {
+  SCHEDULED: 'Agendado',
+  CHECKED_IN: 'Entrada registrada',
+  NO_SHOW: 'Não compareceu',
+  CANCELED: 'Cancelado',
+};
+
 export function SchedulesScreen() {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const loadSchedules = useCallback(async () => {
-    setLoading(true);
+  function refreshSchedule() {
     setLoadError('');
-    try {
-      const data = await api('/me/schedules');
-      setSchedules(Array.isArray(data) ? data : []);
-    } catch {
-      setLoadError('Não foi possível carregar sua agenda. Sem conexão ou serviço indisponível.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    setLoading(true);
+    setRefreshKey((current) => current + 1);
+  }
 
   useEffect(() => {
-    const timer = setTimeout(() => { void loadSchedules(); }, 0);
-    return () => clearTimeout(timer);
-  }, [loadSchedules]);
+    let active = true;
+    api('/me/schedules')
+      .then((data) => {
+        if (active) {
+          if (!Array.isArray(data)) throw new Error('O servidor retornou uma agenda inválida.');
+          setSchedules(data);
+        }
+      })
+      .catch(() => {
+        if (active) setLoadError('Não foi possível atualizar a agenda. Confira sua conexão.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [refreshKey]);
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View><Text style={styles.heading}>Agenda</Text><Text style={styles.sub}>Suas aulas e entradas 📅</Text></View>
-        <Ionicons name="calendar" size={24} color="#2BF47A" />
+        <Ionicons name="calendar" size={24} color="#f59e0b" />
       </View>
-      <CheckInScreen />
+      <CheckInScreen onCheckedIn={refreshSchedule} />
       <Text style={styles.sectionTitle}>Horários reservados</Text>
       {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? (
-        <RequestErrorState message={loadError} onRetry={() => { void loadSchedules(); }} />
+        <RequestErrorState retryTestID="schedule-retry" message={`Sem conexão ou serviço indisponível. ${loadError}`} onRetry={refreshSchedule} />
       ) : schedules.length === 0 ? (
         <EmptyState icon="calendar-outline" title="Nenhum horário reservado" subtitle="Quando sua academia abrir a agenda, suas reservas aparecem aqui." />
       ) : schedules.map((schedule, index) => (
@@ -54,10 +68,10 @@ export function SchedulesScreen() {
             <Text style={styles.cardTitle}>{schedule.slot?.name || schedule.name || 'Aula / Horário'}</Text>
             <Text style={styles.meta}>
               {schedule.slot?.startTime || schedule.startTime ? `🕐 ${schedule.slot?.startTime || schedule.startTime}` : ''}
-              {schedule.status ? ` · ${schedule.status}` : ''}
+              {schedule.status ? ` · ${bookingStatusLabels[schedule.status] ?? schedule.status}` : ''}
             </Text>
           </View>
-          <Ionicons name="checkmark-circle" size={18} color="#7DFFB1" />
+          <Ionicons name="checkmark-circle" size={18} color="#10b981" />
         </View>
       ))}
     </ScrollView>
@@ -65,17 +79,21 @@ export function SchedulesScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#000000' },
+  scroll: { flex: 1, backgroundColor: '#0a0e1a' },
   content: { padding: 20, paddingBottom: 100 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  heading: { color: '#EEF1F5', fontSize: 24, fontWeight: '800' },
-  sub: { color: '#A1A6AE', fontSize: 14, marginTop: 2 },
-  sectionTitle: { color: '#EEF1F5', fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  heading: { color: '#f1f5f9', fontSize: 24, fontWeight: '800' },
+  sub: { color: '#94a3b8', fontSize: 14, marginTop: 2 },
+  sectionTitle: { color: '#f1f5f9', fontSize: 18, fontWeight: '700', marginBottom: 12 },
   loading: { marginTop: 40 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F0F12', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#24262B', gap: 12 },
-  dateBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#2f91ff20', alignItems: 'center', justifyContent: 'center' },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1a2035', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#252d47', gap: 12 },
+  dateBox: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#2BF47A20', alignItems: 'center', justifyContent: 'center' },
   dateText: { color: '#2BF47A', fontWeight: '800', fontSize: 13 },
   cardContent: { flex: 1 },
-  cardTitle: { color: '#EEF1F5', fontSize: 15, fontWeight: '700' },
-  meta: { color: '#A1A6AE', fontSize: 12, marginTop: 2 },
+  cardTitle: { color: '#f1f5f9', fontSize: 15, fontWeight: '700' },
+  meta: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
+  errorCard: { padding: 16, borderRadius: 12, borderColor: '#ef444450', borderWidth: 1, marginTop: 8 },
+  errorText: { color: '#fca5a5', fontSize: 13 },
+  retryButton: { paddingVertical: 10, marginTop: 8, alignSelf: 'flex-start' },
+  retryText: { color: '#2BF47A', fontSize: 13, fontWeight: '700' },
 });

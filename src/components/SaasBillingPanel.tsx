@@ -1,607 +1,177 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Linking,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { IronInput as TextInput } from './IronInput';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { GlowCard } from './GlowCard';
 import { api } from '../services/api';
 
-type Price = {
-  id: string;
-  priceCode: string;
-  currency: string;
-  amountMinor: number;
-  interval: 'MONTHLY' | 'YEARLY';
-  planVersion?: {
-    version?: number;
-    productPlan?: { code?: string; name?: string };
-  };
-};
-
-type BillingPolicy = {
-  invoiceDueDays?: number | null;
-  dunningGraceDays?: number | null;
-  gracePeriodEndsAt?: string | null;
-};
-
 type BillingAuthority = {
-  billingAuthority?: string;
-  productCode?: string;
-  localMutationsEnabled?: boolean;
-  providerWebhooksAccepted?: boolean;
-  mode?: string;
+  billingAuthority: string;
+  productCode: string;
+  localMutationsEnabled: boolean;
+  providerWebhooksAccepted: boolean;
+  mode: string;
 };
-
+type LegacyPrice = { priceCode?: string; currency?: string; amountMinor?: number;
+  planVersion?: { productPlan?: { name?: string } } };
+type LegacyAgreement = { status?: string; nextBillingAt?: string | null; price?: LegacyPrice | null };
+type Invoice = {
+  id: string; status?: string; amountDueMinor?: number | null; amountPaidMinor?: number | null;
+  currency?: string | null; dueAt?: string | null;
+};
 type BillingState = {
-  agreement?: any;
-  invoices?: any[];
-  billingPolicy?: BillingPolicy | null;
-  authority?: BillingAuthority | null;
+  agreement?: LegacyAgreement | null;
+  invoices?: Invoice[];
   projection?: string;
+  authority?: BillingAuthority;
 };
 
-function requestId() {
-  const runtimeCrypto = (globalThis as typeof globalThis & {
-    crypto?: { randomUUID?: () => string };
-  }).crypto;
-  if (runtimeCrypto?.randomUUID) return runtimeCrypto.randomUUID();
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (token) => {
-    const random = Math.floor(Math.random() * 16);
-    const value = token === 'x' ? random : (random & 0x3) | 0x8;
-    return value.toString(16);
-  });
+const statuses: Record<string, string> = {
+  ACTIVE: 'Ativa', TRIALING: 'Em avaliação', PENDING_CHECKOUT: 'Aguardando contratação',
+  PAST_DUE: 'Pagamento em atraso', SUSPENDED: 'Suspensa', CANCELED: 'Cancelada',
+  CANCELLED: 'Cancelada', PAID: 'Paga', PENDING: 'Pendente', OVERDUE: 'Vencida',
+  OPEN: 'Aberta', FAILED: 'Falhou', VOID: 'Anulada', DRAFT: 'Rascunho',
+  GRACE: 'Em período de tolerância', UNPAID: 'Não paga',
+};
+function statusLabel(value?: string) {
+  return value ? statuses[value] ?? 'Estado não identificado' : 'Não informado';
 }
-
-function formatMoney(amountMinor: unknown, currency = 'BRL') {
-  const minor = Number(amountMinor ?? 0);
+function readableDate(value?: string | null) {
+  if (!value) return 'Não informado';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Não informado' : date.toLocaleDateString('pt-BR');
+}
+function money(amountMinor?: number | null, currency?: string | null) {
+  if (typeof amountMinor !== 'number' || !Number.isSafeInteger(amountMinor) ||
+    !currency || !/^[A-Z]{3}$/.test(currency)) return 'Não informado';
   try {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency,
-    }).format(Number.isFinite(minor) ? minor / 100 : 0);
-  } catch {
-    return `${currency} ${(Number.isFinite(minor) ? minor / 100 : 0).toFixed(2)}`;
-  }
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(amountMinor / 100);
+  } catch { return 'Não informado'; }
 }
 
-function formatDate(value: unknown) {
-  if (!value) return '—';
-  const date = new Date(String(value));
-  if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'UTC',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(date);
-}
-
-function toMinorUnits(value: string) {
-  const raw = value.trim().replace(/^R\$\s*/i, '');
-  if (!raw) return null;
-  const normalized = raw.includes(',')
-    ? raw.replace(/\./g, '').replace(',', '.')
-    : raw;
-  const parsed = Number(normalized);
-  if (!Number.isFinite(parsed)) return null;
-  return Math.round(parsed * 100);
-}
-
-const billingStatusLabels: Record<string, string> = {
-  ACTIVE: 'Ativa',
-  TRIALING: 'Em teste',
-  PENDING_CHECKOUT: 'Aguardando pagamento',
-  PAST_DUE: 'Em atraso',
-  SUSPENDED: 'Suspensa',
-  PAUSED: 'Pausada',
-  CANCELED: 'Cancelada',
-  OPEN: 'Em aberto',
-  PENDING: 'Pendente',
-  READY: 'Pronto para pagamento',
-  PROCESSING: 'Processando',
-  PAID: 'Paga',
-  VOID: 'Cancelada',
-  FAILED: 'Falhou',
-  EXPIRED: 'Expirada',
-  REFUNDED: 'Reembolsada',
-  PARTIALLY_REFUNDED: 'Reembolso parcial',
-};
-
-function billingStatus(value: unknown) {
-  const key = typeof value === 'string' ? value : '';
-  return billingStatusLabels[key] ?? (key || 'Não disponível');
-}
-
-function intervalLabel(value: unknown) {
-  return value === 'YEARLY' ? 'Anual' : 'Mensal';
-}
-
-function planName(price: any) {
-  return price?.planVersion?.productPlan?.name
-    ?? price?.planVersion?.productPlan?.code
-    ?? 'Plano IRON';
-}
-
-function invoiceRefunded(invoice: any) {
-  return Array.isArray(invoice?.refunds)
-    ? invoice.refunds
-        .filter((refund: any) => refund?.status === 'SUCCEEDED')
-        .reduce((sum: number, refund: any) => sum + Number(refund?.amountMinor ?? 0), 0)
-    : 0;
-}
-
-export function SaasBillingPanel({
-  onCommercialStateChanged,
-  canAdministerBilling = false,
-}: {
+export function SaasBillingPanel({ onCommercialStateChanged }: {
   onCommercialStateChanged?: () => Promise<void> | void;
-  canAdministerBilling?: boolean;
 }) {
-  const [billing, setBilling] = useState<BillingState | null>(null);
   const [authority, setAuthority] = useState<BillingAuthority | null>(null);
-  const [prices, setPrices] = useState<Price[]>([]);
+  const [billing, setBilling] = useState<BillingState | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [lastAction, setLastAction] = useState<any>(null);
-  const [refundInvoiceId, setRefundInvoiceId] = useState('');
-  const [refundAmount, setRefundAmount] = useState('');
-  const [refundReason, setRefundReason] = useState('');
-
   const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
-      const [authorityState, current, available] = await Promise.all([
+      const [authorityResponse, current] = await Promise.all([
         api('/saas-billing/authority'),
         api('/saas-billing/current'),
-        api('/saas-billing/prices'),
       ]);
-      setAuthority(authorityState ?? current?.authority ?? null);
-      setBilling(current ?? { agreement: null, invoices: [], billingPolicy: null });
-      setPrices(Array.isArray(available) ? available : []);
-    } catch (reason: unknown) {
-      setError(reason instanceof Error ? reason.message : 'Falha ao carregar a assinatura IRON.');
-    } finally {
-      setLoading(false);
-    }
+      if (
+        authorityResponse?.billingAuthority !== 'FM_COMMAND' ||
+        authorityResponse?.productCode !== 'IRON_FIT_CORE' ||
+        authorityResponse?.localMutationsEnabled !== false ||
+        authorityResponse?.providerWebhooksAccepted !== false ||
+        authorityResponse?.mode !== 'COMMAND_CENTRALIZED' ||
+        current?.authority?.billingAuthority !== 'FM_COMMAND' ||
+        current?.authority?.localMutationsEnabled !== false ||
+        current?.authority?.providerWebhooksAccepted !== false
+      ) {
+        throw new Error('Autoridade de cobrança não confirmada. Operações comerciais permanecem bloqueadas.');
+      }
+      setAuthority(authorityResponse);
+      setBilling(current);
+    } catch (reason) {
+      setAuthority(null); setBilling(null);
+      setError(reason instanceof Error ? reason.message : 'Não foi possível consultar a assinatura.');
+    } finally { setLoading(false); }
   }, []);
-
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void load();
-    }, 0);
+    const timer = setTimeout(() => { void load(); }, 0);
     return () => clearTimeout(timer);
   }, [load]);
 
-  const agreement = billing?.agreement ?? null;
-  const commandAuthority = authority?.billingAuthority === 'FM_COMMAND' && authority?.localMutationsEnabled === false;
-  const currentPrice = agreement?.price ?? null;
-  const billingPolicy = billing?.billingPolicy ?? null;
-  const invoices = Array.isArray(billing?.invoices) ? billing!.invoices! : [];
-
-  const sortedPrices = useMemo(
-    () => [...prices].sort((a, b) => a.amountMinor - b.amountMinor),
-    [prices],
-  );
-
-  const selectedRefundInvoice = useMemo(
-    () => invoices.find((invoice: any) => invoice.id === refundInvoiceId) ?? null,
-    [invoices, refundInvoiceId],
-  );
-  const refundAmountMinor = toMinorUnits(refundAmount);
-  const refundableMinor = selectedRefundInvoice
-    ? Math.max(
-        0,
-        Number(selectedRefundInvoice.amountPaidMinor ?? 0)
-          - invoiceRefunded(selectedRefundInvoice),
-      )
-    : 0;
-
-  async function execute(operation: () => Promise<any>, success: string) {
-    setSaving(true);
-    setError('');
+  async function refresh() {
     setNotice('');
+    await load();
     try {
-      const result = await operation();
-      setLastAction(result);
-      setNotice(success);
-      await load();
       await onCommercialStateChanged?.();
-    } catch (reason: unknown) {
-      setError(reason instanceof Error ? reason.message : 'Não foi possível concluir a operação.');
-    } finally {
-      setSaving(false);
+    } catch {
+      setNotice('A consulta de assinatura foi solicitada, mas o estado comercial geral não pôde ser atualizado.');
     }
   }
 
-  function actionFor(price: Price) {
-    if (commandAuthority) return null;
-    if (!agreement || !currentPrice || agreement.status === 'PENDING_CHECKOUT') {
-      return {
-        label: 'Iniciar pagamento',
-        run: () =>
-          api('/saas-billing/checkout', undefined, {
-            method: 'POST',
-            body: JSON.stringify({
-              requestId: requestId(),
-              priceCode: price.priceCode,
-            }),
-          }),
-      };
-    }
+  const agreement = billing?.agreement ?? null;
+  const invoices = Array.isArray(billing?.invoices) ? billing!.invoices! : [];
+  const legacy = billing?.projection === 'LEGACY_READ_ONLY';
 
-    if (currentPrice.id === price.id) return null;
-
-    const transitionKind =
-      price.amountMinor > Number(currentPrice.amountMinor ?? 0)
-        ? 'UPGRADE'
-        : 'DOWNGRADE';
-
-    return {
-      label: transitionKind === 'UPGRADE' ? 'Mudar para este plano' : 'Agendar este plano',
-      run: () =>
-        api('/saas-billing/change-plan', undefined, {
-          method: 'POST',
-          body: JSON.stringify({
-            requestId: requestId(),
-            priceCode: price.priceCode,
-            transitionKind,
-            reason: 'Alteração solicitada pelo painel Web IRON',
-          }),
-        }),
-    };
-  }
-
-  function refundSelectedInvoice() {
-    if (
-      !selectedRefundInvoice
-      || refundAmountMinor === null
-      || refundAmountMinor <= 0
-      || refundAmountMinor > refundableMinor
-      || !refundReason.trim()
-    ) {
-      return;
-    }
-    void execute(
-      () => api('/saas-billing/refunds', undefined, {
-        method: 'POST',
-        body: JSON.stringify({
-          requestId: requestId(),
-          invoiceId: selectedRefundInvoice.id,
-          amountMinor: refundAmountMinor,
-          reason: refundReason.trim(),
-        }),
-      }),
-      'Solicitação de reembolso registrada.',
-    ).then(() => {
-      setRefundInvoiceId('');
-      setRefundAmount('');
-      setRefundReason('');
-    });
-  }
-
-  return (
-    <View testID="saas-billing-panel">
-      <View style={styles.heroCard}>
-        <View style={styles.heroCopy}>
-          <Text style={styles.eyebrow}>BILLING IRON</Text>
-          <Text style={styles.heroTitle}>Assinatura IRON</Text>
-          <Text style={styles.muted}>
-            Plano, cobrança e faturas da FM Tecnologia para sua academia. Este módulo é separado do financeiro dos alunos.
-          </Text>
+  return <View testID="saas-billing-panel">
+    <GlowCard style={styles.card}>
+      <View style={styles.header}>
+        <View style={styles.heading}>
+          <Text style={styles.title}>Assinatura IRON</Text>
+          <Text style={styles.muted}>Administração comercial centralizada pela FM Tecnologia no FM Command.</Text>
         </View>
-        <View style={styles.heroStatus}>
-          <Text style={styles.heroStatusLabel}>Situação</Text>
-          <Text style={styles.heroStatusValue}>
-            {agreement ? billingStatus(agreement.status) : 'Sem assinatura ativa'}
-          </Text>
-        </View>
+        <TouchableOpacity testID="saas-billing-refresh" accessibilityRole="button" style={[styles.button, loading && styles.disabled]}
+          disabled={loading} onPress={() => { void refresh(); }}>
+          <Text style={styles.buttonText}>Atualizar situação</Text>
+        </TouchableOpacity>
       </View>
+      {loading ? <ActivityIndicator color="#2BF47A" /> : null}
+      {error ? <Text testID="saas-billing-authority-error" style={styles.error}>{error}</Text> : null}
+      {notice ? <Text style={styles.warning}>{notice}</Text> : null}
+      {authority ? <View testID="saas-billing-command-authority" style={styles.authority}>
+        <Text style={styles.authorityTitle}>Cobrança SaaS sob autoridade do FM Command</Text>
+        <Text style={styles.muted}>Planos, checkout, cobrança, pagamento, renovação, mudança e cancelamento não podem ser executados pelo antigo billing local. A licença e os acessos são definidos pelas operações corporativas governadas.</Text>
+        <Text style={styles.warning}>Esta tela é de consulta, não de contratação. Nenhum pagamento é confirmado aqui.</Text>
+      </View> : null}
+    </GlowCard>
 
-      {loading ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando sua assinatura…</Text></View> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-      {commandAuthority ? (
-        <View style={styles.commandAuthority} testID="saas-billing-command-authority">
-          <Text style={styles.commandAuthorityTitle}>Billing centralizado no FM Command</Text>
-          <Text style={styles.commandAuthorityText}>
-            Esta tela está em modo de leitura durante a migração. Checkout, alteração de plano, cancelamento, reembolso e processamento de gateway não são executados localmente pelo IRON.
-          </Text>
+    {authority && !loading ? <>
+      <GlowCard style={styles.card}>
+        <Text style={styles.title}>Situação conhecida no IRON</Text>
+        <Text style={styles.muted}>{legacy
+          ? 'Histórico local de leitura, não uma posição financeira homologada do FM Command.'
+          : 'Projeção disponibilizada pelo backend do IRON. Confirme cobranças e pagamentos no sistema corporativo.'}</Text>
+        <View style={styles.statusRow}>
+          <Text style={styles.statusLabel}>Registro local</Text>
+          <Text testID="saas-billing-state" style={styles.statusValue}>{agreement ? statusLabel(agreement.status) : 'Não registrado'}</Text>
         </View>
-      ) : null}
-
-      <View style={styles.summaryGrid}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Plano atual</Text>
-          <Text style={styles.summaryValue}>{currentPrice ? planName(currentPrice) : '—'}</Text>
-          <Text style={styles.summaryMeta}>
-            {currentPrice
-              ? `${formatMoney(currentPrice.amountMinor, currentPrice.currency)} · ${intervalLabel(currentPrice.interval)}`
-              : 'Nenhum preço vigente'}
-          </Text>
+        <View style={styles.statusRow}>
+          <Text style={styles.statusLabel}>Plano registrado</Text>
+          <Text style={styles.statusValue}>{agreement?.price?.planVersion?.productPlan?.name ?? 'Não informado'}</Text>
         </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Próxima cobrança</Text>
-          <Text style={styles.summaryValue}>{formatDate(agreement?.nextBillingAt)}</Text>
-          <Text style={styles.summaryMeta}>
-            {agreement?.cancelAtPeriodEnd ? 'Cancelamento agendado no fim do período' : 'Renovação conforme ciclo contratado'}
-          </Text>
+        <View style={styles.statusRow}>
+          <Text style={styles.statusLabel}>Próxima data registrada</Text>
+          <Text style={styles.statusValue}>{readableDate(agreement?.nextBillingAt)}</Text>
         </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Faturas</Text>
-          <Text style={styles.summaryValue}>{invoices.length}</Text>
-          <Text style={styles.summaryMeta}>
-            {invoices.filter((invoice: any) => ['OPEN', 'FAILED'].includes(invoice.status)).length} em aberto
-          </Text>
-        </View>
-        <View style={[styles.summaryCard, ['PAST_DUE', 'SUSPENDED'].includes(agreement?.status) && styles.summaryAlert]}>
-          <Text style={styles.summaryLabel}>Regularização</Text>
-          <Text style={styles.summaryValue}>
-            {billingPolicy?.gracePeriodEndsAt ? formatDate(billingPolicy.gracePeriodEndsAt) : 'Em dia'}
-          </Text>
-          <Text style={styles.summaryMeta}>
-            {billingPolicy?.dunningGraceDays
-              ? `Período de tolerância: ${billingPolicy.dunningGraceDays} dias`
-              : 'Sem período de tolerância ativo'}
-          </Text>
-        </View>
-      </View>
-
-      {['PAST_DUE', 'SUSPENDED'].includes(agreement?.status) ? (
-        <View style={styles.warningCard} testID="saas-billing-dunning-state">
-          <Text style={styles.warningTitle}>
-            {agreement.status === 'SUSPENDED' ? 'Assinatura suspensa por inadimplência' : 'Pagamento em atraso'}
-          </Text>
-          <Text style={styles.warningText}>
-            {billingPolicy?.gracePeriodEndsAt
-              ? `A política comercial vigente prevê regularização até ${formatDate(billingPolicy.gracePeriodEndsAt)}.`
-              : 'Consulte as faturas em aberto para regularizar a assinatura.'}
-          </Text>
-        </View>
-      ) : null}
-
-      <View style={styles.card}>
-        <View style={styles.sectionHead}>
-          <View>
-            <Text style={styles.title}>Planos disponíveis</Text>
-            <Text style={styles.muted}>Valores e ciclos publicados pelo servidor comercial do IRON.</Text>
+      </GlowCard>
+      <GlowCard style={styles.card}>
+        <Text style={styles.title}>Histórico de faturas do IRON</Text>
+        <Text style={styles.muted}>Registros do módulo anterior, disponibilizados somente para consulta. Eles não substituem as faturas e liquidações do FM Command.</Text>
+        {invoices.length ? invoices.slice(0, 24).map((invoice) => <View key={invoice.id} style={styles.invoice}>
+          <View style={styles.invoiceHeader}>
+            <Text style={styles.invoiceTitle}>{statusLabel(invoice.status)}</Text>
+            <Text style={styles.invoiceTitle}>{money(invoice.amountDueMinor, invoice.currency)}</Text>
           </View>
-        </View>
-        {sortedPrices.length === 0 && !loading ? (
-          <Text style={styles.empty}>Nenhum plano comercial publicado.</Text>
-        ) : null}
-        <ScrollView horizontal contentContainerStyle={styles.planRow}>
-          {sortedPrices.map((price) => {
-            const action = actionFor(price);
-            const current = currentPrice?.id === price.id;
-            return (
-              <View key={price.id} style={[styles.planCard, current && styles.planCardCurrent]}>
-                <Text style={styles.planName}>{planName(price)}</Text>
-                <Text style={styles.planPrice}>{formatMoney(price.amountMinor, price.currency)}</Text>
-                <Text style={styles.planCycle}>{intervalLabel(price.interval)}</Text>
-                {current ? <Text style={styles.currentBadge}>Plano atual</Text> : null}
-                {action ? (
-                  <TouchableOpacity
-                    accessibilityRole="button"
-                    testID={`saas-billing-action-${price.priceCode}`}
-                    style={[styles.button, saving && styles.disabled]}
-                    disabled={saving}
-                    onPress={() => void execute(action.run, 'Operação comercial registrada.')}
-                  >
-                    <Text style={styles.buttonText}>{action.label}</Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            );
-          })}
-        </ScrollView>
-
-        {!commandAuthority && agreement && agreement.status !== 'CANCELED' && !agreement.cancelAtPeriodEnd ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            testID="saas-billing-cancel-period-end"
-            style={[styles.secondaryButton, saving && styles.disabled]}
-            disabled={saving}
-            onPress={() =>
-              void execute(
-                () =>
-                  api('/saas-billing/cancel', undefined, {
-                    method: 'POST',
-                    body: JSON.stringify({ atPeriodEnd: true }),
-                  }),
-                'Cancelamento agendado para o fim do período.',
-              )
-            }
-          >
-            <Text style={styles.secondaryButtonText}>Cancelar no fim do período</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.title}>Faturas</Text>
-        <Text style={styles.muted}>Histórico de cobranças da assinatura IRON.</Text>
-        {invoices.length === 0 ? (
-          <Text style={styles.empty}>Nenhuma fatura emitida.</Text>
-        ) : (
-          invoices.map((invoice: any) => {
-            const refunded = invoiceRefunded(invoice);
-            const paid = Number(invoice.amountPaidMinor ?? 0);
-            const refundable = Math.max(0, paid - refunded);
-            return (
-              <View key={invoice.id} style={styles.invoice}>
-                <View style={styles.invoiceMain}>
-                  <Text style={styles.rowTitle}>{billingStatus(invoice.status)}</Text>
-                  <Text style={styles.muted}>
-                    Período {formatDate(invoice.periodStart)} a {formatDate(invoice.periodEnd)} · vencimento {formatDate(invoice.dueAt)}
-                  </Text>
-                  <Text style={styles.muted}>
-                    Pago {formatMoney(paid, invoice.currency ?? 'BRL')}
-                    {refunded > 0 ? ` · reembolsado ${formatMoney(refunded, invoice.currency ?? 'BRL')}` : ''}
-                  </Text>
-                </View>
-                <View style={styles.invoiceAmount}>
-                  <Text style={styles.rowTitle}>{formatMoney(invoice.amountDueMinor, invoice.currency ?? 'BRL')}</Text>
-                  {!commandAuthority && canAdministerBilling && refundable > 0 ? (
-                    <TouchableOpacity
-                      testID={`saas-billing-refund-${invoice.id}`}
-                      accessibilityRole="button"
-                      style={styles.inlineButton}
-                      onPress={() => {
-                        setRefundInvoiceId(invoice.id);
-                        setRefundAmount((refundable / 100).toFixed(2).replace('.', ','));
-                        setRefundReason('');
-                      }}
-                    >
-                      <Text style={styles.inlineButtonText}>Reembolsar</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-              </View>
-            );
-          })
-        )}
-      </View>
-
-      {!commandAuthority && canAdministerBilling && selectedRefundInvoice ? (
-        <View style={styles.card} testID="saas-billing-refund-panel">
-          <Text style={styles.title}>Reembolso administrativo</Text>
-          <Text style={styles.muted}>
-            Ação restrita a SUPER_ADMIN. Limite disponível: {formatMoney(refundableMinor, selectedRefundInvoice.currency ?? 'BRL')}.
-          </Text>
-          <Text style={styles.fieldLabel}>Valor do reembolso (R$)</Text>
-          <TextInput
-            accessibilityLabel="Valor do reembolso"
-            style={styles.input}
-            value={refundAmount}
-            onChangeText={setRefundAmount}
-            keyboardType="numeric"
-            placeholder="0,00"
-            placeholderTextColor="#828A91"
-          />
-          <Text style={styles.fieldLabel}>Motivo</Text>
-          <TextInput
-            accessibilityLabel="Motivo do reembolso"
-            style={styles.input}
-            value={refundReason}
-            onChangeText={setRefundReason}
-            placeholder="Descreva o motivo"
-            placeholderTextColor="#828A91"
-          />
-          <View style={styles.actions}>
-            <TouchableOpacity
-              testID="saas-billing-confirm-refund"
-              accessibilityRole="button"
-              disabled={
-                saving
-                || refundAmountMinor === null
-                || refundAmountMinor <= 0
-                || refundAmountMinor > refundableMinor
-                || !refundReason.trim()
-              }
-              style={[
-                styles.button,
-                (
-                  saving
-                  || refundAmountMinor === null
-                  || refundAmountMinor <= 0
-                  || refundAmountMinor > refundableMinor
-                  || !refundReason.trim()
-                ) && styles.disabled,
-              ]}
-              onPress={refundSelectedInvoice}
-            >
-              <Text style={styles.buttonText}>{saving ? 'Processando…' : 'Confirmar reembolso'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityRole="button"
-              style={styles.secondaryButton}
-              onPress={() => {
-                setRefundInvoiceId('');
-                setRefundAmount('');
-                setRefundReason('');
-              }}
-            >
-              <Text style={styles.secondaryButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : null}
-
-      {lastAction ? (
-        <View style={styles.card}>
-          <Text style={styles.title}>Última operação</Text>
-          <Text style={styles.muted}>A alteração foi registrada e o estado comercial foi atualizado.</Text>
-          {typeof lastAction?.checkoutUrl === 'string' && lastAction.checkoutUrl ? (
-            <TouchableOpacity
-              accessibilityRole="button"
-              testID="saas-billing-open-checkout"
-              style={styles.button}
-              onPress={() => void Linking.openURL(lastAction.checkoutUrl)}
-            >
-              <Text style={styles.buttonText}>Abrir pagamento seguro</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
-      ) : null}
-    </View>
-  );
+          <Text style={styles.muted}>Vencimento: {readableDate(invoice.dueAt)} · Valor pago registrado: {money(invoice.amountPaidMinor, invoice.currency)}</Text>
+        </View>) : <Text style={styles.muted}>Nenhuma fatura histórica registrada neste ambiente.</Text>}
+      </GlowCard>
+    </> : null}
+  </View>;
 }
-
 const styles = StyleSheet.create({
-  heroCard: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 15, marginBottom: 9 },
-  heroCopy: { flex: 1, minWidth: 260 },
-  eyebrow: { color: '#56EC95', fontSize: 10, fontWeight: '900', letterSpacing: 0.8, marginBottom: 3 },
-  heroTitle: { color: '#EEF1F5', fontSize: 22, fontWeight: '900', letterSpacing: -0.4, marginBottom: 4 },
-  heroStatus: { minWidth: 150, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
-  heroStatusLabel: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
-  heroStatusValue: { color: '#EEF1F5', fontSize: 14, fontWeight: '900', marginTop: 4 },
-  loading: { flexDirection: 'row', gap: 8, alignItems: 'center', paddingVertical: 10 },
-  error: { color: '#fca5a5', backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', padding: 10, borderRadius: 9, marginBottom: 8 },
-  notice: { color: '#7DFFB1', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 10, borderRadius: 9, marginBottom: 8 },
-  commandAuthority: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 11, padding: 11, marginBottom: 9 },
-  commandAuthorityTitle: { color: '#7DFFB1', fontSize: 12, fontWeight: '900' },
-  commandAuthorityText: { color: '#A1A6AE', fontSize: 10, lineHeight: 15, marginTop: 4 },
-  muted: { color: '#A1A6AE', fontSize: 11, lineHeight: 16 },
-  summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 9 },
-  summaryCard: { flexGrow: 1, flexBasis: 210, minWidth: 180, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, padding: 11 },
-  summaryAlert: { borderColor: '#7f2d3a', backgroundColor: '#1a1018' },
-  summaryLabel: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
-  summaryValue: { color: '#EEF1F5', fontSize: 17, fontWeight: '900', marginTop: 4 },
-  summaryMeta: { color: '#A1A6AE', fontSize: 9, lineHeight: 13, marginTop: 3 },
-  warningCard: { backgroundColor: '#1a1018', borderWidth: 1, borderColor: '#7f2d3a', borderRadius: 12, padding: 11, marginBottom: 9 },
-  warningTitle: { color: '#fecaca', fontSize: 12, fontWeight: '900' },
-  warningText: { color: '#d8b4b8', fontSize: 10, lineHeight: 15, marginTop: 3 },
-  card: { backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 13, marginBottom: 9 },
-  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  title: { color: '#EEF1F5', fontSize: 16, fontWeight: '900', marginBottom: 3 },
-  empty: { color: '#828A91', fontSize: 10, paddingVertical: 10 },
-  planRow: { flexDirection: 'row', gap: 8, paddingTop: 8, paddingBottom: 4 },
-  planCard: { width: 220, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 12, padding: 11 },
-  planCardCurrent: { borderColor: '#2BF47A', backgroundColor: '#121719' },
-  planName: { color: '#EEF1F5', fontSize: 13, fontWeight: '900' },
-  planPrice: { color: '#EEF1F5', fontSize: 19, fontWeight: '900', marginTop: 8 },
-  planCycle: { color: '#A1A6AE', fontSize: 10, marginTop: 2 },
-  currentBadge: { alignSelf: 'flex-start', color: '#7DFFB1', backgroundColor: '#142018', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '800', marginTop: 8 },
-  invoice: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10, borderTopWidth: 1, borderTopColor: '#1B2420', paddingVertical: 9 },
-  invoiceMain: { flex: 1, minWidth: 0 },
-  invoiceAmount: { alignItems: 'flex-end', gap: 6 },
-  rowTitle: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
-  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#19B95D', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
-  secondaryButton: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 9 },
-  buttonText: { color: '#fff', fontSize: 11, fontWeight: '900' },
-  secondaryButtonText: { color: '#DDE3E4', fontSize: 11, fontWeight: '900' },
-  inlineButton: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#2BF47A', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5 },
-  inlineButtonText: { color: '#7DFFB1', fontSize: 9, fontWeight: '900' },
+  card: { padding: 16, marginBottom: 12, gap: 12 },
+  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
+  heading: { flexGrow: 1, flexBasis: 190, gap: 4 },
+  title: { color: '#2BF47A', fontSize: 17, fontWeight: '800' },
+  muted: { color: '#afbed0', fontSize: 12, lineHeight: 18 },
+  warning: { color: '#f3c18b', fontSize: 12, lineHeight: 18 },
+  error: { color: '#fca5a5', fontSize: 12 },
+  authority: { backgroundColor: '#0e2921', borderRadius: 10, borderWidth: 1, borderColor: '#215e44', padding: 12, gap: 8 },
+  authorityTitle: { color: '#d8ffe5', fontWeight: '800', fontSize: 13 },
+  button: { alignSelf: 'flex-start', backgroundColor: '#2BF47A', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 9 },
+  buttonText: { color: '#04140b', fontWeight: '800', fontSize: 12 },
   disabled: { opacity: 0.45 },
-  fieldLabel: { color: '#A1A6AE', fontSize: 10, fontWeight: '800', marginTop: 8, marginBottom: 4 },
-  input: { color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderBottomWidth: 1, borderBottomColor: '#29384c', paddingVertical: 10 },
+  statusLabel: { color: '#a8b9cc', fontSize: 12 },
+  statusValue: { color: '#f0f7fa', fontWeight: '800', fontSize: 12, textAlign: 'right', flexShrink: 1 },
+  invoice: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#29384c', gap: 6 },
+  invoiceHeader: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
+  invoiceTitle: { color: '#eff7fa', fontWeight: '700', fontSize: 13 },
 });

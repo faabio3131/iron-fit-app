@@ -23,7 +23,7 @@ export function AIInsightCard({ workoutCount, weeklyFrequency, onOpenAssistant }
     <View style={styles.card} testID="iron-intelligence-card">
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Ionicons name="sparkles" size={18} color="#67d6ff" />
+          <Ionicons name="sparkles" size={18} color="#2BF47A" />
           <Text style={styles.title}>Iron Intelligence</Text>
         </View>
         <Text style={[styles.badge, insight.source === 'ai' ? styles.badgeAi : styles.badgeSafe]}>
@@ -38,7 +38,7 @@ export function AIInsightCard({ workoutCount, weeklyFrequency, onOpenAssistant }
         </View>
       ))}
       <TouchableOpacity style={styles.button} onPress={onOpenAssistant} accessibilityRole="button">
-        <Ionicons name="chatbubble-ellipses-outline" size={17} color="#dbeafe" />
+        <Ionicons name="chatbubble-ellipses-outline" size={17} color="#04140b" />
         <Text style={styles.buttonText}>Conversar com assistente</Text>
       </TouchableOpacity>
     </View>
@@ -46,17 +46,17 @@ export function AIInsightCard({ workoutCount, weeklyFrequency, onOpenAssistant }
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#071528', borderRadius: 18, padding: 16, borderWidth: 1, borderColor: '#203b55', marginBottom: 22 },
+  card: { backgroundColor: '#17132b', borderRadius: 18, padding: 16, borderWidth: 1, borderColor: '#1a9e5255', marginBottom: 22 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  title: { color: '#eef7ff', fontSize: 16, fontWeight: '800' },
+  title: { color: '#f1f5f9', fontSize: 16, fontWeight: '800' },
   badge: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },
-  badgeAi: { color: '#bfdbfe', backgroundColor: '#0b2340' },
-  badgeSafe: { color: '#9fb0c5', backgroundColor: '#101722' },
+  badgeAi: { color: '#86efac', backgroundColor: '#16653455' },
+  badgeSafe: { color: '#fde68a', backgroundColor: '#92400e55' },
   summary: { color: '#cbd5e1', fontSize: 13, lineHeight: 19, marginBottom: 12 },
-  recommendation: { backgroundColor: '#050b14', borderRadius: 12, padding: 11, marginBottom: 8 },
-  recommendationTitle: { color: '#dce9f6', fontSize: 13, fontWeight: '700', marginBottom: 3 },
-  recommendationDetail: { color: '#9fb0c5', fontSize: 12, lineHeight: 17 },
-  button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: '#176bc1', borderRadius: 12, paddingVertical: 11, marginTop: 4 },
-  buttonText: { color: '#eef7ff', fontSize: 13, fontWeight: '700' },
+  recommendation: { backgroundColor: '#0f172a88', borderRadius: 12, padding: 11, marginBottom: 8 },
+  recommendationTitle: { color: '#baf7d3', fontSize: 13, fontWeight: '700', marginBottom: 3 },
+  recommendationDetail: { color: '#94a3b8', fontSize: 12, lineHeight: 17 },
+  button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: '#2BF47A', borderRadius: 12, paddingVertical: 11, marginTop: 4 },
+  buttonText: { color: '#04140b', fontSize: 13, fontWeight: '700' },
 });

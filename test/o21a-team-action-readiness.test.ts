@@ -1,16 +1,23 @@
 import fs from 'node:fs';
 
-const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
+const shell = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
+const team = fs.readFileSync('src/components/TeamManagementPanel.tsx', 'utf8');
 
-test('O21A team invitation is unavailable until roster and member data are valid', () => {
-  expect(web).toContain('disabled={saving || !teamLoaded || !!inviteIssue}');
-  expect(web).toContain("if (inviteIssue) { setError(inviteIssue); return; }");
-  expect(web).toContain("api('/users/invite'");
+test('O21A invite stays fail-closed until the authoritative team roster loads', () => {
+  expect(shell).toContain('rosterLoaded={Array.isArray(data.users) || Array.isArray(data.users?.items)}');
+  expect(team).toContain('disabled={!rosterLoaded || !inviteValid || working}');
+  expect(team).toContain('if (working || !rosterLoaded || allowedRoles.length === 0) return;');
+  expect(team).toContain('name.trim().length >= 2');
+  expect(team).toContain('allowedRoles.includes(inviteRole)');
+  expect(team).toContain("api('/users/invite'");
 });
 
-test('O21A direct team creation requires valid role, identity, and strong password', () => {
-  expect(web).toContain('disabled={saving || !teamLoaded || !!directIssue}');
-  expect(web).toContain("const directIssue = inviteIssue || (!member.password");
-  expect(web).toContain("strongPassword(member.password)");
-  expect(web).toContain("api('/users', undefined, {");
+test('O21A team creation uses per-user secure invitations and governed tenant memberships', () => {
+  expect(team).toContain("isOwner ? ['MANAGER', 'RECEPTION', 'TRAINER'] : isManager ? ['RECEPTION', 'TRAINER'] : []");
+  expect(team).toContain('!isManager || role !== \'MANAGER\'');
+  expect(team).toContain('/membership/status');
+  expect(team).toContain('/membership/role');
+  expect(team).not.toContain('member.password');
+  expect(team).not.toContain("api('/users', undefined, {");
+  expect(shell).not.toContain('member.password');
 });

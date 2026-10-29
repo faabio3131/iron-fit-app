@@ -6,8 +6,10 @@ const agenda = fs.readFileSync('src/web/ScheduleWorkspace.tsx', 'utf8');
 test('O9 Web loads canonical tenant schedule read model and renders the premium workspace', () => {
   expect(web).toContain("import { ScheduleWorkspace } from './ScheduleWorkspace';");
   expect(web).toContain("api('/schedule-slots')");
-  expect(web).toContain("api('/schedules')");
-  expect(web).toContain('bookings={list(data.bookings)}');
+  // O shell funcional mantém a fonte canônica de horários via /schedule-slots;
+  // os agendamentos e check-ins são executados pelo painel operacional conectado.
+  expect(web).toContain('<ScheduleManagementPanel');
+  expect(web).toContain('slots={slots} bookingDate={bookingDate}');
   expect(web).not.toContain('Dia da semana (0 a 6)');
   expect(web).not.toContain('<Data value={slots} />');
 });
@@ -38,6 +40,7 @@ test('O9 Agenda exposes day/week calendar, filters, capacity, status and check-i
 test('O9 Agenda keeps authority in backend contracts and never sends tenant authority from UI', () => {
   expect(agenda).not.toContain('gymId');
   expect(web).not.toMatch(/JSON\.stringify\([^\n]*gymId/);
-  expect(web).toContain("canCreateSlot={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}");
-  expect(web).toContain("canManageBookings={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')}");
+  expect(web).toContain("canManageSlots={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}");
+  expect(web).toContain("canCheckIn={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')}");
+  expect(web).toContain("{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ?");
 });

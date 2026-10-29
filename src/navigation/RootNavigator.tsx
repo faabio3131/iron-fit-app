@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-
-import { ActivityIndicator, Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { TabItem } from '../components/TabItem';
 import { useAuth } from '../context/AuthContext';
 import { EvolutionScreen } from '../screens/EvolutionScreen';
@@ -17,17 +16,40 @@ import { WebAuthEntry } from '../web/WebAuthEntry';
 
 type Tab = 'treino' | 'intelligence' | 'agenda' | 'progresso' | 'financeiro' | 'perfil';
 
+const operationalRoles = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION', 'TRAINER'];
+
 function isStudentProfile(profile: any) {
-  return Array.isArray(profile?.roles) && profile.roles.includes('STUDENT');
+  const roles: string[] = Array.isArray(profile?.roles) ? profile.roles : [];
+  return roles.includes('STUDENT') && !roles.some((role) => operationalRoles.includes(role));
 }
 
 export function RootNavigator() {
-  const { sessionReady, session, profile, pendingTenantSelection } = useAuth();
+  const { sessionReady, session, profile, pendingTenantSelection, refreshProfile, logout } = useAuth();
   const [tab, setTab] = useState<Tab>('treino');
   const [recoveryMode, setRecoveryMode] = useState(false);
+  const [recoveringProfile, setRecoveringProfile] = useState(false);
+  const [profileActionError, setProfileActionError] = useState('');
+
+  async function retryProfile() {
+    if (recoveringProfile) return;
+    setRecoveringProfile(true);
+    setProfileActionError('');
+    try { await refreshProfile(); }
+    catch { setProfileActionError('A consulta de perfil falhou. Confira sua conexão e tente novamente.'); }
+    finally { setRecoveringProfile(false); }
+  }
+
+  async function leaveUnverifiedSession() {
+    if (recoveringProfile) return;
+    setRecoveringProfile(true);
+    setProfileActionError('');
+    try { await logout(); }
+    catch { setProfileActionError('Não foi possível encerrar a sessão. Tente novamente.'); }
+    finally { setRecoveringProfile(false); }
+  }
 
   if (!sessionReady) {
-    return <View style={styles.boot}><StatusBar barStyle="light-content" backgroundColor="#030811" /><ActivityIndicator size="large" color="#2f91ff" /></View>;
+    return <View style={styles.boot}><StatusBar barStyle="light-content" backgroundColor="#0a0e1a" /><ActivityIndicator size="large" color="#2BF47A" /></View>;
   }
 
   if (!session && pendingTenantSelection) return <TenantSelectionScreen />;
@@ -40,13 +62,34 @@ export function RootNavigator() {
       : <LoginScreen onForgotPassword={() => setRecoveryMode(true)} />;
   }
 
-  if (Platform.OS === 'web' && profile && !isStudentProfile(profile)) {
+  // One canonical operations UI on Web/Android/iOS. Staff must never fall
+  // through to a student's screens just because the platform is native.
+  // Without a loaded, authorized profile, do not expose either surface.
+  if (!profile || !Array.isArray(profile.roles) || !profile.roles.length) {
+    return <View style={styles.boot} testID="profile-validation-pending">
+      <ActivityIndicator size="large" color="#2BF47A" />
+      <Text style={styles.recoveryTitle}>Perfil de acesso ainda não confirmado</Text>
+      <Text style={styles.recoveryExplanation}>Sem identidade e funções válidas, os módulos do IRON permanecem bloqueados. Você pode consultar novamente ou encerrar esta sessão.</Text>
+      {profileActionError ? <Text testID="profile-retry-error" style={styles.recoveryError}>{profileActionError}</Text> : null}
+      <TouchableOpacity testID="profile-retry" accessibilityRole="button"
+        disabled={recoveringProfile} style={[styles.recoveryButton, recoveringProfile && styles.recoveryDisabled]}
+        onPress={() => { void retryProfile(); }}>
+        <Text style={styles.recoveryButtonText}>{recoveringProfile ? 'Consultando perfil…' : 'Tentar novamente'}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="profile-logout" accessibilityRole="button"
+        disabled={recoveringProfile} style={[styles.recoverySecondary, recoveringProfile && styles.recoveryDisabled]}
+        onPress={() => { void leaveUnverifiedSession(); }}>
+        <Text style={styles.recoverySecondaryText}>Sair da conta</Text>
+      </TouchableOpacity>
+    </View>;
+  }
+  if (!isStudentProfile(profile)) {
     return <CommercialWebApp />;
   }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#030811" />
+      <StatusBar barStyle="light-content" backgroundColor="#0a0e1a" />
       <View style={styles.screen}>
         {tab === 'treino' ? <WorkoutsScreen /> : null}
         {tab === 'intelligence' ? <IntelligenceScreen /> : null}
@@ -68,8 +111,16 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#030811' },
-  boot: { flex: 1, backgroundColor: '#030811', alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#0a0e1a' },
+  boot: { flex: 1, backgroundColor: '#0a0e1a', alignItems: 'center', justifyContent: 'center' },
   screen: { flex: 1 },
-  tabBar: { flexDirection: 'row', backgroundColor: '#050b14', borderTopWidth: 1, borderTopColor: '#203b55', paddingBottom: 16 },
+  tabBar: { flexDirection: 'row', backgroundColor: '#131826', borderTopWidth: 1, borderTopColor: '#252d47', paddingBottom: 16 },
+  recoveryTitle: { color: '#edf9f1', fontSize: 17, fontWeight: '800', textAlign: 'center', marginTop: 18 },
+  recoveryExplanation: { color: '#a8bac6', fontSize: 13, textAlign: 'center', lineHeight: 20, marginHorizontal: 28, marginTop: 9, maxWidth: 420 },
+  recoveryError: { color: '#fecaca', marginTop: 12, fontSize: 12, textAlign: 'center' },
+  recoveryButton: { backgroundColor: '#2BF47A', borderRadius: 9, marginTop: 20, paddingVertical: 12, paddingHorizontal: 20 },
+  recoveryButtonText: { color: '#08190e', fontWeight: '800', fontSize: 13 },
+  recoverySecondary: { borderWidth: 1, borderColor: '#365249', borderRadius: 9, marginTop: 10, paddingVertical: 12, paddingHorizontal: 20 },
+  recoverySecondaryText: { color: '#d1e7d9', fontWeight: '700', fontSize: 13 },
+  recoveryDisabled: { opacity: 0.45 },
 });

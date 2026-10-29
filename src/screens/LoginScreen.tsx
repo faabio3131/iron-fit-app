@@ -1,15 +1,16 @@
-import { AuthFrame } from '../components/AuthFrame';
-import { IronInput as TextInput } from '../components/IronInput';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { IronBrand } from '../components/IronBrand';
 
 type LoginScreenProps = {
   initialEmail?: string;
@@ -75,7 +76,16 @@ export function LoginScreen({
     (requiresMfa && !mfaCode.trim() && !recoveryCode.trim());
 
   return (
-    <AuthFrame>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          <IronBrand />
+          <Text style={styles.logoTagline}>A força da sua academia, na nuvem.</Text>
+        </View>
+
         <View style={styles.card}>
           <Text style={styles.welcome}>Bem-vindo de volta</Text>
           <Text style={styles.sub}>
@@ -88,12 +98,11 @@ export function LoginScreen({
               {notice}
             </Text>
           ) : null}
-          <Text style={styles.fieldLabel}>E-mail</Text>
           <View style={styles.inputGroup}>
             <Ionicons
               name="mail-outline"
               size={20}
-              color="#A1A6AE"
+              color="#64748b"
               style={styles.inputIcon}
             />
             <TextInput
@@ -105,16 +114,15 @@ export function LoginScreen({
               autoCapitalize="none"
               autoCorrect={false}
               placeholder="Email"
-              placeholderTextColor="#A1A6AE"
+              placeholderTextColor="#64748b"
               keyboardType="email-address"
             />
           </View>
-          <Text style={styles.fieldLabel}>Senha</Text>
           <View style={styles.inputGroup}>
             <Ionicons
               name="lock-closed-outline"
               size={20}
-              color="#A1A6AE"
+              color="#64748b"
               style={styles.inputIcon}
             />
             <TextInput
@@ -124,26 +132,16 @@ export function LoginScreen({
               onChangeText={setPassword}
               editable={!requiresMfa}
               secureTextEntry={!passwordVisible}
-              autoCapitalize="none"
-              autoCorrect={false}
               placeholder="Senha"
-              placeholderTextColor="#A1A6AE"
+              placeholderTextColor="#64748b"
             />
-            <TouchableOpacity
-              testID="login-password-toggle"
-              style={styles.passwordToggle}
-              onPress={() => setPasswordVisible((visible) => !visible)}
-              disabled={requiresMfa}
+                      <TouchableOpacity testID="login-password-toggle"
+              style={styles.passwordToggle} disabled={requiresMfa}
+              onPress={() => setPasswordVisible((value) => !value)}
               accessibilityRole="button"
-              accessibilityLabel={passwordVisible ? 'Ocultar senha' : 'Mostrar senha'}
-              accessibilityState={{ disabled: requiresMfa, expanded: passwordVisible }}
-              hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
-            >
-              <Ionicons
-                name={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
-                size={22}
-                color="#A1A6AE"
-              />
+              accessibilityLabel={passwordVisible ? "Ocultar senha" : "Mostrar senha"}
+              accessibilityState={{ disabled: requiresMfa, expanded: passwordVisible }}>
+              <Ionicons name={passwordVisible ? "eye-off-outline" : "eye-outline"} size={22} color="#94a3b8" />
             </TouchableOpacity>
           </View>
 
@@ -153,7 +151,7 @@ export function LoginScreen({
                 <Ionicons
                   name="shield-checkmark-outline"
                   size={20}
-                  color="#A1A6AE"
+                  color="#64748b"
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -166,7 +164,7 @@ export function LoginScreen({
                   }}
                   keyboardType="number-pad"
                   placeholder="Código MFA de 6 dígitos"
-                  placeholderTextColor="#A1A6AE"
+                  placeholderTextColor="#64748b"
                 />
               </View>
               <Text style={styles.or}>ou</Text>
@@ -174,7 +172,7 @@ export function LoginScreen({
                 <Ionicons
                   name="key-outline"
                   size={20}
-                  color="#A1A6AE"
+                  color="#64748b"
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -188,22 +186,21 @@ export function LoginScreen({
                   autoCapitalize="characters"
                   autoCorrect={false}
                   placeholder="Recovery code"
-                  placeholderTextColor="#A1A6AE"
+                  placeholderTextColor="#64748b"
                 />
               </View>
             </>
           ) : null}
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TouchableOpacity
-              accessibilityRole="button"
+          <TouchableOpacity accessibilityRole="button"
             testID="login-submit"
             style={[styles.button, disabled && styles.disabled]}
             onPress={handleLogin}
             disabled={disabled}
           >
             {loading ? (
-              <ActivityIndicator color="#EEF1F5" />
+              <ActivityIndicator color="#04140b" />
             ) : (
               <Text style={styles.buttonText}>
                 {requiresMfa ? 'Confirmar e entrar' : 'Entrar'}
@@ -212,8 +209,7 @@ export function LoginScreen({
           </TouchableOpacity>
 
           {requiresMfa ? (
-            <TouchableOpacity
-              accessibilityRole="button"
+            <TouchableOpacity accessibilityRole="button"
               style={styles.linkButton}
               onPress={() => {
                 setRequiresMfa(false);
@@ -227,8 +223,7 @@ export function LoginScreen({
           ) : (
             <>
               {onForgotPassword ? (
-                <TouchableOpacity
-              accessibilityRole="button"
+                <TouchableOpacity accessibilityRole="button"
                   testID="forgot-password"
                   style={styles.linkButton}
                   onPress={onForgotPassword}
@@ -238,8 +233,7 @@ export function LoginScreen({
                 </TouchableOpacity>
               ) : null}
               {onStartTrial ? (
-                <TouchableOpacity
-              accessibilityRole="button"
+                <TouchableOpacity accessibilityRole="button"
                   testID="start-trial"
                   style={styles.trialButton}
                   onPress={onStartTrial}
@@ -251,21 +245,55 @@ export function LoginScreen({
             </>
           )}
         </View>
-    </AuthFrame>
+        <Text style={styles.footer}>Iron Fit © 2026</Text>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  fieldLabel: { color: '#EEF1F5', fontSize: 13, fontWeight: '600', marginBottom: 7 },
+  container: { flexGrow: 1, backgroundColor: '#0a0e1a' },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  },
+  logoContainer: { alignItems: 'center', marginBottom: 40 },
+  logoBadge: {
+    width: 110,
+    height: 110,
+    borderRadius: 30,
+    backgroundColor: '#1a2035',
+    borderWidth: 1,
+    borderColor: '#252d47',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  logoBarbell: { position: 'absolute', bottom: 22 },
+  logoTitle: {
+    color: '#f1f5f9',
+    fontSize: 36,
+    fontWeight: '800',
+    letterSpacing: -1,
+  },
+  logoTagline: {
+    color: '#94a3b8',
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 22,
+  },
   card: {
-    backgroundColor: '#0F0F12',
+    backgroundColor: '#1a2035',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#24262B',
+    borderColor: '#252d47',
   },
-  welcome: { color: '#EEF1F5', fontSize: 22, fontWeight: '700', marginBottom: 4 },
-  sub: { color: '#A1A6AE', fontSize: 14, marginBottom: 18 },
+  welcome: { color: '#f1f5f9', fontSize: 22, fontWeight: '700', marginBottom: 4 },
+  sub: { color: '#94a3b8', fontSize: 14, marginBottom: 18 },
   notice: {
     color: '#86efac',
     backgroundColor: '#12301f',
@@ -279,34 +307,40 @@ const styles = StyleSheet.create({
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#08080A',
+    backgroundColor: '#131826',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#24262B',
+    borderColor: '#252d47',
     paddingHorizontal: 14,
     marginBottom: 12,
   },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, color: '#EEF1F5', paddingVertical: 14, fontSize: 15 },
   passwordToggle: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  or: { color: '#A1A6AE', textAlign: 'center', marginBottom: 10, fontSize: 12 },
+  input: { flex: 1, color: '#f1f5f9', paddingVertical: 14, fontSize: 15 },
+  or: { color: '#64748b', textAlign: 'center', marginBottom: 10, fontSize: 12 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
   button: {
-    backgroundColor: '#19B95D',
+    backgroundColor: '#2BF47A',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
   },
   disabled: { opacity: 0.6 },
-  buttonText: { color: '#EEF1F5', fontSize: 16, fontWeight: '700' },
+  buttonText: { color: '#04140b', fontSize: 16, fontWeight: '700' },
   linkButton: { paddingVertical: 12, alignItems: 'center' },
-  linkText: { color: '#A1A6AE', fontSize: 13, fontWeight: '600' },
+  linkText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
   trialButton: {
     borderWidth: 1,
-    borderColor: '#1E4F34',
+    borderColor: '#166534',
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: 'center',
   },
-  trialText: { color: '#9BFFC4', fontSize: 14, fontWeight: '700' },
+  trialText: { color: '#2BF47A', fontSize: 14, fontWeight: '700' },
+  footer: {
+    color: '#64748b',
+    textAlign: 'center',
+    marginTop: 24,
+    fontSize: 12,
+  },
 });

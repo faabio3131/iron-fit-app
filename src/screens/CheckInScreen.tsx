@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../services/api';
 
-export function CheckInScreen() {
+export function CheckInScreen({ onCheckedIn }: { onCheckedIn?: () => void } = {}) {
   const [checkingIn, setCheckingIn] = useState(false);
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
@@ -13,6 +13,7 @@ export function CheckInScreen() {
     try {
       await api('/me/check-in', undefined, { method: 'POST', body: JSON.stringify({}) });
       setMessage({ type: 'ok', text: 'Check-in registrado! Bom treino 💪' });
+      onCheckedIn?.();
     } catch (reason: unknown) {
       setMessage({ type: 'err', text: reason instanceof Error ? reason.message : 'Não foi possível registrar o check-in.' });
     } finally {
@@ -22,13 +23,13 @@ export function CheckInScreen() {
 
   return (
     <>
-      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Registrar check-in na academia" accessibilityState={{ disabled: checkingIn, busy: checkingIn }} testID="checkin-submit" style={styles.card} onPress={handleCheckIn} disabled={checkingIn} activeOpacity={0.8}>
-        <View style={styles.iconBox}><Ionicons name="qr-code" size={32} color="#EEF1F5" /></View>
+      <TouchableOpacity accessibilityRole="button" testID="checkin-submit" style={styles.card} onPress={handleCheckIn} disabled={checkingIn} activeOpacity={0.8}>
+        <View style={styles.iconBox}><Ionicons name="qr-code" size={32} color="#04140b" /></View>
         <View style={styles.content}>
           <Text style={styles.title}>Check-in na academia</Text>
           <Text style={styles.sub}>Toque para registrar sua entrada</Text>
         </View>
-        {checkingIn ? <ActivityIndicator color="#EEF1F5" /> : <Ionicons name="chevron-forward" size={20} color="#A1A6AE" />}
+        {checkingIn ? <ActivityIndicator color="#04140b" /> : <Ionicons name="chevron-forward" size={20} color="#04140bcc" />}
       </TouchableOpacity>
       {message ? (
         <View style={[styles.message, message.type === 'ok' ? styles.messageOk : styles.messageError]}>
@@ -41,13 +42,13 @@ export function CheckInScreen() {
 
 const styles = StyleSheet.create({
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2BF47A', borderRadius: 16, padding: 18, marginBottom: 16, gap: 14 },
-  iconBox: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#ffffff25', alignItems: 'center', justifyContent: 'center' },
+  iconBox: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#04140b1f', alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1 },
-  title: { color: '#EEF1F5', fontSize: 16, fontWeight: '800' },
-  sub: { color: '#ffffffcc', fontSize: 12, marginTop: 2 },
+  title: { color: '#04140b', fontSize: 16, fontWeight: '800' },
+  sub: { color: '#04140bcc', fontSize: 12, marginTop: 2 },
   message: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 16 },
-  messageOk: { backgroundColor: '#121719', borderColor: '#1E4F34' },
+  messageOk: { backgroundColor: '#10b98120', borderColor: '#10b98150' },
   messageError: { backgroundColor: '#ef444420', borderColor: '#ef444450' },
-  okText: { color: '#7DFFB1', fontWeight: '700' },
+  okText: { color: '#7DFFB1', fontWeight: '600' },
   errorText: { color: '#ef4444', fontWeight: '600' },
 });

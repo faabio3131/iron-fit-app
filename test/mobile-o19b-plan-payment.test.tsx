@@ -51,4 +51,14 @@ describe('O19 mobile plan payments', () => {
     await waitFor(() => expect(view.getByText(/100,00/)).toBeTruthy());
     expect(view.queryByTestId('student-charge-payment-charge-b')).toBeNull();
   });
+  test.each(['PAID', 'CANCELED', 'CANCELLED', null, 'UNKNOWN'])(
+    'never offers payment for a non-payable status %s', async (status) => {
+      mockApi.mockResolvedValue([{ id: 'closed', amount: 10000, status,
+        paymentLink: 'https://pay.example.com/closed' }]);
+      const view = render(<FinancialScreen />);
+      await waitFor(() => expect(view.getByTestId('student-charge-closed')).toBeTruthy());
+      expect(view.queryByTestId('student-charge-payment-closed')).toBeNull();
+    },
+  );
+
 });

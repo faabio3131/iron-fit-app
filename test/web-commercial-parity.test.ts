@@ -4,7 +4,14 @@ const navigator = fs.readFileSync('src/navigation/RootNavigator.tsx', 'utf8');
 const auth = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
 const login = fs.readFileSync('src/screens/LoginScreen.tsx', 'utf8');
 const web = fs.readFileSync('src/web/CommercialWebApp.tsx', 'utf8');
-const entitlements = fs.readFileSync('src/web/EntitlementsWorkspace.tsx', 'utf8');
+const student360 = fs.readFileSync('src/components/Student360Panel.tsx', 'utf8');
+const assessmentEvolution = fs.readFileSync('src/components/AssessmentEvolutionPanel.tsx', 'utf8');
+const workoutComposer = fs.readFileSync('src/components/WorkoutComposer.tsx', 'utf8');
+const intelligence = fs.readFileSync('src/components/IronIntelligencePanel.tsx', 'utf8');
+const accessCenter = fs.readFileSync('src/components/AccessCenterPanel.tsx', 'utf8');
+const scheduleManagement = fs.readFileSync('src/components/ScheduleManagementPanel.tsx', 'utf8');
+const operationalWeb = web + student360 + assessmentEvolution;
+const fullWeb = operationalWeb + workoutComposer + intelligence + accessCenter + scheduleManagement;
 const trial = fs.readFileSync('src/web/TrialSignupScreen.tsx', 'utf8');
 const workflow = fs.readFileSync('.github/workflows/mobile-ci.yml', 'utf8');
 
@@ -27,7 +34,7 @@ test('public web trial calls only the canonical commercial provisioning endpoint
 
 test('commercial web derives tenant from session and never submits browser-selected gymId', () => {
   expect(web).toMatch(/activeTenantId/);
-  expect(web).toContain('const { profile, activeTenantId, logout } = useAuth()');
+  expect(web).toMatch(/Tenant derivado da sessão autenticada/);
   expect(web).not.toMatch(/JSON\.stringify\([^\n]*gymId/s);
   expect(web).not.toMatch(/localStorage|sessionStorage/);
 });
@@ -49,7 +56,7 @@ test('commercial modules consume backend sources of truth and entitlement keys',
     '/creator-network/content/tenant/items',
     '/ai/workout-candidates',
   ]) {
-    expect(web).toContain(route);
+    expect(fullWeb).toContain(route);
   }
   expect(web).toContain("equipment.inventory");
   expect(web).toContain("ai.workout_generation");
@@ -60,7 +67,7 @@ test('commercial modules consume backend sources of truth and entitlement keys',
 test('web surface exposes fail-closed and human-review states', () => {
   expect(web).toMatch(/EXPIRED/);
   expect(web).toMatch(/SUSPENDED/);
-  expect(entitlements).toMatch(/FAIL_CLOSED_DEFAULT/);
+  expect(web).toMatch(/FAIL_CLOSED_DEFAULT/);
   expect(web).toMatch(/PENDING_REVIEW/);
   expect(web).toMatch(/APPROVED/);
   expect(web).toMatch(/Seu perfil não possui permissão/);

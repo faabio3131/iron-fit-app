@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { CommercialWebApp } from '../src/web/CommercialWebApp';
 
 const mockApi = jest.fn();
@@ -57,4 +57,25 @@ describe('commercial web shell', () => {
     expect(mockApi).toHaveBeenCalledWith('/product-entitlements/tenant/features');
     expect(mockApi).toHaveBeenCalledWith('/commercial/trial/status');
   });
+});
+
+test('C03 suspended tenant exposes only recovery navigation and requires owner step-up before SaaS billing', async () => {
+  mockApi.mockReset();
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/product-entitlements/tenant/features') return [];
+    if (path === '/product-entitlements/tenant/current') return { status: 'SUSPENDED' };
+    if (path === '/commercial/trial/status') return { status: 'TRIALING' };
+    if (path === '/commercial/onboarding') return { nextStep: 'FINISH' };
+    if (path === '/auth/step-up/status') return { active: false, expiresAt: null };
+    throw new Error('Unexpected suspended-state call: ' + path);
+  });
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('subscription-blocked')).toBeTruthy());
+  expect(view.queryByTestId('nav-students')).toBeNull();
+  expect(view.getByTestId('nav-saasBilling')).toBeTruthy();
+  expect(view.queryByTestId('saas-billing-panel')).toBeNull();
+  fireEvent.press(view.getByTestId('nav-saasBilling'));
+  await waitFor(() => expect(view.getByTestId('admin-step-up-submit')).toBeTruthy());
+  expect(view.queryByTestId('saas-billing-panel')).toBeNull();
+  expect(mockApi.mock.calls.some(([path]) => path.startsWith('/saas-billing'))).toBe(false);
 });

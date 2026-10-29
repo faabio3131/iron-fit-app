@@ -430,7 +430,7 @@ export function IntegrationCredentialsPanel({
           }),
         },
       );
-      if (typeof result?.authorizationUrl !== 'string' || !result.authorizationUrl) {
+      if (typeof result?.authorizationUrl !== 'string' || !/^https:\/\/[^/\s]+/i.test(result.authorizationUrl)) {
         throw new Error('O servidor não retornou a URL segura de autorização.');
       }
       setNotice('Autorização iniciada. Conclua o consentimento no provedor e depois atualize esta tela.');
@@ -502,7 +502,7 @@ export function IntegrationCredentialsPanel({
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator color="#2BF47A" />
+        <ActivityIndicator color="#2F91FF" />
         <Text style={styles.muted}>Carregando integrações da academia…</Text>
       </View>
     );
@@ -831,58 +831,58 @@ export function IntegrationCredentialsPanel({
 }
 
 const styles = StyleSheet.create({
-  hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 14, marginBottom: 9 },
+  hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#071629', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 14, marginBottom: 9 },
   heroCopy: { flex: 1, minWidth: 260 },
   eyebrow: { color: '#56EC95', fontSize: 10, fontWeight: '900', letterSpacing: 0.8, marginBottom: 3 },
   heroTitle: { color: '#EEF1F5', fontSize: 21, fontWeight: '900', letterSpacing: -0.4, marginBottom: 4 },
-  environmentCard: { minWidth: 170, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
+  environmentCard: { minWidth: 170, backgroundColor: '#050B14', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
   environmentLabel: { color: '#828A91', fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
   environmentValue: { color: '#EEF1F5', fontSize: 14, fontWeight: '900', marginTop: 3 },
   environmentMeta: { color: '#828A91', fontSize: 9, marginTop: 2 },
-  section: { backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 13, marginBottom: 9 },
+  section: { backgroundColor: '#071629', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 13, marginBottom: 9 },
   title: { color: '#EEF1F5', fontSize: 16, fontWeight: '900', marginBottom: 4 },
   subTitle: { color: '#DDE3E4', fontSize: 13, fontWeight: '900', marginTop: 8, marginBottom: 3 },
   muted: { color: '#A1A6AE', fontSize: 11, lineHeight: 16, marginBottom: 6 },
-  helper: { color: '#7DFFB1', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 9, padding: 8, fontSize: 10, marginBottom: 7 },
+  helper: { color: '#8CC5FF', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 9, padding: 8, fontSize: 10, marginBottom: 7 },
   empty: { color: '#828A91', fontSize: 10, paddingVertical: 8 },
   providerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 7 },
-  providerCard: { flexGrow: 1, flexBasis: 210, minWidth: 190, maxWidth: 330, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
-  providerCardActive: { borderColor: '#2BF47A', backgroundColor: '#121719' },
+  providerCard: { flexGrow: 1, flexBasis: 210, minWidth: 190, maxWidth: 330, backgroundColor: '#050B14', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },
+  providerCardActive: { borderColor: '#2F91FF', backgroundColor: '#121719' },
   providerCardDisabled: { opacity: 0.42 },
   providerName: { color: '#EEF1F5', fontSize: 13, fontWeight: '900' },
   providerMeta: { color: '#9299A1', fontSize: 9, lineHeight: 13, marginTop: 3 },
   label: { color: '#A1A6AE', fontSize: 10, fontWeight: '800', marginTop: 8, marginBottom: 5 },
   field: { marginBottom: 7 },
-  input: { color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
+  input: { color: '#EEF1F5', backgroundColor: '#050B14', borderWidth: 1, borderColor: '#252A2B', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 },
-  chip: { minHeight: 36, justifyContent: 'center', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  chipActive: { backgroundColor: '#12271B', borderColor: '#2BF47A' },
+  chip: { minHeight: 36, justifyContent: 'center', backgroundColor: '#050B14', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  chipActive: { backgroundColor: '#09243D', borderColor: '#2F91FF' },
   chipText: { color: '#DDE3E4', fontSize: 10, fontWeight: '800' },
-  oauthCard: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10, marginTop: 6 },
+  oauthCard: { backgroundColor: '#050B14', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10, marginTop: 6 },
   configRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: '#1B2420', paddingTop: 7, marginTop: 4 },
   configField: { flexGrow: 1, flexBasis: 180, minWidth: 160 },
   removeButton: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 8, marginBottom: 7 },
   removeButtonText: { color: '#DDE3E4', fontSize: 9, fontWeight: '800' },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 8 },
-  button: { minHeight: 44, justifyContent: 'center', backgroundColor: '#19B95D', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9 },
+  button: { minHeight: 44, justifyContent: 'center', backgroundColor: '#247BE0', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9 },
   buttonSecondary: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31' },
   danger: { backgroundColor: '#7f1d1d' },
   buttonText: { color: '#fff', fontWeight: '900', fontSize: 10 },
   disabled: { opacity: 0.42 },
-  connection: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10, marginTop: 7 },
+  connection: { backgroundColor: '#050B14', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10, marginTop: 7 },
   connectionHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' },
   connectionCopy: { flex: 1, minWidth: 220 },
   connectionTitle: { color: '#EEF1F5', fontWeight: '900', fontSize: 13 },
   connectionMeta: { color: '#9299A1', fontSize: 9, marginTop: 3 },
-  vaultBadge: { color: '#7DFFB1', backgroundColor: '#142018', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 4, fontSize: 9, fontWeight: '800' },
+  vaultBadge: { color: '#8CC5FF', backgroundColor: '#142018', borderWidth: 1, borderColor: '#1E4F34', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 4, fontSize: 9, fontWeight: '800' },
   pendingBadge: { color: '#fde68a', backgroundColor: '#2a210d', borderWidth: 1, borderColor: '#785e13', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 4, fontSize: 9, fontWeight: '800' },
   capabilityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 7 },
   capabilityBadge: { color: '#DDE3E4', backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 9, fontWeight: '700' },
   connectionFacts: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  fact: { flexGrow: 1, flexBasis: 130, minWidth: 110, backgroundColor: '#0F0F12', borderRadius: 8, padding: 7 },
+  fact: { flexGrow: 1, flexBasis: 130, minWidth: 110, backgroundColor: '#071629', borderRadius: 8, padding: 7 },
   factLabel: { color: '#828A91', fontSize: 8, fontWeight: '800', textTransform: 'uppercase' },
   factValue: { color: '#DDE3E4', fontSize: 10, fontWeight: '800', marginTop: 2 },
   error: { color: '#fca5a5', backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', padding: 9, borderRadius: 9, marginBottom: 8 },
-  notice: { color: '#7DFFB1', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 9, borderRadius: 9, marginBottom: 8 },
+  notice: { color: '#8CC5FF', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 9, borderRadius: 9, marginBottom: 8 },
   loading: { minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 8 },
 });
