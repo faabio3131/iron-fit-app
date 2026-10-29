@@ -52,7 +52,10 @@ export function ManagerAlertsPanel() {
       setPreferences(Array.isArray(prefs) ? prefs : []); setEvolution(connection ?? { configured: false, status: 'DISCONNECTED' });
     } catch (reason) { setError(errorMessage(reason)); } finally { setLoading(false); }
   }, [filter]);
-  useEffect(() => { void load(); }, [activeTenantId, load]);
+  useEffect(() => {
+    const timer = setTimeout(() => void load(), 0);
+    return () => clearTimeout(timer);
+  }, [activeTenantId, load]);
 
   async function alertAction(id: string, action: string) {
     setSaving(id); setError(''); setNotice('');
