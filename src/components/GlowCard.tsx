@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 import { colors, glow, glowRest } from '../theme/colors';
 
 /**
@@ -30,10 +30,22 @@ export function GlowCard({
   const [pressed, setPressed] = useState(false);
   const active = hovered || pressed;
 
+  // Decorative containers must not be announced as buttons or capture
+  // keyboard focus. Only cards with an action use Pressable semantics.
+  if (!onPress) return (
+    <View testID={testID}
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      style={[styles.card, style, hovered ? styles.cardActive : null, hovered ? glow : glowRest]}>
+      {children}
+    </View>
+  );
+
   return (
     <Pressable
+      accessibilityRole="button"
       testID={testID}
-      accessibilityRole={onPress ? accessibilityRole ?? 'button' : undefined}
+      {...(accessibilityRole === 'link' ? { accessibilityRole: 'link' as const } : {})}
       disabled={disabled}
       onPress={onPress}
       onHoverIn={() => setHovered(true)}

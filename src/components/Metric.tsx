@@ -13,7 +13,7 @@ export function Metric({ label, value, icon }: { label: string; value: string; i
 }
 
 const styles = StyleSheet.create({
-  box: { flex: 1, backgroundColor: '#131826', borderRadius: 12, padding: 12, alignItems: 'center' },
-  value: { color: '#f1f5f9', fontSize: 18, fontWeight: '800', marginTop: 6, letterSpacing: -0.5 },
-  label: { color: '#94a3b8', fontSize: 11, marginTop: 2 },
+  box: { flex: 1, backgroundColor: '#08080A', borderRadius: 12, padding: 12, alignItems: 'center' },
+  value: { color: '#EEF1F5', fontSize: 18, fontWeight: '800', marginTop: 6, letterSpacing: -0.5 },
+  label: { color: '#A1A6AE', fontSize: 11, marginTop: 2 },
 });

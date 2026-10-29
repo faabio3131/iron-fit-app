@@ -2,9 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { AccountSecurityPanel } from '../components/AccountSecurityPanel';
+import { IronBrand } from '../components/IronBrand';
+import { PASSWORD_POLICY_TEXT } from '../security/password-policy';
 import { SaasBillingPanel } from '../components/SaasBillingPanel';
 import { IntegrationCredentialsPanel } from '../components/IntegrationCredentialsPanel';
 import { CommunicationCenterPanel } from '../components/CommunicationCenterPanel';
+import { CommunicationCenter } from './CommunicationCenter';
 import { Student360Panel } from '../components/Student360Panel';
 import { AssessmentEvolutionPanel } from '../components/AssessmentEvolutionPanel';
 import { EquipmentIntelligencePanel } from '../components/EquipmentIntelligencePanel';
@@ -17,19 +20,26 @@ import { AccessCenterPanel } from '../components/AccessCenterPanel';
 import { OperationsCockpitPanel, type CockpitShortcut } from '../components/OperationsCockpitPanel';
 import { OnboardingWorkspace } from '../components/OnboardingWorkspace';
 import { AcademyChargesPanel } from '../components/AcademyChargesPanel';
-import { PrivacyCenterPanel } from '../components/PrivacyCenterPanel';
+import { PrivacyCenter } from './PrivacyCenter';
 import { IronIntelligencePanel } from '../components/IronIntelligencePanel';
 import { AggregatorHubPanel } from '../components/AggregatorHubPanel';
 import { GlowCard } from '../components/GlowCard';
-import { CreatorNetworkWorkspace } from '../components/CreatorNetworkWorkspace';
+import { CreatorNetworkWorkspace } from './CreatorNetworkWorkspace';
+import { ScheduleWorkspace } from './ScheduleWorkspace';
+import { AccessCenterWorkspace } from './AccessCenterWorkspace';
+import { FinancialWorkspace } from './FinancialWorkspace';
+import { EntitlementsWorkspace } from './EntitlementsWorkspace';
+import { FiscalCenter } from './FiscalCenter';
 import { useAuth } from '../context/AuthContext';
 import { brlFromMinor, brlToMinor, positiveBrlToMinor } from '../utils/academy-money';
 import { api } from '../services/api';
 
-type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'intelligence' | 'aggregator' | 'schedule' | 'access' | 'communication' | 'financial' | 'saasBilling' | 'security' | 'privacy' | 'entitlements' | 'integrations' | 'creator';
+type ModuleKey = 'overview' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'intelligence' | 'aggregator' | 'schedule' | 'access' | 'communication' | 'financial' | 'fiscal' | 'saasBilling' | 'security' | 'privacy' | 'entitlements' | 'integrations' | 'creator';
 type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; value: boolean | number | string[] | null; source?: string; reason?: string | null };
 type ModuleDefinition = { key: ModuleKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name']; roles?: string[]; entitlement?: string[] };
-const restrictedAdminModules: ModuleKey[] = ['financial', 'saasBilling', 'entitlements', 'integrations'];
+const restrictedAdminModules: ModuleKey[] = ['financial', 'fiscal', 'saasBilling', 'entitlements', 'integrations'];
+// Missing or unspecified grants must never unlock a feature.
+const FAIL_CLOSED_DEFAULT = false;
 
 const operational = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION'];
 const staff = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION', 'TRAINER'];
@@ -43,11 +53,11 @@ const modules: ModuleDefinition[] = [
   { key: 'assessments', label: 'Avaliações', icon: 'pulse-outline', roles: staff },
   { key: 'workouts', label: 'Treinos', icon: 'clipboard-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER'] },
   { key: 'intelligence', label: 'IRON Intelligence', icon: 'sparkles-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER'], entitlement: ['ai.workout_generation'] },
-  { key: 'aggregator', label: 'Aggregator Hub', icon: 'git-merge-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION'] },
   { key: 'schedule', label: 'Agenda', icon: 'calendar-outline', roles: staff },
   { key: 'access', label: 'Acessos', icon: 'key-outline', roles: operational },
   { key: 'communication', label: 'Comunicação', icon: 'chatbubbles-outline', roles: operational },
   { key: 'financial', label: 'Financeiro', icon: 'lock-closed-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
+  { key: 'fiscal', label: 'Fiscal / NFS-e', icon: 'document-text-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
   { key: 'saasBilling', label: 'Assinatura IRON', icon: 'card-outline', roles: ['SUPER_ADMIN', 'OWNER'] },
   { key: 'security', label: 'Segurança', icon: 'shield-checkmark-outline' },
   { key: 'privacy', label: 'Privacidade', icon: 'document-text-outline' },
@@ -101,10 +111,10 @@ function formatFieldValue(value: unknown): string {
   return String(value);
 }
 function Field({ label, value, onChangeText, secureTextEntry, numeric, testID }: { label: string; value: string; onChangeText: (value: string) => void; secureTextEntry?: boolean; numeric?: boolean; testID?: string }) {
-  return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><TextInput testID={testID} style={styles.input} value={value} onChangeText={onChangeText} secureTextEntry={secureTextEntry} keyboardType={numeric ? 'numeric' : 'default'} placeholderTextColor="#64748b" /></View>;
+  return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><TextInput accessibilityLabel={label} testID={testID} style={styles.input} value={value} onChangeText={onChangeText} secureTextEntry={secureTextEntry} keyboardType={numeric ? 'numeric' : 'default'} placeholderTextColor="#64748b" /></View>;
 }
 function Button({ label, onPress, disabled, secondary, testID }: { label: string; onPress: () => void; disabled?: boolean; secondary?: boolean; testID?: string }) {
-  return <TouchableOpacity testID={testID} style={[styles.button, secondary && styles.secondary, disabled && styles.disabled]} onPress={onPress} disabled={disabled}><Text style={[styles.buttonText, !secondary && styles.buttonTextOnAccent]}>{label}</Text></TouchableOpacity>;
+  return <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} testID={testID} style={[styles.button, secondary && styles.secondary, disabled && styles.disabled]} onPress={onPress} disabled={disabled}><Text style={[styles.buttonText, !secondary && styles.buttonTextOnAccent]}>{label}</Text></TouchableOpacity>;
 }
 function Section({ title, children, subtitle }: { title: string; children: React.ReactNode; subtitle?: string }) {
   return (
@@ -144,12 +154,24 @@ function Data({ value, empty = 'Nenhum registro encontrado.' }: { value: any; em
   );
 }
 function Chips({ rows, selected, onSelect }: { rows: any[]; selected: string; onSelect: (id: string) => void }) {
-  return <View style={styles.chips}>{rows.map((row) => <TouchableOpacity key={row.id} style={[styles.chip, selected === row.id && styles.chipActive]} onPress={() => onSelect(row.id)}><Text style={[styles.chipText, selected === row.id && styles.chipTextActive]}>{row.name ?? row.user?.name ?? row.id}</Text></TouchableOpacity>)}</View>;
+  return <View style={styles.chips}>{rows.map((row) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: selected === row.id }} key={row.id} style={[styles.chip, selected === row.id && styles.chipActive]} onPress={() => onSelect(row.id)}><Text style={[styles.chipText, selected === row.id && styles.chipTextActive]}>{row.name ?? row.user?.name ?? row.id}</Text></TouchableOpacity>)}</View>;
 }
 
 export function CommercialWebApp() {
+  const { activeTenantId, profile } = useAuth();
+  // Remount all shell state when its authority changes. Pending requests from
+  // the previous academy/user can only update the unmounted instance.
+  const authorityKey = JSON.stringify([
+    activeTenantId, profile?.id, profile?.roles, profile?.permissions,
+  ]);
+  return <TenantCommercialWebApp key={authorityKey} />;
+}
+
+function TenantCommercialWebApp() {
   const { profile, activeTenantId, logout } = useAuth();
-  const compact = useWindowDimensions().width < 980;
+  const { width: viewportWidth } = useWindowDimensions();
+  const compact = viewportWidth < 980;
+  const narrow = viewportWidth < 560;
   const roles = useMemo<string[]>(() => Array.isArray(profile?.roles) ? profile.roles : [], [profile]);
   const permissions = useMemo<string[]>(() => Array.isArray(profile?.permissions) ? profile.permissions : [], [profile]);
   const [active, setActive] = useState<ModuleKey>('overview');
@@ -174,19 +196,19 @@ export function CommercialWebApp() {
   const [studentPlan, setStudentPlan] = useState({ planName: '', amount: '', nextBillingAt: '' });
   const [charge, setCharge] = useState({ amount: '', dueDate: '', paymentMethod: '' });
   const [academy, setAcademy] = useState({ name: '', timezone: 'America/Sao_Paulo' });
-  const [configDraft, setConfigDraft] = useState<Record<string, string>>({});
   const [reviewWorkoutId, setReviewWorkoutId] = useState<string | null>(null);
   const [bookingDate, setBookingDate] = useState('');
   const [scheduleRefresh, setScheduleRefresh] = useState(0);
   const [adminStepUpActive, setAdminStepUpActive] = useState(false);
   const [adminStepUpExpiresAt, setAdminStepUpExpiresAt] = useState<string | null>(null);
   const [adminPassword, setAdminPassword] = useState('');
+  const [adminPasswordVisible, setAdminPasswordVisible] = useState(false);
   const [adminSecondFactor, setAdminSecondFactor] = useState('');
   const [adminGateLoading, setAdminGateLoading] = useState(false);
   const [adminGateError, setAdminGateError] = useState('');
 
   const entitlementMap = useMemo(() => new Map(entitlements.map((item) => [item.featureKey, item])), [entitlements]);
-  const enabled = useCallback((key: string) => entitlementMap.get(key)?.value === true, [entitlementMap]);
+  const enabled = useCallback((key: string) => (entitlementMap.get(key)?.value ?? FAIL_CLOSED_DEFAULT) === true, [entitlementMap]);
   const allowed = useCallback((item: ModuleDefinition) => (!item.roles || item.roles.some((role) => roles.includes(role))) && (!item.entitlement || item.entitlement.some(enabled)), [enabled, roles]);
   const can = useCallback((...targets: string[]) => targets.some((role) => roles.includes(role)), [roles]);
   const isRestrictedAdminModule = useCallback((key: ModuleKey) => restrictedAdminModules.includes(key), []);
@@ -220,14 +242,18 @@ export function CommercialWebApp() {
       const next: Record<string, any> = {};
       if (key === 'overview') {
         const canSeeFinancialDashboard = can('SUPER_ADMIN', 'OWNER') && adminStepUpActive;
-        const [summary, revenue, attendance, overdue, birthdays, gym] = await Promise.all([
+        const canSeeSchedule = visible.some((item) => item.key === 'schedule');
+        const canSeeWorkouts = visible.some((item) => item.key === 'workouts');
+        const [summary, revenue, attendance, overdue, birthdays, gym, cockpitSlots, cockpitWorkouts] = await Promise.all([
           api('/dashboard/summary'),
           canSeeFinancialDashboard ? api('/dashboard/revenue?days=30') : Promise.resolve(null),
           api('/dashboard/attendance?days=7'),
           canSeeFinancialDashboard ? api('/dashboard/overdue') : Promise.resolve(null),
           api('/dashboard/birthdays?days=30'),
           activeTenantId && can('OWNER', 'MANAGER') ? api(`/gyms/${activeTenantId}`).catch(() => null) : Promise.resolve(null),
-        ]); Object.assign(next, { summary, revenue, attendance, overdue, birthdays, gym });
+          canSeeSchedule ? api('/schedule-slots') : Promise.resolve(null),
+          canSeeWorkouts ? api('/workouts') : Promise.resolve(null),
+        ]); Object.assign(next, { summary, revenue, attendance, overdue, birthdays, gym, cockpitSlots, cockpitWorkouts });
       }
       if (key === 'students') next.students = await api('/students');
       if (key === 'team') next.users = await api('/users');
@@ -242,7 +268,7 @@ export function CommercialWebApp() {
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
       setData(next);
     } catch (reason) { setError(message(reason)); setData({}); } finally { setLoading(false); }
-  }, [activeTenantId, adminStepUpActive, can, enabled, selectedStudent, subscription]);
+  }, [activeTenantId, adminStepUpActive, can, enabled, selectedStudent, subscription, visible]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -299,6 +325,7 @@ export function CommercialWebApp() {
       setAdminStepUpActive(state?.active === true);
       setAdminStepUpExpiresAt(state?.expiresAt ? String(state.expiresAt) : null);
       setAdminPassword('');
+      setAdminPasswordVisible(false);
       setAdminSecondFactor('');
       if (state?.active === true) await loadModule(active);
     } catch (reason) {
@@ -310,7 +337,61 @@ export function CommercialWebApp() {
   }
 
   function adminGateView() {
-    return <Section title="Acesso administrativo protegido" subtitle="Confirme sua identidade para entrar nesta área restrita. A autorização é temporária e vinculada à sessão atual."><View style={styles.adminGateIdentity}><Ionicons name="lock-closed-outline" size={24} color="#60a5fa" /><View><Text style={styles.rowTitle}>{profile?.name ?? 'Proprietário'}</Text><Text style={styles.muted}>{profile?.email ?? 'Conta administrativa'}</Text></View></View><View style={styles.form}><Field label="Senha atual" value={adminPassword} secureTextEntry onChangeText={setAdminPassword} />{profile?.mfaEnabled ? <Field label="Código MFA ou código de recuperação" value={adminSecondFactor} onChangeText={setAdminSecondFactor} /> : null}</View>{adminGateError ? <Text style={styles.error}>{adminGateError}</Text> : null}<Button testID="admin-step-up-submit" label={adminGateLoading ? 'Validando…' : 'Entrar na área administrativa'} disabled={adminGateLoading || !adminPassword.trim()} onPress={() => { void unlockAdministrativeArea(); }} /><Text style={styles.muted}>Por segurança, o acesso administrativo expira automaticamente após 15 minutos.</Text></Section>;
+    return <Section
+      title="Acesso administrativo protegido"
+      subtitle="Confirme sua identidade para entrar nesta área restrita. A autorização é temporária e vinculada à sua sessão atual."
+    >
+      <View style={styles.adminGateIdentity}>
+        <Ionicons name="lock-closed-outline" size={24} color="#56EC95" />
+        <View>
+          <Text style={styles.rowTitle}>{profile?.name ?? 'Proprietário'}</Text>
+          <Text style={styles.muted}>{profile?.email ?? 'Conta administrativa'}</Text>
+        </View>
+      </View>
+      <View style={styles.adminGateForm}>
+        <View style={styles.adminPasswordField}>
+          <Text style={styles.label}>Senha atual</Text>
+          <View style={styles.adminPasswordInputRow}>
+            <TextInput
+              accessibilityLabel="Senha atual"
+              testID="admin-password-input"
+              style={styles.adminPasswordInput}
+              value={adminPassword}
+              onChangeText={setAdminPassword}
+              secureTextEntry={!adminPasswordVisible}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="Digite sua senha atual"
+              placeholderTextColor="#828A91"
+            />
+            <TouchableOpacity
+              testID="admin-password-visibility-toggle"
+              accessibilityRole="button"
+              accessibilityLabel={adminPasswordVisible ? 'Ocultar senha atual' : 'Mostrar senha atual'}
+              accessibilityHint="Alterna a visibilidade da senha nesta tela"
+              style={styles.adminPasswordToggle}
+              onPress={() => setAdminPasswordVisible((visible) => !visible)}
+            >
+              <Ionicons name={adminPasswordVisible ? 'eye-off-outline' : 'eye-outline'} size={21} color="#2BF47A" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.adminPasswordHelp}>
+            Use sua senha atual. Para criar ou alterar uma senha: {PASSWORD_POLICY_TEXT}
+          </Text>
+        </View>
+        {profile?.mfaEnabled ? <View style={styles.adminGateMfaField}>
+          <Field label="Código MFA ou código de recuperação" value={adminSecondFactor} onChangeText={setAdminSecondFactor} />
+        </View> : null}
+      </View>
+      {adminGateError ? <Text style={styles.error}>{adminGateError}</Text> : null}
+      <Button
+        testID="admin-step-up-submit"
+        label={adminGateLoading ? 'Validando…' : 'Entrar na área administrativa'}
+        disabled={adminGateLoading || !adminPassword.trim()}
+        onPress={() => { void unlockAdministrativeArea(); }}
+      />
+      <Text style={styles.helper}>Por segurança, o acesso administrativo expira automaticamente após 15 minutos.</Text>
+    </Section>;
   }
 
   async function mutate(operation: () => Promise<unknown>, reset?: () => void) {
@@ -329,6 +410,8 @@ export function CommercialWebApp() {
       revenue={financialAuthorized && Array.isArray(data.revenue) ? data.revenue : null}
       overdue={financialAuthorized && Array.isArray(data.overdue) ? data.overdue : null}
       birthdays={Array.isArray(data.birthdays) ? data.birthdays : null}
+      slots={Array.isArray(data.cockpitSlots) ? data.cockpitSlots : null}
+      workouts={Array.isArray(data.cockpitWorkouts) ? data.cockpitWorkouts : null}
       financialAuthorized={financialAuthorized}
       availableModules={authorizedShortcuts}
       onNavigate={(key) => setActive(key)}
@@ -362,6 +445,7 @@ export function CommercialWebApp() {
       key={activeTenantId ?? 'sem-academia'}
       members={list(data.users)}
       actorRoles={roles}
+      rosterLoaded={Array.isArray(data.users) || Array.isArray(data.users?.items)}
       onUpdated={() => loadModule('team')}
     />;
   }
@@ -581,39 +665,64 @@ export function CommercialWebApp() {
     </>;
   }
   function entitlementsView() {
-    const features = list(data.features);
-    const configure = (feature: any) => {
-      const raw = (configDraft[feature.featureKey] ?? '').trim();
-      if (feature.kind === 'FEATURE') return mutate(() => api(`/product-entitlements/tenant/configurations/${feature.featureKey}`, undefined, { method: 'PUT', body: JSON.stringify({ featureEnabled: false }) }));
-      if (feature.kind === 'LIMIT') { const limitValue = Number(raw); if (!raw || !Number.isInteger(limitValue) || limitValue < 0) { setError('Informe limite inteiro não negativo.'); return Promise.resolve(); } return mutate(() => api(`/product-entitlements/tenant/configurations/${feature.featureKey}`, undefined, { method: 'PUT', body: JSON.stringify({ limitValue }) })); }
-      const policyValues = raw.split(',').map((value) => value.trim()).filter(Boolean); if (!policyValues.length) { setError('Informe valores de policy separados por vírgula.'); return Promise.resolve(); } return mutate(() => api(`/product-entitlements/tenant/configurations/${feature.featureKey}`, undefined, { method: 'PUT', body: JSON.stringify({ policyValues }) }));
-    };
-    return <><Section title="Assinatura SaaS atual"><Data value={data.subscription ? [data.subscription] : []} /></Section><Section title="Capabilities e configurações" subtitle="Configurações só podem estreitar o plano efetivo; o backend permanece autoridade.">{features.map((feature: any) => <View key={feature.featureKey} style={styles.row}><Text style={styles.rowTitle}>{feature.featureKey}</Text><Text style={styles.muted}>Tipo: {feature.kind} · Efetivo: {JSON.stringify(feature.value)} · Fonte: {feature.source ?? '—'} {feature.reason ? `· ${feature.reason}` : ''}</Text>{feature.kind !== 'FEATURE' ? <Field label={feature.kind === 'LIMIT' ? 'Novo limite' : 'Policies separadas por vírgula'} value={configDraft[feature.featureKey] ?? ''} onChangeText={(value) => setConfigDraft((current) => ({ ...current, [feature.featureKey]: value }))} /> : null}<View style={styles.actions}><Button label={feature.kind === 'FEATURE' ? 'Desativar no tenant' : 'Aplicar configuração'} disabled={saving || feature.source === 'FAIL_CLOSED_DEFAULT'} onPress={() => { void configure(feature); }} /><Button secondary label="Herdar do plano" disabled={saving} onPress={() => void mutate(() => api(`/product-entitlements/tenant/configurations/${feature.featureKey}`, undefined, { method: 'DELETE' }))} /></View></View>)}</Section><Section title="Configurações persistidas"><Data value={data.configurations} /></Section></>;
+    return <EntitlementsWorkspace
+      subscription={data.subscription ?? subscription}
+      features={list(data.features)}
+      saving={saving}
+      onSetConfiguration={async (featureKey, payload) => {
+        await mutate(() => api(`/product-entitlements/tenant/configurations/${featureKey}`, undefined, {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        }));
+      }}
+      onResetConfiguration={async (featureKey) => {
+        await mutate(() => api(`/product-entitlements/tenant/configurations/${featureKey}`, undefined, {
+          method: 'DELETE',
+        }));
+      }}
+    />;
+  }
+  function creatorView() {
+    return <CreatorNetworkWorkspace
+      items={list(data.items)}
+      overview={data.overview}
+      analytics={data.analytics}
+      externalYoutubeEnabled={enabled('content.external_youtube')}
+      ironManagedEnabled={enabled('content.iron_managed')}
+      tenantPrivateEnabled={enabled('content.tenant_private')}
+    />;
   }
   function content() {
     if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
-    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'intelligence') return intelligenceView(); if (active === 'aggregator') return <AggregatorHubPanel key={activeTenantId ?? 'sem-academia'} canManage={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenterPanel key={activeTenantId ?? 'sem-academia'} canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'financial') return financialView(); if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenterPanel key={activeTenantId ?? 'sem-academia'} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel />; return <CreatorNetworkWorkspace key={activeTenantId ?? 'sem-academia'}
-      items={list(data.items)} overview={data.overview ?? null} analytics={data.analytics ?? null}
-      refreshing={loading} onRefresh={() => { void loadModule('creator'); }} />;
+    if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'intelligence') return intelligenceView(); if (active === 'aggregator') return <AggregatorHubPanel key={activeTenantId ?? 'sem-academia'} canManage={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenterPanel key={activeTenantId ?? 'sem-academia'} canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'financial') return financialView(); if (active === 'fiscal') return <FiscalCenter />; if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />; return creatorView();
   }
 
-  const topBar = <View style={styles.top}><View><Text style={styles.brand}>IRON</Text><Text style={styles.muted}>Gestão da academia</Text></View><View style={styles.actions}><Text style={styles.muted}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
+  const topBar = <View style={[styles.top, narrow && styles.topNarrow]}><IronBrand compact mobile={narrow} /><View style={[styles.actions, narrow && styles.actionsNarrow]}><Text numberOfLines={1} style={[styles.muted, narrow && styles.userNameNarrow]}>{profile?.name ?? profile?.email ?? 'Usuário'}</Text><Button testID="commercial-logout" secondary label="Sair" onPress={() => { void logout(); }} /></View></View>;
   if (!shellReady) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={styles.contentInner}>{error ? <Text style={styles.error}>{error}</Text> : <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Validando assinatura, trial e capabilities…</Text></View>}</View></View>;
-  if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#2BF47A' : '#94a3b8'} /><Text style={[styles.navText, active === item.key && styles.navTextActive]}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Trial expirado, assinatura inativa/ausente ou suspensa. A superfície operacional permanece fail-closed. Assinatura IRON e Segurança continuam disponíveis para recuperação.</Text></View><Section title="Estado comercial"><Text style={styles.muted}>Avaliação: {trial?.status === 'EXPIRED' ? 'Expirada' : trial?.status === 'INACTIVE' ? 'Inativa' : trial?.status === 'TRIALING' ? 'Em andamento' : 'Situação não confirmada'}</Text><Text style={styles.muted}>Assinatura: {subscription?.status === 'SUSPENDED' ? 'Suspensa' : subscription?.status === 'CANCELED' ? 'Cancelada' : subscription?.status === 'ACTIVE' ? 'Ativa' : 'Situação não confirmada'}</Text></Section>{active === 'security' ? <AccountSecurityPanel /> : active === 'privacy' ? <PrivacyCenterPanel key={activeTenantId ?? 'sem-academia'} /> : active === 'saasBilling' && can('SUPER_ADMIN', 'OWNER') ? (adminStepUpActive ? <SaasBillingPanel onCommercialStateChanged={loadShell} /> : adminGateView()) : <Section title="Recuperação de acesso" subtitle="Selecione Segurança, Privacidade ou Assinatura IRON nas áreas permitidas ao seu perfil."><Text style={styles.muted}>A operação da academia permanece bloqueada até o backend confirmar a situação comercial.</Text></Section>}</ScrollView></View></View>;
-  return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#2BF47A' : '#94a3b8'} /><Text style={[styles.navText, active === item.key && styles.navTextActive]}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>Tenant derivado da sessão autenticada · {activeTenantId ?? 'sem tenant ativo'}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando dados canônicos…</Text></View> : content()}</ScrollView></View></View>;
+  if (blocked) return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#2BF47A' : '#94a3b8'} /><Text style={[styles.navText, active === item.key && styles.navTextActive]}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.warning} testID="subscription-blocked"><Text style={styles.warningTitle}>Acesso comercial limitado</Text><Text style={styles.muted}>Seu acesso operacional está limitado. Trial expirado, assinatura inativa/ausente ou suspensa. A superfície operacional permanece fail-closed. Assinatura IRON e Segurança continuam disponíveis para recuperação.</Text></View><Section title="Estado comercial"><Text style={styles.muted}>Avaliação: {trial?.status === 'EXPIRED' ? 'Expirada' : trial?.status === 'INACTIVE' ? 'Inativa' : trial?.status === 'TRIALING' ? 'Em andamento' : 'Situação não confirmada'}</Text><Text style={styles.muted}>Assinatura: {subscription?.status === 'SUSPENDED' ? 'Suspensa' : subscription?.status === 'CANCELED' ? 'Cancelada' : subscription?.status === 'ACTIVE' ? 'Ativa' : 'Situação não confirmada'}</Text></Section>{active === 'security' ? <AccountSecurityPanel /> : active === 'privacy' ? <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} /> : active === 'saasBilling' && can('SUPER_ADMIN', 'OWNER') ? (adminStepUpActive ? <SaasBillingPanel onCommercialStateChanged={loadShell} /> : adminGateView()) : <Section title="Recuperação de acesso" subtitle="Selecione Segurança, Privacidade ou Assinatura IRON nas áreas permitidas ao seu perfil."><Text style={styles.muted}>A operação da academia permanece bloqueada até o backend confirmar a situação comercial.</Text></Section>}</ScrollView></View></View>;
+  return <View style={styles.app} testID="commercial-web-app">{topBar}<View style={[styles.body, compact && styles.bodyCompact]}><ScrollView horizontal={compact} accessibilityLabel="Navegação dos módulos" accessibilityHint={compact ? 'Deslize horizontalmente para visualizar mais módulos' : undefined} style={[styles.nav, compact && styles.navCompact]} contentContainerStyle={compact ? styles.navHorizontal : undefined}>{visible.map((item) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: active === item.key }} key={item.key} testID={`nav-${item.key}`} style={[styles.navItem, active === item.key && styles.navActive]} onPress={() => setActive(item.key)}><Ionicons name={item.icon} size={18} color={active === item.key ? '#2BF47A' : '#94a3b8'} /><Text style={[styles.navText, active === item.key && styles.navTextActive]}>{item.label}</Text></TouchableOpacity>)}</ScrollView><ScrollView style={styles.content} contentContainerStyle={styles.contentInner}><View style={styles.pageHead}><View><Text style={styles.title}>{modules.find((item) => item.key === active)?.label}</Text><Text style={styles.muted}>Tenant derivado da sessão autenticada · {activeTenantId ?? 'sem tenant ativo'}</Text></View><Button secondary label="Atualizar" onPress={() => { void loadModule(active); }} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}{loading ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Carregando dados canônicos…</Text></View> : content()}</ScrollView></View></View>;
 }
 
 const styles = StyleSheet.create({
   adminGateIdentity: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
+  adminGateForm: { width: '100%', maxWidth: 400, flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
+  adminPasswordField: { width: '100%', minWidth: 0 },
+  adminPasswordInputRow: { flexDirection: 'row', alignItems: 'center', minHeight: 44, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#315140', borderRadius: 10, overflow: 'hidden' },
+  adminPasswordInput: { flex: 1, minWidth: 0, minHeight: 44, color: '#EEF1F5', paddingHorizontal: 11, paddingVertical: 8 },
+  adminPasswordToggle: { minWidth: 48, minHeight: 44, justifyContent: 'center', alignItems: 'center', borderLeftWidth: 1, borderLeftColor: '#315140' },
+  adminPasswordHelp: { color: '#A1A6AE', fontSize: 11, lineHeight: 16, marginTop: 6 },
+  adminGateMfaField: { width: '100%', minWidth: 0 },
+  helper: { color: '#94a3b8', fontSize: 11, lineHeight: 16, marginTop: 6 },
   app: { flex: 1, backgroundColor: '#080c17' },
   top: { minHeight: 72, padding: 18, backgroundColor: '#101625', borderBottomWidth: 1, borderBottomColor: '#273248', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  topNarrow: { minHeight: 68, flexWrap: 'nowrap', paddingHorizontal: 10, gap: 6 },
   brand: { color: '#f8fafc', fontSize: 22, fontWeight: '900', letterSpacing: 3 },
   body: { flex: 1, flexDirection: 'row' },
   bodyCompact: { flexDirection: 'column' },
-  nav: { width: 240, backgroundColor: '#0d1321', paddingVertical: 10 },
-  navCompact: { width: '100%', maxHeight: 72 },
+  nav: { width: 240, flexGrow: 0, flexShrink: 0, backgroundColor: '#0d1321', paddingVertical: 10 },
+  navCompact: { width: '100%', maxWidth: '100%', minWidth: 0, maxHeight: 72 },
   navHorizontal: { alignItems: 'center' },
-  navItem: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, margin: 4, borderRadius: 9 },
+  navItem: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, margin: 4, borderRadius: 9 },
   navActive: { backgroundColor: '#0f2a1c' },
   navText: { color: '#cbd5e1', fontWeight: '600' },
   navTextActive: { color: '#2BF47A' },
@@ -642,15 +751,17 @@ const styles = StyleSheet.create({
   form: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginVertical: 10 },
   fieldWrap: { minWidth: 180, flexGrow: 1, flexBasis: 210 },
   label: { color: '#94a3b8', fontSize: 11, fontWeight: '700', marginBottom: 5 },
-  input: { color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 9, padding: 10 },
-  button: { alignSelf: 'flex-start', backgroundColor: '#2BF47A', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10, marginTop: 4 },
+  input: { minHeight: 44, color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 9, padding: 10 },
+  button: { minHeight: 44, alignSelf: 'flex-start', backgroundColor: '#2BF47A', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10, marginTop: 4 },
   secondary: { backgroundColor: '#172033', borderWidth: 1, borderColor: '#334155' },
   buttonText: { color: '#fff', fontWeight: '800', fontSize: 12 },
   buttonTextOnAccent: { color: '#04140b' },
   disabled: { opacity: 0.45 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
+  actionsNarrow: { flexShrink: 1, minWidth: 0, flexWrap: 'nowrap', gap: 6 },
+  userNameNarrow: { flexShrink: 1, minWidth: 0, maxWidth: 135, fontSize: 11 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 10 },
-  chip: { borderWidth: 1, borderColor: '#334155', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
+  chip: { minHeight: 44, justifyContent: 'center', borderWidth: 1, borderColor: '#334155', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 },
   chipActive: { backgroundColor: '#123524', borderColor: '#2BF47A' },
   chipText: { color: '#cbd5e1', fontSize: 12 },
   chipTextActive: { color: '#2BF47A', fontWeight: '700' },

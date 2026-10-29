@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AIInsightCard } from '../components/AIInsightCard';
 import { AIWorkoutAssistant } from '../components/AIWorkoutAssistant';
 import { EmptyState } from '../components/EmptyState';
+import { RequestErrorState } from '../components/RequestErrorState';
 import { StatCard } from '../components/StatCard';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -12,22 +13,27 @@ export function WorkoutsScreen() {
   const { profile } = useAuth();
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [reloadVersion, setReloadVersion] = useState(0);
   const [assistantVisible, setAssistantVisible] = useState(false);
 
   useEffect(() => {
     let active = true;
     api('/me/workouts')
       .then((data) => {
-        if (active) setWorkouts(Array.isArray(data) ? data : []);
+        if (active) {
+          if (!Array.isArray(data)) throw new Error('O servidor retornou uma lista de treinos inválida.');
+          setWorkouts(data);
+        }
       })
-      .catch(() => {
-        if (active) setWorkouts([]);
+      .catch((reason: unknown) => {
+        if (active) setLoadError(reason instanceof Error ? reason.message : 'Não foi possível consultar seus treinos.');
       })
       .finally(() => {
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, []);
+  }, [reloadVersion]);
 
   const weeklyFrequency = workouts.reduce((sum, workout) => sum + (workout.weeklyFrequency || 0), 0);
 
@@ -38,13 +44,14 @@ export function WorkoutsScreen() {
           <View><Text style={styles.heading}>Olá, {profile?.name?.split(' ')[0] || 'Atleta'}</Text><Text style={styles.sub}>Bora treinar hoje? 💪</Text></View>
           <View style={styles.avatar}><Ionicons name="person" size={24} color="#2BF47A" /></View>
         </View>
-        <View style={styles.stats}>
+        {!loadError ? <View>
+          <View style={styles.stats}>
           <StatCard icon="barbell" value={String(workouts.length)} label="Treinos" color="#2BF47A" />
           <StatCard icon="calendar" value={String(weeklyFrequency)} label="Dias/semana" color="#f59e0b" />
         </View>
-        <AIInsightCard workoutCount={workouts.length} weeklyFrequency={weeklyFrequency} onOpenAssistant={() => setAssistantVisible(true)} />
+        <AIInsightCard workoutCount={workouts.length} weeklyFrequency={weeklyFrequency} onOpenAssistant={() => setAssistantVisible(true)} /></View> : null}
         <Text style={styles.sectionTitle}>Seus Treinos</Text>
-        {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : workouts.length === 0 ? (
+        {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? <RequestErrorState message={`Sem conexão ou serviço indisponível. ${loadError}`} onRetry={() => { setLoadError(''); setLoading(true); setReloadVersion((n) => n + 1); }} /> : workouts.length === 0 ? (
           <EmptyState icon="barbell-outline" title="Nenhum treino ainda" subtitle="Seu instrutor ainda não liberou treinos para você." />
         ) : workouts.map((workout) => (
           <View key={workout.id} style={styles.card}>
@@ -60,7 +67,7 @@ export function WorkoutsScreen() {
                       <Text style={styles.exerciseName}>{item.exercise?.name}</Text>
                       <Text style={styles.exerciseMeta}>{item.sets && item.reps ? `${item.sets}x${item.reps}` : ''}{item.restSeconds ? ` · ${item.restSeconds}s` : ''}{item.suggestedLoad ? ` · ${item.suggestedLoad}` : ''}</Text>
                       {item.exercise?.videoUrl ? (
-                        <TouchableOpacity style={styles.videoButton} onPress={() => Linking.openURL(item.exercise.videoUrl)}>
+                        <TouchableOpacity accessibilityRole="button" style={styles.videoButton} onPress={() => Linking.openURL(item.exercise.videoUrl)}>
                           <Ionicons name="play-circle" size={16} color="#2BF47A" /><Text style={styles.videoText}>Ver vídeo</Text>
                         </TouchableOpacity>
                       ) : null}

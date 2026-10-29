@@ -6,7 +6,8 @@ import { api } from '../services/api';
 type Student = { id: string; name?: string };
 type Exercise = { id: string; name: string; muscleGroup?: string | null };
 type Assessment = { id: string; createdAt: string; weight?: number | null };
-type PrescribedExercise = { exerciseId: string; sets: string; reps: string; restSeconds: string };
+type PrescribedExercise = { exerciseId: string; equipmentId?: string; sets: string; reps: string; restSeconds: string };
+type CompatibleEquipment = { id: string; name?: string; catalogItem?: { name?: string } };
 type SessionDraft = { key: number; name: string; estimatedMinutes: string; exercises: PrescribedExercise[] };
 const seed = (): SessionDraft[] => [{ key: 1, name: 'Sessão A', estimatedMinutes: '', exercises: [] }];
 
@@ -42,6 +43,10 @@ export function WorkoutComposer({ students, onUpdated }: {
   const [notes, setNotes] = useState('');
   const [sessions, setSessions] = useState<SessionDraft[]>(seed);
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
+  const [selectedEquipmentId, setSelectedEquipmentId] = useState('');
+  const [compatibleExerciseId, setCompatibleExerciseId] = useState('');
+  const [compatibleEquipment, setCompatibleEquipment] = useState<CompatibleEquipment[]>([]);
+  const [loadingEquipment, setLoadingEquipment] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -69,10 +74,23 @@ export function WorkoutComposer({ students, onUpdated }: {
   function changeSession(key: number, update: Partial<SessionDraft>) {
     setSessions((rows) => rows.map((row) => row.key === key ? { ...row, ...update } : row));
   }
+  async function loadCompatibleEquipment() {
+    const exerciseId = selectedExerciseId;
+    if (!exerciseId || loadingEquipment) return;
+    setLoadingEquipment(true); setError(''); setSelectedEquipmentId('');
+    setCompatibleExerciseId(''); setCompatibleEquipment([]);
+    try {
+      const rows = await api(`/equipments/exercises/${exerciseId}/compatible`);
+      setCompatibleEquipment(Array.isArray(rows) ? rows.filter((item: CompatibleEquipment) => typeof item.id === 'string') : []);
+      setCompatibleExerciseId(exerciseId);
+    } catch (reason: unknown) {
+      setError(reason instanceof Error ? reason.message : 'Compatibilidade indisponível.');
+    } finally { setLoadingEquipment(false); }
+  }
   function addExercise(key: number) {
     if (!selectedExerciseId || !exerciseLibrary.some((row) => row.id === selectedExerciseId)) return;
     setSessions((rows) => rows.map((session) => session.key === key
-      ? { ...session, exercises: [...session.exercises, { exerciseId: selectedExerciseId, sets: '3', reps: '12', restSeconds: '60' }] } : session));
+      ? { ...session, exercises: [...session.exercises, { exerciseId: selectedExerciseId, ...(compatibleExerciseId === selectedExerciseId && selectedEquipmentId ? { equipmentId: selectedEquipmentId } : {}), sets: '3', reps: '12', restSeconds: '60' }] } : session));
   }
   function changeExercise(key: number, index: number, patch: Partial<PrescribedExercise>) {
     setSessions((rows) => rows.map((session) => session.key === key
@@ -106,6 +124,7 @@ export function WorkoutComposer({ students, onUpdated }: {
           ...(s.estimatedMinutes.trim() ? { estimatedMinutes: Number(s.estimatedMinutes) } : {}),
           exercises: s.exercises.map((entry, j) => ({
             exerciseId: entry.exerciseId, order: j + 1,
+            ...(entry.equipmentId ? { equipmentId: entry.equipmentId } : {}),
             ...(entry.sets.trim() ? { sets: Number(entry.sets) } : {}),
             ...(entry.reps.trim() ? { reps: entry.reps.trim() } : {}),
             ...(entry.restSeconds.trim() ? { restSeconds: Number(entry.restSeconds) } : {}),
@@ -154,7 +173,16 @@ export function WorkoutComposer({ students, onUpdated }: {
     <View style={styles.actions}>{exerciseLibrary.slice(0, 60).map((exercise) => <Button key={exercise.id}
       testID={`studio-exercise-${exercise.id}`}
       label={`${exercise.name}${selectedExerciseId === exercise.id ? ' ✓' : ''}`}
-      onPress={() => setSelectedExerciseId(exercise.id)} />)}</View>
+      onPress={() => { setSelectedExerciseId(exercise.id); setSelectedEquipmentId(''); setCompatibleExerciseId(''); setCompatibleEquipment([]); }} />)}</View>
+    {selectedExerciseId ? <View style={styles.actions}>
+      <Button testID="studio-compatibility-search" label="Buscar equipamentos compatíveis" disabled={loadingEquipment}
+        onPress={() => { void loadCompatibleEquipment(); }} />
+      {compatibleExerciseId === selectedExerciseId ? compatibleEquipment.map((equipment) => <Button key={equipment.id}
+        testID={`studio-compatible-equipment-${equipment.id}`}
+        label={`${equipment.catalogItem?.name ?? equipment.name ?? 'Equipamento'}${selectedEquipmentId === equipment.id ? ' ✓' : ''}`}
+        onPress={() => setSelectedEquipmentId(equipment.id)} />) : null}
+      {compatibleExerciseId === selectedExerciseId && !compatibleEquipment.length ? <Text style={styles.muted}>Nenhum equipamento compatível no inventário desta academia.</Text> : null}
+    </View> : null}
     {!exerciseLibrary.length ? <Text style={styles.muted}>Exercícios indisponíveis. Atualize a biblioteca antes de prescrever.</Text> : null}
     {sessions.map((session, si) => <View key={session.key} style={styles.session}>
       <Input label={`Sessão ${si + 1}`} testID={`studio-session-name-${session.key}`} value={session.name}

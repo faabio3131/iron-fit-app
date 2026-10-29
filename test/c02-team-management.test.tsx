@@ -74,3 +74,17 @@ test('C02 backend operation failure preserves membership controls and shows erro
   expect(mockReload).not.toHaveBeenCalled();
   expect(screen.queryByTestId('team-notice')).toBeNull();
 });
+
+// A failed or pending /users roster read must never unlock write-capable actions.
+test('C02 no invitations or membership mutations before authoritative roster readiness', () => {
+  const screen = render(<TeamManagementPanel members={members} actorRoles={['OWNER']}
+    rosterLoaded={false} onUpdated={mockReload} />);
+  fireEvent.changeText(screen.getByTestId('team-invite-name'), 'Carlos');
+  fireEvent.changeText(screen.getByTestId('team-invite-email'), 'carlos@example.test');
+  expect(screen.getByTestId('team-invite-submit').props.accessibilityState?.disabled ??
+    screen.getByTestId('team-invite-submit').props.disabled).toBe(true);
+  fireEvent.press(screen.getByTestId('team-invite-submit'));
+  fireEvent.press(screen.getByTestId('team-status-toggle-reception-a'));
+  expect(mockApi).not.toHaveBeenCalled();
+  expect(mockReload).not.toHaveBeenCalled();
+});

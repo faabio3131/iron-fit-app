@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '../components/EmptyState';
+import { RequestErrorState } from '../components/RequestErrorState';
 import { api } from '../services/api';
 import { CheckInScreen } from './CheckInScreen';
 
@@ -34,7 +35,10 @@ export function SchedulesScreen() {
     let active = true;
     api('/me/schedules')
       .then((data) => {
-        if (active) setSchedules(Array.isArray(data) ? data : []);
+        if (active) {
+          if (!Array.isArray(data)) throw new Error('O servidor retornou uma agenda inválida.');
+          setSchedules(data);
+        }
       })
       .catch(() => {
         if (active) setLoadError('Não foi possível atualizar a agenda. Confira sua conexão.');
@@ -54,12 +58,7 @@ export function SchedulesScreen() {
       <CheckInScreen onCheckedIn={refreshSchedule} />
       <Text style={styles.sectionTitle}>Horários reservados</Text>
       {loading ? <ActivityIndicator size="large" color="#2BF47A" style={styles.loading} /> : loadError ? (
-        <View style={styles.errorCard}>
-          <Text style={styles.errorText}>{loadError}</Text>
-          <TouchableOpacity testID="schedule-retry" onPress={refreshSchedule} style={styles.retryButton}>
-            <Text style={styles.retryText}>Tentar novamente</Text>
-          </TouchableOpacity>
-        </View>
+        <RequestErrorState retryTestID="schedule-retry" message={`Sem conexão ou serviço indisponível. ${loadError}`} onRetry={refreshSchedule} />
       ) : schedules.length === 0 ? (
         <EmptyState icon="calendar-outline" title="Nenhum horário reservado" subtitle="Quando sua academia abrir a agenda, suas reservas aparecem aqui." />
       ) : schedules.map((schedule, index) => (

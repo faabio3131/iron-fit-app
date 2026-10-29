@@ -20,7 +20,8 @@ test('commercial shell does not hide authority failures and blocks invalid comme
   expect(web).not.toMatch(/commercial\/trial\/status'\)\.catch/);
   expect(web).toContain("!subscription || trial?.status === 'EXPIRED'");
   expect(web).toContain('subscription-blocked');
-  expect(web).toContain('A superfície operacional permanece fail-closed');
+  expect(web).toContain('Acesso comercial limitado');
+  expect(web).toContain('Seu acesso operacional está limitado');
 });
 
 test('CI keeps dependency high-severity audit and production exports', () => {
@@ -34,7 +35,7 @@ test('CI keeps dependency high-severity audit and production exports', () => {
 
 
 test('restricted administration is owner-only and requires session step-up', () => {
-  expect(web).toContain("restrictedAdminModules: ModuleKey[] = ['financial', 'saasBilling', 'entitlements', 'integrations']");
+  expect(web).toContain("restrictedAdminModules: ModuleKey[] = ['financial', 'fiscal', 'saasBilling', 'entitlements', 'integrations']");
   expect(web).toContain("{ key: 'financial', label: 'Financeiro', icon: 'lock-closed-outline', roles: ['SUPER_ADMIN', 'OWNER'] }");
   expect(web).toContain("{ key: 'saasBilling', label: 'Assinatura IRON', icon: 'card-outline', roles: ['SUPER_ADMIN', 'OWNER'] }");
   expect(web).toContain("api('/auth/step-up/status')");
@@ -42,4 +43,12 @@ test('restricted administration is owner-only and requires session step-up', () 
   expect(web).toContain('Acesso administrativo protegido');
   expect(web).toContain('admin-step-up-submit');
   expect(web).toContain("can('SUPER_ADMIN', 'OWNER') && adminStepUpActive");
+});
+
+test('protected admin password field stays compact and responsive without changing security controls', () => {
+  expect(web).toContain("adminGateForm: { width: '100%', maxWidth: 400,");
+  expect(web).toContain("adminPasswordField: { width: '100%', minWidth: 0 }");
+  expect(web).toContain('admin-password-visibility-toggle');
+  expect(web).toContain('secureTextEntry={!adminPasswordVisible}');
+  expect(web).toContain('Por segurança, o acesso administrativo expira automaticamente após 15 minutos.');
 });

@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { IronBrand } from '../components/IronBrand';
 
 type LoginScreenProps = {
   initialEmail?: string;
@@ -27,6 +28,7 @@ export function LoginScreen({
   const { login } = useAuth();
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [requiresMfa, setRequiresMfa] = useState(false);
@@ -80,19 +82,8 @@ export function LoginScreen({
     >
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          <View style={styles.logoBadge}>
-            <Ionicons name="cloud" size={48} color="#f1f5f9" />
-            <Ionicons
-              name="barbell"
-              size={28}
-              color="#2BF47A"
-              style={styles.logoBarbell}
-            />
-          </View>
-          <Text style={styles.logoTitle}>Iron Fit</Text>
-          <Text style={styles.logoTagline}>
-            A força da sua academia,{String.fromCharCode(10)}na nuvem.
-          </Text>
+          <IronBrand />
+          <Text style={styles.logoTagline}>A força da sua academia, na nuvem.</Text>
         </View>
 
         <View style={styles.card}>
@@ -140,10 +131,18 @@ export function LoginScreen({
               value={password}
               onChangeText={setPassword}
               editable={!requiresMfa}
-              secureTextEntry
+              secureTextEntry={!passwordVisible}
               placeholder="Senha"
               placeholderTextColor="#64748b"
             />
+                      <TouchableOpacity testID="login-password-toggle"
+              style={styles.passwordToggle} disabled={requiresMfa}
+              onPress={() => setPasswordVisible((value) => !value)}
+              accessibilityRole="button"
+              accessibilityLabel={passwordVisible ? "Ocultar senha" : "Mostrar senha"}
+              accessibilityState={{ disabled: requiresMfa, expanded: passwordVisible }}>
+              <Ionicons name={passwordVisible ? "eye-off-outline" : "eye-outline"} size={22} color="#94a3b8" />
+            </TouchableOpacity>
           </View>
 
           {requiresMfa ? (
@@ -194,7 +193,7 @@ export function LoginScreen({
           ) : null}
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             testID="login-submit"
             style={[styles.button, disabled && styles.disabled]}
             onPress={handleLogin}
@@ -210,7 +209,7 @@ export function LoginScreen({
           </TouchableOpacity>
 
           {requiresMfa ? (
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={styles.linkButton}
               onPress={() => {
                 setRequiresMfa(false);
@@ -224,7 +223,7 @@ export function LoginScreen({
           ) : (
             <>
               {onForgotPassword ? (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   testID="forgot-password"
                   style={styles.linkButton}
                   onPress={onForgotPassword}
@@ -234,7 +233,7 @@ export function LoginScreen({
                 </TouchableOpacity>
               ) : null}
               {onStartTrial ? (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   testID="start-trial"
                   style={styles.trialButton}
                   onPress={onStartTrial}
@@ -316,6 +315,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   inputIcon: { marginRight: 10 },
+  passwordToggle: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   input: { flex: 1, color: '#f1f5f9', paddingVertical: 14, fontSize: 15 },
   or: { color: '#64748b', textAlign: 'center', marginBottom: 10, fontSize: 12 },
   error: { color: '#ef4444', fontSize: 13, marginBottom: 12 },
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   linkText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
   trialButton: {
     borderWidth: 1,
-    borderColor: '#4c3b78',
+    borderColor: '#166534',
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: 'center',

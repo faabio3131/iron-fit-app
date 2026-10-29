@@ -23,7 +23,7 @@ export function CheckInScreen({ onCheckedIn }: { onCheckedIn?: () => void } = {}
 
   return (
     <>
-      <TouchableOpacity testID="checkin-submit" style={styles.card} onPress={handleCheckIn} disabled={checkingIn} activeOpacity={0.8}>
+      <TouchableOpacity accessibilityRole="button" testID="checkin-submit" style={styles.card} onPress={handleCheckIn} disabled={checkingIn} activeOpacity={0.8}>
         <View style={styles.iconBox}><Ionicons name="qr-code" size={32} color="#04140b" /></View>
         <View style={styles.content}>
           <Text style={styles.title}>Check-in na academia</Text>
@@ -49,6 +49,6 @@ const styles = StyleSheet.create({
   message: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 16 },
   messageOk: { backgroundColor: '#10b98120', borderColor: '#10b98150' },
   messageError: { backgroundColor: '#ef444420', borderColor: '#ef444450' },
-  okText: { color: '#10b981', fontWeight: '600' },
+  okText: { color: '#7DFFB1', fontWeight: '600' },
   errorText: { color: '#ef4444', fontWeight: '600' },
 });

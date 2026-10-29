@@ -13,12 +13,15 @@ type Summary = {
 type Attendance = { date: string; count: number };
 type Revenue = { date: string; amount: number };
 type Birthday = { studentId: string; name: string; nextBirthday?: string; daysUntil?: number };
+type CockpitSlot = { id: string; weekday?: number; startTime?: string; endTime?: string; capacity?: number; active?: boolean };
+type CockpitWorkout = { id: string; status?: string; createdByAI?: boolean; student?: { user?: { name?: string } }; goal?: string };
 type Overdue = { id: string; dueDate?: string; student?: { user?: { name?: string } } };
 export type CockpitShortcut = 'students' | 'team' | 'equipment' | 'workouts' | 'schedule' | 'access' | 'financial';
 type Props = {
   academyName?: string; operatorName?: string; summary: Summary | null; attendance: Attendance[] | null;
   revenue: Revenue[] | null; overdue: Overdue[] | null; birthdays: Birthday[] | null;
   financialAuthorized: boolean; availableModules: readonly CockpitShortcut[];
+  slots?: CockpitSlot[] | null; workouts?: CockpitWorkout[] | null;
   onNavigate: (key: CockpitShortcut) => void; onRefresh: () => void; refreshing: boolean;
 };
 const shortcuts: { key: CockpitShortcut; label: string; description: string }[] = [
@@ -62,13 +65,17 @@ function Bars({ points }: { points: Attendance[] }) {
   </View>;
 }
 export function OperationsCockpitPanel({ academyName, operatorName, summary, attendance, revenue,
-  overdue, birthdays, financialAuthorized, availableModules, onNavigate, onRefresh, refreshing }: Props) {
+  overdue, birthdays, slots, workouts, financialAuthorized, availableModules, onNavigate, onRefresh, refreshing }: Props) {
   const checkins = Array.isArray(attendance) ? attendance : [];
   const upcoming = Array.isArray(birthdays) ? birthdays : [];
   const overdueRows = financialAuthorized && Array.isArray(overdue) ? overdue : [];
   const revenueRows = financialAuthorized && Array.isArray(revenue) ? revenue : [];
   const shortcutsAvailable = shortcuts.filter((item) => availableModules.includes(item.key));
-  return <View>
+  const agendaSlots = availableModules.includes('schedule') && Array.isArray(slots) ? slots.filter((slot) => slot.active !== false) : [];
+  const candidates = availableModules.includes('workouts') && Array.isArray(workouts)
+    ? workouts.filter((workout) => workout.createdByAI === true && workout.status === 'PENDING_REVIEW') : [];
+  const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  return <View testID="dashboard-overview">
     <GlowCard style={styles.hero}>
       <View style={styles.heroRow}>
         <View style={styles.heroText}>
@@ -104,6 +111,29 @@ export function OperationsCockpitPanel({ academyName, operatorName, summary, att
           : date(birthday.nextBirthday)}</Text>
       </View>) : <Text style={styles.hint}>Nenhum aniversário próximo.</Text>}
     </Section>
+    {availableModules.includes('schedule') ? <Section title="Agenda operacional" description="Horários da academia conforme calendário canônico.">
+      {agendaSlots.length ? agendaSlots.slice(0, 8).map((slot) => <View key={slot.id} style={styles.record}>
+        <Text style={styles.recordName}>{typeof slot.weekday === 'number' && dayNames[slot.weekday] ? dayNames[slot.weekday] : 'Dia não informado'} · {slot.startTime ?? '—'}–{slot.endTime ?? '—'}</Text>
+        <Text style={styles.hint}>{typeof slot.capacity === 'number' ? `Capacidade: ${slot.capacity}` : 'Capacidade não informada'}</Text>
+      </View>) : <Text style={styles.hint}>Nenhum horário ativo retornado.</Text>}
+      <TouchableOpacity accessibilityRole="button" testID="cockpit-agenda-open" style={styles.button} onPress={() => onNavigate('schedule')}>
+        <Text style={styles.buttonText}>Abrir agenda</Text>
+      </TouchableOpacity>
+    </Section> : null}
+    <Section title="Alertas operacionais" description="Pendências não financeiras baseadas nas atividades autorizadas.">
+      <Text style={styles.hint}>{availableModules.includes('workouts')
+        ? `Treinos de IA aguardando revisão profissional: ${candidates.length}`
+        : 'Alertas de treinos indisponíveis para este perfil.'}</Text>
+    </Section>
+    {availableModules.includes('workouts') ? <Section title="IRON Intelligence" description="Candidatos consultivos: a IA não aprova nem ativa treinos.">
+      {candidates.length ? candidates.slice(0, 6).map((workout) => <View key={workout.id} style={styles.record}>
+        <Text style={styles.recordName}>{workout.student?.user?.name ?? workout.goal ?? 'Treino candidato'}</Text>
+        <Text style={styles.hint}>Aguardando revisão humana</Text>
+      </View>) : <Text style={styles.hint}>Nenhum candidato aguardando revisão.</Text>}
+      <TouchableOpacity accessibilityRole="button" testID="cockpit-workouts-open" style={styles.button} onPress={() => onNavigate('workouts')}>
+        <Text style={styles.buttonText}>Revisar treinos</Text>
+      </TouchableOpacity>
+    </Section> : null}
     {financialAuthorized ? <>
       <Section title="Cobranças da academia" description="Somente proprietário ou superadministrador com reautenticação ativa. Financeiro academia → aluno, separado do billing FM → academia.">
         <View style={styles.kpis}>
