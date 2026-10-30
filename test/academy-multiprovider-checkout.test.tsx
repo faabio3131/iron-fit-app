@@ -2,6 +2,8 @@ import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { AcademyChargesPanel } from '../src/components/AcademyChargesPanel';
 
+// Multiple asynchronous provider/policy reads under the parallel Web+Mobile CI can exceed Jest's 5s default.
+jest.setTimeout(15000);
 const mockApi = jest.fn();
 jest.mock('../src/services/api', () => ({
   api: (...args: unknown[]) => mockApi(...args),
