@@ -9,7 +9,7 @@ type Credential = {
   studentId?: string; student?: { user?: { name?: string } };
 };
 type Device = {
-  id: string; name?: string; type?: string; protocol?: string; manufacturer?: string | null; model?: string | null;
+  id: string; name?: string; type?: string; protocol?: string; manufacturer?: string | null; model?: string | null; certificationStatus?: string | null; certificationRef?: string | null;
   active?: boolean; lastSyncAt?: string | null; tokenRotatedAt?: string | null;
 };
 type Event = {
@@ -357,6 +357,9 @@ export function AccessCenterPanel({
       {devices.map((device) => <View key={device.id} testID={'access-device-' + device.id} style={styles.entry}>
         <Text style={styles.entryTitle}>{device.name ?? 'Dispositivo'}</Text>
         <Text style={styles.muted}>Fabricante: {device.manufacturer ?? 'Não informado'} · Modelo: {device.model ?? 'Não informado'} · Tipo: {device.type ?? 'Não informado'} · Protocolo: {device.protocol ?? 'Não informado'} · {device.active ? 'Ativo' : 'Inativo'}</Text>
+        <Text style={styles.muted}>Homologação: {device.certificationStatus === 'PRODUCTION_HOMOLOGATED' && device.certificationRef
+          ? 'Homologado para este dispositivo'
+          : 'Pendente de homologação externa — acesso físico desativado'}</Text>
         <Text style={styles.muted}>Última sincronização: {formattedDate(device.lastSyncAt)}</Text>
         {canEnrollDevices && device.active !== true ? <Action
           testID={'access-hardware-provision-' + device.id}
