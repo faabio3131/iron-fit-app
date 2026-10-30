@@ -21,7 +21,7 @@ test('Web and shared component interactive elements expose a real press/click ha
         const name = node.tagName.getText(source);
         if (interactiveNames.has(name)) {
           const attributes = node.attributes.properties.filter(ts.isJsxAttribute);
-          const named = (key: string) => attributes.find((attr) => attr.name.text === key);
+          const named = (key: string) => attributes.find((attr) => attr.name.getText(source) === key);
           const handler = named('onPress') ?? named('onClick');
           if (!handler && !named('href')) {
             const { line } = source.getLineAndCharacterOfPosition(node.getStart(source));
