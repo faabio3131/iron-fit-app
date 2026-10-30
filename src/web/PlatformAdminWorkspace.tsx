@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { IronBrand } from '../components/IronBrand';
 import { GlowCard } from '../components/GlowCard';
-import { API_URL } from '../config/env';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { colors } from '../theme/colors';
@@ -82,7 +81,7 @@ export function PlatformAdminWorkspace() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [baseUrl, setBaseUrl] = useState(DEFAULT_EVOLUTION_URL);
-  const [webhookUrl, setWebhookUrl] = useState(`${API_URL}/webhooks/evolution`);
+  const [webhookUrl, setWebhookUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
@@ -115,7 +114,7 @@ export function PlatformAdminWorkspace() {
   }, [load]);
 
   const stepUp = () => ({ currentPassword: password, ...(mfaCode.trim() ? { mfaCode: mfaCode.trim() } : {}) });
-  const canSubmit = !busy && password.length >= 6 && /^https:\/\//.test(baseUrl.trim()) && /^https:\/\//.test(webhookUrl.trim());
+  const canSubmit = !busy && password.length >= 6 && /^https:\/\//.test(baseUrl.trim()) && (!webhookUrl.trim() || /^https:\/\//.test(webhookUrl.trim()));
 
   function clearSensitive() {
     setApiKey('');
@@ -138,7 +137,7 @@ export function PlatformAdminWorkspace() {
           providerCode: 'evolution',
           authModel: 'API_KEY',
           capabilities: ['evolution.whatsapp'],
-          publicConfiguration: { baseUrl: baseUrl.trim(), webhookUrl: webhookUrl.trim() },
+          publicConfiguration: { baseUrl: baseUrl.trim(), ...(webhookUrl.trim() ? { webhookUrl: webhookUrl.trim() } : {}) },
           secret: apiKey.trim(),
           ...stepUp(),
         }),
@@ -220,7 +219,7 @@ export function PlatformAdminWorkspace() {
         <GlowCard style={styles.section}>
           <Text style={styles.sectionTitle}>WhatsApp central (Evolution)</Text>
           <Text style={styles.muted}>
-            Serviço usado pelas academias para conectar o WhatsApp por QR Code. Cada academia recebe a própria instância.
+            Credencial central da plataforma. O provisionamento de instâncias e a entrega de mensagens dependem de integração e homologação específicas.
           </Text>
 
           {loading ? <ActivityIndicator color={colors.accent} /> : (
@@ -240,7 +239,7 @@ export function PlatformAdminWorkspace() {
           {notice ? <Text style={styles.ok}>{notice}</Text> : null}
 
           <TextField label="Endereço da Evolution (HTTPS)" value={baseUrl} onChangeText={setBaseUrl} testID="platform-evolution-base-url" />
-          <TextField label="Endereço do webhook do Iron (HTTPS)" value={webhookUrl} onChangeText={setWebhookUrl} testID="platform-evolution-webhook-url" />
+          <TextField label="Endereço HTTPS de notificações (opcional; somente endereço verificado)" value={webhookUrl} onChangeText={setWebhookUrl} testID="platform-evolution-webhook-url" />
           <SecretField label={configured ? 'Nova chave da Evolution' : 'Chave da Evolution'} value={apiKey} onChangeText={setApiKey} testID="platform-evolution-key" />
           <Text style={styles.muted}>Confirmação de segurança</Text>
           <SecretField label="Sua senha de administrador" value={password} onChangeText={setPassword} testID="platform-evolution-password" />

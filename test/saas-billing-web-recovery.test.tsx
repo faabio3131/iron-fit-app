@@ -42,7 +42,7 @@ test('C03 IRON billing is read-only under proven FM Command authority, with no o
     path === '/saas-billing/change-plan' || path === '/saas-billing/cancel')).toBe(false);
   expect(view.queryByTestId('saas-billing-cancel-period-end')).toBeNull();
   expect(view.queryByTestId('saas-billing-open-checkout')).toBeNull();
-  expect(view.getByText(/não podem ser executados pelo antigo billing local/)).toBeTruthy();
+  expect(view.getByText(/não podem ser executados pelo sistema antigo de cobranças/)).toBeTruthy();
 });
 
 test('C03 translates historical invoice and agreement, preserving minor units and not exposing raw JSON', async () => {
@@ -79,7 +79,7 @@ test('C03 billing refresh performs only canonical GET queries and notifies the c
 test('C03 blocked subscription still exposes protected recovery and privacy without operational data', async () => {
   const source = await readFile('src/web/CommercialWebApp.tsx', 'utf8');
   expect(source).toContain("item.key === 'saasBilling' || item.key === 'security'");
-  expect(source).toContain('A superfície operacional permanece fail-closed');
+  expect(source).toContain('As operações permanecem bloqueadas até a regularização');
   expect(source).toContain('<SaasBillingPanel onCommercialStateChanged={loadShell} />');
   expect(source).toContain("key: 'saasBilling'");
   expect(source).not.toContain('blocked ? [] : modules.filter');

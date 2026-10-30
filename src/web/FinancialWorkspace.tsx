@@ -495,7 +495,7 @@ export function FinancialWorkspace({
             {(charge.status === 'PENDING' || charge.status === 'FAILED') && onCreatePaymentSession ? <>
               <PrimaryButton
                 testID={`financial-checkout-${charge.id}`}
-                label={checkoutBusy === charge.id ? 'Gerando checkout…' : 'Gerar link ou Pix'}
+                label={checkoutBusy === charge.id ? 'Preparando pagamento…' : 'Gerar link ou Pix'}
                 disabled={saving || checkoutBusy !== null}
                 onPress={() => { void createCheckout(charge.id); }}
               />

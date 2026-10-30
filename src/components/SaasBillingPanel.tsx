@@ -118,7 +118,7 @@ export function SaasBillingPanel({ onCommercialStateChanged }: {
       {notice ? <Text style={styles.warning}>{notice}</Text> : null}
       {authority ? <View testID="saas-billing-command-authority" style={styles.authority}>
         <Text style={styles.authorityTitle}>Cobrança SaaS sob autoridade do FM Command</Text>
-        <Text style={styles.muted}>Planos, checkout, cobrança, pagamento, renovação, mudança e cancelamento não podem ser executados pelo antigo billing local. A licença e os acessos são definidos pelas operações corporativas governadas.</Text>
+        <Text style={styles.muted}>Planos, checkout, cobrança, pagamento, renovação, mudança e cancelamento não podem ser executados pelo sistema antigo de cobranças. A licença e os acessos são definidos pelas operações corporativas governadas.</Text>
         <Text style={styles.warning}>Esta tela é de consulta, não de contratação. Nenhum pagamento é confirmado aqui.</Text>
       </View> : null}
     </GlowCard>
