@@ -9,8 +9,18 @@ type Credential = {
   studentId?: string; student?: { user?: { name?: string } };
 };
 type Device = {
-  id: string; name?: string; type?: string; protocol?: string;
+  id: string; name?: string; type?: string; protocol?: string; manufacturer?: string | null; model?: string | null; firmwareVersion?: string | null; certificationStatus?: string | null; certificationRef?: string | null;
   active?: boolean; lastSyncAt?: string | null; tokenRotatedAt?: string | null;
+};
+type PhysicalAttempt = {
+  id: string;
+  studentId?: string | null;
+  deviceId: string;
+  manufacturer?: string;
+  state: string;
+  denialReason?: string | null;
+  direction: string;
+  createdAt?: string;
 };
 type Event = {
   id: string; allowed: boolean; occurredAt?: string; denialReason?: string | null;
@@ -48,13 +58,15 @@ function extractDate(value: string, boundary: 'from' | 'to') {
 }
 
 export function AccessCenterPanel({
-  students, credentials, devices, events, canManageDevices, onUpdated,
+  students, credentials, devices, events, physicalAttempts = [], canManageDevices, canEnrollDevices = false, onUpdated,
 }: {
   students: Student[];
   credentials: Credential[];
   devices: Device[];
   events: Event[];
+  physicalAttempts?: PhysicalAttempt[];
   canManageDevices: boolean;
+  canEnrollDevices?: boolean;
   onUpdated: () => Promise<void>;
 }) {
   const [studentSearch, setStudentSearch] = useState('');
@@ -73,6 +85,16 @@ export function AccessCenterPanel({
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [eventError, setEventError] = useState('');
   const [eventFilterApplied, setEventFilterApplied] = useState(false);
+  const [hardwareName, setHardwareName] = useState('');
+  const [hardwareModel, setHardwareModel] = useState('');
+  const [hardwareManufacturer, setHardwareManufacturer] = useState<'CONTROL_ID' | 'TOPDATA' | 'HENRY' | 'DIMEP'>('CONTROL_ID');
+  const [hardwareType, setHardwareType] = useState<'QR_CODE' | 'BIOMETRIC' | 'FACIAL' | 'TAG'>('QR_CODE');
+  const [hardwareBusy, setHardwareBusy] = useState(false);
+  const [hardwareNotice, setHardwareNotice] = useState('');
+  const [hardwareError, setHardwareError] = useState('');
+  const [oneTimeDeviceToken, setOneTimeDeviceToken] = useState<{ id: string; token: string } | null>(null);
+  const [deviceFirmwareInputs, setDeviceFirmwareInputs] = useState<Record<string, string>>({});
+
 
   const studentMatches = students.filter((entry) => (entry.name ?? entry.user?.name ?? '').toLocaleLowerCase('pt-BR')
     .includes(studentSearch.toLocaleLowerCase('pt-BR'))).slice(0, 30);
@@ -153,13 +175,97 @@ export function AccessCenterPanel({
     setDecision('ALL'); setFrom(''); setTo(''); setFilteredEvents(null); setEventError(''); setEventFilterApplied(false);
   }
 
+
+  async function configureHardwareFirmware(deviceId: string) {
+    if (!canEnrollDevices || hardwareBusy) return;
+    const firmwareVersion = (deviceFirmwareInputs[deviceId] ?? '').trim();
+    if (!firmwareVersion) return;
+    setHardwareBusy(true);
+    setHardwareError('');
+    setHardwareNotice('');
+    try {
+      const result = await api('/access/devices/' + encodeURIComponent(deviceId) + '/firmware', undefined, {
+        method: 'PATCH', body: JSON.stringify({ firmwareVersion }),
+      });
+      if (!result || result.firmwareVersion !== firmwareVersion) {
+        setHardwareError('Não foi possível confirmar a versão do firmware.');
+        return;
+      }
+      setHardwareNotice('Firmware registrado. A homologação anterior foi invalidada quando houve alteração.');
+      setDeviceFirmwareInputs((current) => ({ ...current, [deviceId]: '' }));
+      try { await onUpdated(); } catch {
+        setHardwareError('Firmware registrado, mas o inventário não atualizou.');
+      }
+    } catch (reason) {
+      setHardwareError(failure(reason));
+    } finally {
+      setHardwareBusy(false);
+    }
+  }
+
+  async function provisionHardwareDevice(deviceId: string) {
+    if (!canEnrollDevices || hardwareBusy) return;
+    setHardwareBusy(true);
+    setHardwareError('');
+    setOneTimeDeviceToken(null);
+    try {
+      const response = await api('/access/devices/' + encodeURIComponent(deviceId) + '/provision', undefined, { method: 'POST' });
+      if (!response?.deviceToken) {
+        setHardwareError('O servidor não confirmou o provisionamento do dispositivo.');
+        return;
+      }
+      setOneTimeDeviceToken({ id: deviceId, token: response.deviceToken });
+      setHardwareNotice('Token de instalação emitido. Ele será exibido apenas nesta sessão.');
+      try { await onUpdated(); } catch {
+        setHardwareError('Token emitido, mas a lista não atualizou. Não repita o provisionamento sem conferir.');
+      }
+    } catch (reason) {
+      const status = reason instanceof Error ? (reason as Error & { status?: number }).status : undefined;
+      setHardwareError(status === 403 ? 'Reautenticação administrativa do proprietário obrigatória.' : failure(reason));
+    } finally {
+      setHardwareBusy(false);
+    }
+  }
+
+  async function enrollHardware() {
+    if (!canEnrollDevices || hardwareBusy || !hardwareName.trim() || !hardwareModel.trim()) return;
+    setHardwareBusy(true);
+    setHardwareError('');
+    setHardwareNotice('');
+    try {
+      const result = await api('/access/devices', undefined, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: hardwareName.trim(),
+          model: hardwareModel.trim(),
+          manufacturer: hardwareManufacturer,
+          type: hardwareType,
+        }),
+      });
+      if (!result?.id || result.active !== false) {
+        setHardwareError('O dispositivo não foi confirmado como inativo. Atualize a lista antes de repetir.');
+        return;
+      }
+      setHardwareName('');
+      setHardwareModel('');
+      setHardwareNotice('Dispositivo cadastrado em estado inativo. A liberação física requer instalação e homologação do conector.');
+      try { await onUpdated(); } catch {
+        setHardwareError('Cadastro confirmado, mas a listagem não atualizou. Atualize antes de repetir.');
+      }
+    } catch (reason) {
+      const status = reason instanceof Error ? (reason as Error & { status?: number }).status : undefined;
+      setHardwareError(status === 403 ? 'Ação restrita ao proprietário com reautenticação administrativa ativa.' : failure(reason));
+    } finally {
+      setHardwareBusy(false);
+    }
+  }
   return <View>
     <GlowCard style={styles.card}>
       <Text style={styles.title}>Central de acessos</Text>
       <Text style={styles.muted}>Credenciais, decisões e dispositivos da academia autenticada. A autorização de entrada física é sempre decidida pelo backend/dispositivo autorizado.</Text>
       <View style={styles.kpis}>
         <View style={styles.kpi}><Text style={styles.kpiValue}>{credentials.filter((c) => c.status === 'ACTIVE').length}</Text><Text style={styles.muted}>Credenciais ativas</Text></View>
-        <View style={styles.kpi}><Text style={styles.kpiValue}>{allowedCount}</Text><Text style={styles.muted}>Entradas permitidas (histórico recebido)</Text></View>
+        <View style={styles.kpi}><Text style={styles.kpiValue}>{allowedCount}</Text><Text style={styles.muted}>Autorizações permitidas (não comprovam passagem)</Text></View>
         <View style={styles.kpi}><Text style={styles.kpiValue}>{deniedCount}</Text><Text style={styles.muted}>Entradas negadas (histórico recebido)</Text></View>
       </View>
     </GlowCard>
@@ -237,13 +343,106 @@ export function AccessCenterPanel({
       {!loadingEvents && !eventError && !shownEvents.length ? <Text style={styles.muted}>Nenhum evento registrado com os filtros atuais.</Text> : null}
       {shownEvents.length > 80 ? <Text style={styles.muted}>Exibindo os primeiros 80 eventos mais recentes.</Text> : null}
     </GlowCard>
+    <GlowCard style={styles.card}>
+      <Text style={styles.title}>Passagens físicas</Text>
+      <Text style={styles.muted}>Separadas das decisões de QR Code. Apenas giro confirmado comprova passagem; comando aceito não equivale à entrada.</Text>
+      {physicalAttempts.slice(0, 60).map((item) => <View key={item.id} testID={'access-physical-'+item.id} style={styles.entry}>
+        <Text style={styles.entryTitle}>{
+          item.state === 'PASSAGE_CONFIRMED' ? 'Passagem confirmada'
+          : item.state === 'RELEASE_UNCERTAIN' ? 'Liberação incerta — verificar equipamento'
+          : item.state === 'COMMAND_ACCEPTED' ? 'Aguardando confirmação de giro'
+          : item.state === 'PASSAGE_NOT_CONFIRMED' ? 'Giro não realizado'
+          : item.state === 'DENIED' ? 'Acesso físico negado'
+          : item.state === 'EXPIRED' ? 'Autorização expirada'
+          : 'Solicitação em processamento'
+        }</Text>
+        <Text style={styles.muted}>{item.manufacturer ?? 'Fabricante'} · {item.direction === 'ENTRY' ? 'Entrada' : 'Saída'} · {formattedDate(item.createdAt)}</Text>
+        {item.state === 'DENIED' && item.denialReason ? <Text style={styles.warning}>Motivo: {item.denialReason}</Text> : null}
+      </View>)}
+      {!physicalAttempts.length ? <Text style={styles.muted}>Nenhuma passagem física registrada.</Text> : null}
+    </GlowCard>
     {canManageDevices ? <GlowCard style={styles.card}>
       <Text style={styles.title}>Dispositivos de acesso</Text>
       <Text style={styles.muted}>Inventário de dispositivos configurados. Sincronização não comprova integração física homologada. Tokens e chaves não são exibidos.</Text>
+      {canEnrollDevices ? <View testID="access-hardware-enrollment" style={styles.entry}>
+        <Text style={styles.entryTitle}>Cadastrar catraca</Text>
+        <Text style={styles.muted}>O cadastro não ativa uma catraca. A ativação exige conector homologado e reautenticação administrativa.</Text>
+        <View style={styles.actions}>
+          {([
+            ['CONTROL_ID', 'Control iD'],
+            ['TOPDATA', 'Topdata'],
+            ['HENRY', 'Henry'],
+            ['DIMEP', 'DIMEP'],
+          ] as const).map(([code, label]) => <Action
+            key={code} testID={'access-hardware-brand-' + code}
+            label={label}
+            secondary={hardwareManufacturer !== code}
+            disabled={hardwareBusy}
+            onPress={() => setHardwareManufacturer(code)}
+          />)}
+        </View>
+        <Text style={styles.label}>Leitor/identificação</Text>
+        <View style={styles.actions}>
+          {([
+            ['QR_CODE', 'QR Code'],
+            ['BIOMETRIC', 'Digital'],
+            ['FACIAL', 'Facial'],
+            ['TAG', 'Cartão/Tag'],
+          ] as const).map(([code, label]) => <Action
+            key={code} testID={'access-hardware-type-' + code}
+            label={label} secondary={hardwareType !== code}
+            disabled={hardwareBusy}
+            onPress={() => setHardwareType(code)}
+          />)}
+        </View>
+        <TextInput
+          testID="access-hardware-name" accessibilityLabel="Nome da catraca"
+          style={styles.input} value={hardwareName} onChangeText={setHardwareName}
+          placeholder="Ex.: Entrada principal" placeholderTextColor="#8395ab"
+        />
+        <TextInput
+          testID="access-hardware-model" accessibilityLabel="Modelo da catraca"
+          style={styles.input} value={hardwareModel} onChangeText={setHardwareModel}
+          placeholder="Ex.: iDBlock Next / Fit 4" placeholderTextColor="#8395ab"
+        />
+        <Action testID="access-hardware-create" label={hardwareBusy ? 'Cadastrando…' : 'Cadastrar dispositivo inativo'}
+          disabled={hardwareBusy || !hardwareName.trim() || !hardwareModel.trim()}
+          onPress={() => { void enrollHardware(); }} />
+        {hardwareNotice ? <Text style={styles.success}>{hardwareNotice}</Text> : null}
+        {hardwareError ? <Text testID="access-hardware-error" style={styles.error}>{hardwareError}</Text> : null}
+      </View> : null}
       {devices.map((device) => <View key={device.id} testID={'access-device-' + device.id} style={styles.entry}>
         <Text style={styles.entryTitle}>{device.name ?? 'Dispositivo'}</Text>
-        <Text style={styles.muted}>Tipo: {device.type ?? 'Não informado'} · Protocolo: {device.protocol ?? 'Não informado'} · {device.active ? 'Ativo' : 'Inativo'}</Text>
+        <Text style={styles.muted}>Fabricante: {device.manufacturer ?? 'Não informado'} · Modelo: {device.model ?? 'Não informado'} · Tipo: {device.type ?? 'Não informado'} · Protocolo: {device.protocol ?? 'Não informado'} · {device.active ? 'Ativo' : 'Inativo'}</Text>
+        <Text style={styles.muted}>Homologação: {device.certificationStatus === 'PRODUCTION_HOMOLOGATED' && device.certificationRef
+          ? 'Homologado para este dispositivo'
+          : 'Pendente de homologação externa — acesso físico desativado'}</Text>
+        <Text style={styles.muted}>Firmware: {device.firmwareVersion ?? 'Não configurado'}</Text>
+        {canEnrollDevices && device.active !== true ? <View style={styles.actions}>
+          <TextInput
+            testID={'access-hardware-firmware-' + device.id}
+            accessibilityLabel={'Firmware do dispositivo ' + (device.name ?? device.id)}
+            style={styles.input}
+            value={deviceFirmwareInputs[device.id] ?? ''}
+            onChangeText={(value) => setDeviceFirmwareInputs((current) => ({ ...current, [device.id]: value }))}
+            placeholder="Versão exata do firmware" placeholderTextColor="#8395ab"
+          />
+          <Action secondary testID={'access-hardware-save-firmware-' + device.id}
+            label="Salvar firmware" disabled={hardwareBusy || !(deviceFirmwareInputs[device.id] ?? '').trim()}
+            onPress={() => { void configureHardwareFirmware(device.id); }} />
+        </View> : null}
         <Text style={styles.muted}>Última sincronização: {formattedDate(device.lastSyncAt)}</Text>
+        {canEnrollDevices && device.active !== true ? <Action
+          testID={'access-hardware-provision-' + device.id}
+          label="Gerar token de instalação"
+          secondary disabled={hardwareBusy}
+          onPress={() => { void provisionHardwareDevice(device.id); }}
+        /> : null}
+        {canEnrollDevices && oneTimeDeviceToken?.id === device.id ? <View testID="access-hardware-one-time-token" style={styles.secret}>
+          <Text style={styles.warning}>Token confidencial — exibição única. Entregue somente ao instalador autorizado.</Text>
+          <Text selectable style={styles.secretText}>{oneTimeDeviceToken.token}</Text>
+          <Action secondary label="Ocultar token" testID="access-hardware-hide-token" onPress={() => setOneTimeDeviceToken(null)} />
+        </View> : null}
       </View>)}
       {!devices.length ? <Text style={styles.muted}>Nenhum dispositivo cadastrado.</Text> : null}
     </GlowCard> : null}
