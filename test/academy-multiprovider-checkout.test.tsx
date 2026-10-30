@@ -190,3 +190,29 @@ test('unmatched Mercado Pago event is not exposed as a paid receipt action', asy
   expect(screen.queryByTestId('academy-reconcile-event-event-mp')).toBeNull();
   expect(props.onPay).not.toHaveBeenCalled();
 });
+
+test('owner enables tenant automation policy only with selected active financial account', async () => {
+  mockApi.mockImplementation(async (path: string, _locale: unknown, options?: { method?: string; body?: string }) => {
+    if (path === '/financial/payment-providers') return [];
+    if (path === '/financial/gateway-events') return [];
+    if (path === '/financial/automation-policy' && !options) return { enabled: false };
+    if (path === '/financial/automation-policy' && options?.method === 'POST')
+      return { enabled: true, accountId: 'account-a' };
+    throw new Error('Unexpected request');
+  });
+  const screen = render(<AcademyChargesPanel {...props} />);
+  await waitFor(() => expect(screen.getByTestId('academy-automation-policy-toggle')).toBeTruthy());
+  fireEvent.press(screen.getByTestId('academy-automation-policy-toggle'));
+  await waitFor(() => expect(screen.getByText(/Política da academia habilitada/)).toBeTruthy());
+  const post = mockApi.mock.calls.find((call) => call[0] === '/financial/automation-policy' && call[2]?.method === 'POST');
+  expect(JSON.parse(post[2].body)).toEqual({ accountId: 'account-a', enabled: true });
+  expect(props.onPay).not.toHaveBeenCalled();
+});
+
+test('automation opt-in is not clickable without a tenant financial account', async () => {
+  mockApi.mockResolvedValue([]);
+  const screen = render(<AcademyChargesPanel {...props} selectedAccountId="" accounts={[]} />);
+  await waitFor(() => expect(screen.getByTestId('academy-payment-automation-policy')).toBeTruthy());
+  fireEvent.press(screen.getByTestId('academy-automation-policy-toggle'));
+  expect(mockApi.mock.calls.some((call) => call[0] === '/financial/automation-policy' && call[2]?.method === 'POST')).toBe(false);
+});
