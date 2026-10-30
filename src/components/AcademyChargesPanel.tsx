@@ -219,7 +219,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
       <Text style={styles.muted}>Eventos recebidos e autenticados são apenas avisos. A confirmação do dinheiro continua dependendo da conciliação com o provedor.</Text>
       {providerEvents.map((event) => <View key={event.id} style={styles.row}>
         <Text style={styles.detail}>{event.providerCode.replace(/_/g, ' ')} · {event.eventType}</Text>
-        {event.providerCode === 'stripe' && event.chargeId &&
+        {['stripe', 'mercado_pago'].includes(event.providerCode) && event.chargeId &&
           ['RECEIVED', 'RETRY'].includes(event.status) && account ? <Btn
           testID={'academy-reconcile-event-' + event.id}
           label={eventBusy === event.id ? 'Conferindo…' : 'Conciliar evento'}
