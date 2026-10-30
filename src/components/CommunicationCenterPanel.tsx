@@ -156,7 +156,7 @@ export function CommunicationCenterPanel({ canManageAutomations }: { canManageAu
   </View>;
 
   return <View>
-    <Section title="Mensagens e entregas" subtitle="Status consultado no IRON: fila, processamento e confirmação de entrega são etapas distintas.">
+    <Section title="Mensagens e entregas" subtitle="Situação consultada no IRON: fila, processamento e confirmação de entrega são etapas distintas.">
       {loading ? <ActivityIndicator color="#2BF47A" /> : messages.length === 0
         ? <Text style={styles.muted}>Nenhuma mensagem registrada.</Text>
         : messages.slice(0, 50).map((item) => <View key={item.id} style={styles.entry}>
