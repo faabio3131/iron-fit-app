@@ -200,7 +200,7 @@ export function AccessCenterPanel({
       <Text style={styles.muted}>Credenciais, decisões e dispositivos da academia autenticada. A autorização de entrada física é sempre decidida pelo backend/dispositivo autorizado.</Text>
       <View style={styles.kpis}>
         <View style={styles.kpi}><Text style={styles.kpiValue}>{credentials.filter((c) => c.status === 'ACTIVE').length}</Text><Text style={styles.muted}>Credenciais ativas</Text></View>
-        <View style={styles.kpi}><Text style={styles.kpiValue}>{allowedCount}</Text><Text style={styles.muted}>Entradas permitidas (histórico recebido)</Text></View>
+        <View style={styles.kpi}><Text style={styles.kpiValue}>{allowedCount}</Text><Text style={styles.muted}>Autorizações permitidas (não comprovam passagem)</Text></View>
         <View style={styles.kpi}><Text style={styles.kpiValue}>{deniedCount}</Text><Text style={styles.muted}>Entradas negadas (histórico recebido)</Text></View>
       </View>
     </GlowCard>
