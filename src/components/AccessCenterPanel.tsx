@@ -81,6 +81,7 @@ export function AccessCenterPanel({
   const [hardwareBusy, setHardwareBusy] = useState(false);
   const [hardwareNotice, setHardwareNotice] = useState('');
   const [hardwareError, setHardwareError] = useState('');
+  const [oneTimeDeviceToken, setOneTimeDeviceToken] = useState<{ id: string; token: string } | null>(null);
 
 
   const studentMatches = students.filter((entry) => (entry.name ?? entry.user?.name ?? '').toLocaleLowerCase('pt-BR')
@@ -162,6 +163,30 @@ export function AccessCenterPanel({
     setDecision('ALL'); setFrom(''); setTo(''); setFilteredEvents(null); setEventError(''); setEventFilterApplied(false);
   }
 
+
+  async function provisionHardwareDevice(deviceId: string) {
+    if (!canEnrollDevices || hardwareBusy) return;
+    setHardwareBusy(true);
+    setHardwareError('');
+    setOneTimeDeviceToken(null);
+    try {
+      const response = await api('/access/devices/' + encodeURIComponent(deviceId) + '/provision', undefined, { method: 'POST' });
+      if (!response?.deviceToken) {
+        setHardwareError('O servidor não confirmou o provisionamento do dispositivo.');
+        return;
+      }
+      setOneTimeDeviceToken({ id: deviceId, token: response.deviceToken });
+      setHardwareNotice('Token de instalação emitido. Ele será exibido apenas nesta sessão.');
+      try { await onUpdated(); } catch {
+        setHardwareError('Token emitido, mas a lista não atualizou. Não repita o provisionamento sem conferir.');
+      }
+    } catch (reason) {
+      const status = reason instanceof Error ? (reason as Error & { status?: number }).status : undefined;
+      setHardwareError(status === 403 ? 'Reautenticação administrativa do proprietário obrigatória.' : failure(reason));
+    } finally {
+      setHardwareBusy(false);
+    }
+  }
 
   async function enrollHardware() {
     if (!canEnrollDevices || hardwareBusy || !hardwareName.trim() || !hardwareModel.trim()) return;
@@ -333,6 +358,17 @@ export function AccessCenterPanel({
         <Text style={styles.entryTitle}>{device.name ?? 'Dispositivo'}</Text>
         <Text style={styles.muted}>Fabricante: {device.manufacturer ?? 'Não informado'} · Modelo: {device.model ?? 'Não informado'} · Tipo: {device.type ?? 'Não informado'} · Protocolo: {device.protocol ?? 'Não informado'} · {device.active ? 'Ativo' : 'Inativo'}</Text>
         <Text style={styles.muted}>Última sincronização: {formattedDate(device.lastSyncAt)}</Text>
+        {canEnrollDevices && device.active !== true ? <Action
+          testID={'access-hardware-provision-' + device.id}
+          label="Gerar token de instalação"
+          secondary disabled={hardwareBusy}
+          onPress={() => { void provisionHardwareDevice(device.id); }}
+        /> : null}
+        {canEnrollDevices && oneTimeDeviceToken?.id === device.id ? <View testID="access-hardware-one-time-token" style={styles.secret}>
+          <Text style={styles.warning}>Token confidencial — exibição única. Entregue somente ao instalador autorizado.</Text>
+          <Text selectable style={styles.secretText}>{oneTimeDeviceToken.token}</Text>
+          <Action secondary label="Ocultar token" testID="access-hardware-hide-token" onPress={() => setOneTimeDeviceToken(null)} />
+        </View> : null}
       </View>)}
       {!devices.length ? <Text style={styles.muted}>Nenhum dispositivo cadastrado.</Text> : null}
     </GlowCard> : null}
