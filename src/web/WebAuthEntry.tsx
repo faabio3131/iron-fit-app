@@ -18,8 +18,8 @@ export function WebAuthEntry() {
           setCreatedEmail(email);
           setNotice(
             trialEndsAt
-              ? `Trial criado. Acesso liberado até ${new Date(trialEndsAt).toLocaleDateString('pt-BR')}. Entre com a conta criada.`
-              : 'Trial criado. Entre com a conta criada.',
+              ? `Período gratuito iniciado. Acesso disponível até ${new Date(trialEndsAt).toLocaleDateString('pt-BR')}. Entre com a conta criada.`
+              : 'Período gratuito iniciado. Entre com a conta criada.',
           );
           setMode('login');
         }}
