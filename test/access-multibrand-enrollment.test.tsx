@@ -12,12 +12,14 @@ beforeEach(() => {
   mockApi.mockImplementation(async (path: string, _token?: unknown, opts?: { method?: string }) => {
     if (path === '/access/devices' && opts?.method === 'POST')
       return { id: 'device-new', active: false };
+    if (path === '/access/devices/d-a/provision' && opts?.method === 'POST')
+      return { deviceId: 'd-a', deviceToken: 'secret-for-installer' };
     throw new Error('Unexpected API: ' + path);
   });
 });
 
-function mount(canEnrollDevices: boolean) {
-  return render(<AccessCenterPanel students={[]} credentials={[]} events={[]} devices={[]}
+function mount(canEnrollDevices: boolean, devices: any[] = []) {
+  return render(<AccessCenterPanel students={[]} credentials={[]} events={[]} devices={devices}
     canManageDevices canEnrollDevices={canEnrollDevices} onUpdated={onUpdated} />);
 }
 
@@ -53,4 +55,20 @@ test('failed enrollment does not claim success or invent a physical activation',
   await waitFor(() => expect(ui.getByTestId('access-hardware-error')).toBeTruthy());
   expect(onUpdated).not.toHaveBeenCalled();
   expect(ui.queryByText(/Dispositivo cadastrado em estado inativo/)).toBeNull();
+});
+
+test('owner provisions inactive device token one time without storing it in form fields', async () => {
+  const ui = mount(true, [{ id: 'd-a', name: 'Entrada', active: false }]);
+  fireEvent.press(ui.getByTestId('access-hardware-provision-d-a'));
+  await waitFor(() => expect(ui.getByTestId('access-hardware-one-time-token')).toBeTruthy());
+  expect(ui.getByText('secret-for-installer')).toBeTruthy();
+  expect(mockApi).toHaveBeenCalledWith('/access/devices/d-a/provision', undefined, { method: 'POST' });
+  fireEvent.press(ui.getByTestId('access-hardware-hide-token'));
+  expect(ui.queryByText('secret-for-installer')).toBeNull();
+});
+
+test('manager can see existing devices but cannot provision installation credentials', () => {
+  const ui = mount(false, [{ id: 'd-a', name: 'Entrada', active: false }]);
+  expect(ui.getByTestId('access-device-d-a')).toBeTruthy();
+  expect(ui.queryByTestId('access-hardware-provision-d-a')).toBeNull();
 });
