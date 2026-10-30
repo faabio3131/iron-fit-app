@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { AccountSecurityPanel } from '../components/AccountSecurityPanel';
 import { IronBrand } from '../components/IronBrand';
 import { PASSWORD_POLICY_TEXT } from '../security/password-policy';
@@ -511,9 +511,13 @@ function TenantCommercialWebApp() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rowTitle}>{session.name ?? 'Sessão'}</Text>
                   {(Array.isArray(session.exercises) ? session.exercises : []).map((entry: any, index: number) =>
-                    <Text key={entry.id ?? index} style={styles.muted}>{
-                      entry.exercise?.name ?? 'Exercício'
-                    } · {entry.sets ?? '—'} séries · {entry.reps ?? '—'} repetições · descanso {entry.restSeconds ?? '—'}s</Text>)}
+                    <View key={entry.id ?? index}>
+                      <Text style={styles.muted}>{entry.exercise?.name ?? 'Exercício'} · {entry.sets ?? '—'} séries · {entry.reps ?? '—'} repetições · descanso {entry.restSeconds ?? '—'}s</Text>
+                      {typeof entry.exercise?.videoUrl === 'string' && /^https:\/\//i.test(entry.exercise.videoUrl)
+                        ? <Button testID={`workout-exercise-video-${entry.id ?? index}`} secondary label="Assistir vídeo do exercício"
+                            onPress={() => { void Linking.openURL(entry.exercise.videoUrl).catch(() => setError('Não foi possível abrir o vídeo do exercício.')); }} />
+                        : null}
+                    </View>)}
                 </View>
               </View>)}
               {eligible ? <View style={styles.actions}>
