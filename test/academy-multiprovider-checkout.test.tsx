@@ -153,3 +153,40 @@ test('signed webhook inbox is advisory and cannot book payment by itself', async
   expect(props.onPay).not.toHaveBeenCalled();
   expect(mockApi.mock.calls.every((call) => call[2]?.method !== 'PATCH')).toBe(true);
 });
+
+test('owner can reconcile a signed and matched Stripe event using a real tenant account', async () => {
+  const onUpdated = jest.fn();
+  mockApi.mockImplementation(async (path: string, _locale: unknown, options?: { method?: string; body?: string }) => {
+    if (path === '/financial/payment-providers') return [];
+    if (path === '/financial/gateway-events') return [{
+      id: 'event-a', providerCode: 'stripe', eventType: 'checkout.session.completed',
+      chargeId: charge.id, status: 'RECEIVED',
+    }];
+    if (path === '/financial/gateway-events/event-a/reconcile' && options?.method === 'POST')
+      return { status: 'RECONCILED', processed: true };
+    throw new Error('Unexpected request');
+  });
+  const screen = render(<AcademyChargesPanel {...props} onUpdated={onUpdated} />);
+  await waitFor(() => expect(screen.getByTestId('academy-reconcile-event-event-a')).toBeTruthy());
+  fireEvent.press(screen.getByTestId('academy-reconcile-event-event-a'));
+  await waitFor(() => expect(screen.getByText(/Evento conciliado após verificação/)).toBeTruthy());
+  const request = mockApi.mock.calls.find((args) => args[0] === '/financial/gateway-events/event-a/reconcile');
+  expect(JSON.parse(request[2].body)).toEqual({ accountId: 'account-a' });
+  expect(props.onPay).not.toHaveBeenCalled();
+  expect(onUpdated).toHaveBeenCalledTimes(1);
+});
+
+test('unmatched Mercado Pago event is not exposed as a paid receipt action', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/financial/payment-providers') return [];
+    if (path === '/financial/gateway-events') return [{
+      id: 'event-mp', providerCode: 'mercado_pago', eventType: 'payment.updated',
+      chargeId: null, status: 'UNMATCHED',
+    }];
+    throw new Error('Unexpected request');
+  });
+  const screen = render(<AcademyChargesPanel {...props} />);
+  await waitFor(() => expect(screen.getByTestId('academy-gateway-events')).toBeTruthy());
+  expect(screen.queryByTestId('academy-reconcile-event-event-mp')).toBeNull();
+  expect(props.onPay).not.toHaveBeenCalled();
+});

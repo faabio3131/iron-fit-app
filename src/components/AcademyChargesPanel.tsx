@@ -49,6 +49,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
   const [checkoutError, setCheckoutError] = useState('');
   const [reconcileBusy, setReconcileBusy] = useState<string | null>(null);
   const [reconcileNotice, setReconcileNotice] = useState('');
+  const [eventBusy, setEventBusy] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -119,6 +120,30 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
     }
   }
 
+  async function reconcileSignedEvent(eventId: string) {
+    if (eventBusy || !selectedAccountId) return;
+    setEventBusy(eventId);
+    setReconcileNotice('');
+    try {
+      const response = await api('/financial/gateway-events/' + encodeURIComponent(eventId) + '/reconcile', undefined, {
+        method: 'POST',
+        body: JSON.stringify({ accountId: selectedAccountId }),
+      }) as { status?: string; processed?: boolean };
+      if (response.status === 'RECONCILED' && response.processed !== false) {
+        setReconcileNotice('Evento conciliado após verificação diretamente no gateway.');
+        setProviderEvents((previous) => previous.map((event) =>
+          event.id === eventId ? { ...event, status: 'RECONCILED' } : event));
+        onUpdated?.();
+      } else {
+        setReconcileNotice('Evento ainda não conciliado. Nenhum recebimento foi presumido.');
+      }
+    } catch {
+      setReconcileNotice('Não foi possível conferir o evento no gateway. O recebimento não foi presumido.');
+    } finally {
+      setEventBusy(null);
+    }
+  }
+
   const account = accounts.find((item) => item.id === selectedAccountId && item.active !== false);
   const pendingCharge = charges.find((item) => item.id === confirmId && item.status === 'PENDING');
   const accountApproved = Boolean(account && pendingCharge && confirmAccountId === account?.id);
@@ -154,6 +179,12 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
       <Text style={styles.muted}>Eventos recebidos e autenticados são apenas avisos. A confirmação do dinheiro continua dependendo da conciliação com o provedor.</Text>
       {providerEvents.map((event) => <View key={event.id} style={styles.row}>
         <Text style={styles.detail}>{event.providerCode.replace(/_/g, ' ')} · {event.eventType}</Text>
+        {event.providerCode === 'stripe' && event.chargeId &&
+          ['RECEIVED', 'RETRY'].includes(event.status) && account ? <Btn
+          testID={'academy-reconcile-event-' + event.id}
+          label={eventBusy === event.id ? 'Conferindo…' : 'Conciliar evento'}
+          disabled={saving || !!eventBusy}
+          onPress={() => { void reconcileSignedEvent(event.id); }} /> : null}
         <Text style={styles.muted}>Situação: {event.status === 'RECEIVED' ? 'Recebido — conferir cobrança' :
           event.status === 'UNMATCHED' ? 'Aguardando associação à cobrança' :
           event.status === 'IGNORED' ? 'Fora do escopo financeiro' : 'Revisão necessária'}</Text>
