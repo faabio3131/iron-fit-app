@@ -218,3 +218,24 @@ test('automation opt-in is not clickable without a tenant financial account', as
   fireEvent.press(screen.getByTestId('academy-automation-policy-toggle'));
   expect(mockApi.mock.calls.some((call) => call[0] === '/financial/automation-policy' && call[2]?.method === 'POST')).toBe(false);
 });
+
+test('verified MP event with canonical charge association can be reconciled by owner', async () => {
+  const onUpdated = jest.fn();
+  mockApi.mockImplementation(async (path: string, _locale: unknown, options?: { method?: string }) => {
+    if (path === '/financial/payment-providers') return [];
+    if (path === '/financial/automation-policy') return { enabled: false };
+    if (path === '/financial/gateway-events') return [{
+      id: 'mp-event', providerCode: 'mercado_pago', eventType: 'payment.updated',
+      chargeId: charge.id, status: 'RECEIVED',
+    }];
+    if (path === '/financial/gateway-events/mp-event/reconcile' && options?.method === 'POST')
+      return { status: 'RECONCILED', processed: true };
+    throw new Error('Unexpected request');
+  });
+  const screen = render(<AcademyChargesPanel {...props} onUpdated={onUpdated} />);
+  await waitFor(() => expect(screen.getByTestId('academy-reconcile-event-mp-event')).toBeTruthy());
+  fireEvent.press(screen.getByTestId('academy-reconcile-event-mp-event'));
+  await waitFor(() => expect(screen.getByText(/Evento conciliado após verificação/)).toBeTruthy());
+  expect(onUpdated).toHaveBeenCalledTimes(1);
+  expect(props.onPay).not.toHaveBeenCalled();
+});
