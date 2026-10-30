@@ -9,7 +9,7 @@ type Credential = {
   studentId?: string; student?: { user?: { name?: string } };
 };
 type Device = {
-  id: string; name?: string; type?: string; protocol?: string;
+  id: string; name?: string; type?: string; protocol?: string; manufacturer?: string | null; model?: string | null;
   active?: boolean; lastSyncAt?: string | null; tokenRotatedAt?: string | null;
 };
 type Event = {
@@ -48,13 +48,14 @@ function extractDate(value: string, boundary: 'from' | 'to') {
 }
 
 export function AccessCenterPanel({
-  students, credentials, devices, events, canManageDevices, onUpdated,
+  students, credentials, devices, events, canManageDevices, canEnrollDevices, onUpdated,
 }: {
   students: Student[];
   credentials: Credential[];
   devices: Device[];
   events: Event[];
   canManageDevices: boolean;
+  canEnrollDevices: boolean;
   onUpdated: () => Promise<void>;
 }) {
   const [studentSearch, setStudentSearch] = useState('');
@@ -73,6 +74,13 @@ export function AccessCenterPanel({
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [eventError, setEventError] = useState('');
   const [eventFilterApplied, setEventFilterApplied] = useState(false);
+  const [hardwareName, setHardwareName] = useState('');
+  const [hardwareModel, setHardwareModel] = useState('');
+  const [hardwareManufacturer, setHardwareManufacturer] = useState<'CONTROL_ID' | 'TOPDATA' | 'HENRY' | 'DIMEP'>('CONTROL_ID');
+  const [hardwareBusy, setHardwareBusy] = useState(false);
+  const [hardwareNotice, setHardwareNotice] = useState('');
+  const [hardwareError, setHardwareError] = useState('');
+
 
   const studentMatches = students.filter((entry) => (entry.name ?? entry.user?.name ?? '').toLocaleLowerCase('pt-BR')
     .includes(studentSearch.toLocaleLowerCase('pt-BR'))).slice(0, 30);
@@ -153,6 +161,39 @@ export function AccessCenterPanel({
     setDecision('ALL'); setFrom(''); setTo(''); setFilteredEvents(null); setEventError(''); setEventFilterApplied(false);
   }
 
+
+  async function enrollHardware() {
+    if (!canEnrollDevices || hardwareBusy || !hardwareName.trim() || !hardwareModel.trim()) return;
+    setHardwareBusy(true);
+    setHardwareError('');
+    setHardwareNotice('');
+    try {
+      const result = await api('/access/devices', undefined, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: hardwareName.trim(),
+          model: hardwareModel.trim(),
+          manufacturer: hardwareManufacturer,
+          type: 'QR_CODE',
+        }),
+      });
+      if (!result?.id || result.active !== false) {
+        setHardwareError('O dispositivo não foi confirmado como inativo. Atualize a lista antes de repetir.');
+        return;
+      }
+      setHardwareName('');
+      setHardwareModel('');
+      setHardwareNotice('Dispositivo cadastrado em estado inativo. A liberação física requer instalação e homologação do conector.');
+      try { await onUpdated(); } catch {
+        setHardwareError('Cadastro confirmado, mas a listagem não atualizou. Atualize antes de repetir.');
+      }
+    } catch (reason) {
+      const status = reason instanceof Error ? (reason as Error & { status?: number }).status : undefined;
+      setHardwareError(status === 403 ? 'Ação restrita ao proprietário com reautenticação administrativa ativa.' : failure(reason));
+    } finally {
+      setHardwareBusy(false);
+    }
+  }
   return <View>
     <GlowCard style={styles.card}>
       <Text style={styles.title}>Central de acessos</Text>
@@ -240,9 +281,42 @@ export function AccessCenterPanel({
     {canManageDevices ? <GlowCard style={styles.card}>
       <Text style={styles.title}>Dispositivos de acesso</Text>
       <Text style={styles.muted}>Inventário de dispositivos configurados. Sincronização não comprova integração física homologada. Tokens e chaves não são exibidos.</Text>
+      {canEnrollDevices ? <View testID="access-hardware-enrollment" style={styles.entry}>
+        <Text style={styles.entryTitle}>Cadastrar catraca</Text>
+        <Text style={styles.muted}>O cadastro não ativa uma catraca. A ativação exige conector homologado e reautenticação administrativa.</Text>
+        <View style={styles.actions}>
+          {([
+            ['CONTROL_ID', 'Control iD'],
+            ['TOPDATA', 'Topdata'],
+            ['HENRY', 'Henry'],
+            ['DIMEP', 'DIMEP'],
+          ] as const).map(([code, label]) => <Action
+            key={code} testID={'access-hardware-brand-' + code}
+            label={label}
+            secondary={hardwareManufacturer !== code}
+            disabled={hardwareBusy}
+            onPress={() => setHardwareManufacturer(code)}
+          />)}
+        </View>
+        <TextInput
+          testID="access-hardware-name" accessibilityLabel="Nome da catraca"
+          style={styles.input} value={hardwareName} onChangeText={setHardwareName}
+          placeholder="Ex.: Entrada principal" placeholderTextColor="#8395ab"
+        />
+        <TextInput
+          testID="access-hardware-model" accessibilityLabel="Modelo da catraca"
+          style={styles.input} value={hardwareModel} onChangeText={setHardwareModel}
+          placeholder="Ex.: iDBlock Next / Fit 4" placeholderTextColor="#8395ab"
+        />
+        <Action testID="access-hardware-create" label={hardwareBusy ? 'Cadastrando…' : 'Cadastrar dispositivo inativo'}
+          disabled={hardwareBusy || !hardwareName.trim() || !hardwareModel.trim()}
+          onPress={() => { void enrollHardware(); }} />
+        {hardwareNotice ? <Text style={styles.success}>{hardwareNotice}</Text> : null}
+        {hardwareError ? <Text testID="access-hardware-error" style={styles.error}>{hardwareError}</Text> : null}
+      </View> : null}
       {devices.map((device) => <View key={device.id} testID={'access-device-' + device.id} style={styles.entry}>
         <Text style={styles.entryTitle}>{device.name ?? 'Dispositivo'}</Text>
-        <Text style={styles.muted}>Tipo: {device.type ?? 'Não informado'} · Protocolo: {device.protocol ?? 'Não informado'} · {device.active ? 'Ativo' : 'Inativo'}</Text>
+        <Text style={styles.muted}>Fabricante: {device.manufacturer ?? 'Não informado'} · Modelo: {device.model ?? 'Não informado'} · Tipo: {device.type ?? 'Não informado'} · Protocolo: {device.protocol ?? 'Não informado'} · {device.active ? 'Ativo' : 'Inativo'}</Text>
         <Text style={styles.muted}>Última sincronização: {formattedDate(device.lastSyncAt)}</Text>
       </View>)}
       {!devices.length ? <Text style={styles.muted}>Nenhum dispositivo cadastrado.</Text> : null}
