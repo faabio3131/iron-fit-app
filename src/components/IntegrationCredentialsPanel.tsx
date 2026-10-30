@@ -720,7 +720,7 @@ export function IntegrationCredentialsPanel({
 
       <View style={styles.section}>
         <Text style={styles.title}>Conexões configuradas</Text>
-        <Text style={styles.muted}>Status operacional e ciclo de credenciais do tenant atual.</Text>
+        <Text style={styles.muted}>Situação operacional e ciclo de credenciais da academia atual.</Text>
         {connections.length === 0 ? (
           <Text style={styles.empty}>Nenhuma conexão configurada para esta academia.</Text>
         ) : connections.map((connection) => (

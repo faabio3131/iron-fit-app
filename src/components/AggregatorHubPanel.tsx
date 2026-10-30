@@ -105,7 +105,7 @@ export function AggregatorHubPanel({ canManage }: { canManage: boolean }) {
 
   return <View>
     <Card title="Aggregator Hub — operação da academia">
-      <Text style={styles.muted}>Dados consultados no IRON para o tenant autenticado. Um adapter implementado não comprova integração externa homologada: o status de produção deve ser verificado no Integration Center.</Text>
+      <Text style={styles.muted}>Dados consultados no IRON para a academia autenticada. Uma integração implementada não comprova homologação externa: o status de produção deve ser verificado no Integration Center.</Text>
       <View style={styles.actions}><Button testID="aggregator-refresh" label="Atualizar informações"
         disabled={loading} onPress={refresh} /></View>
       {loading ? <ActivityIndicator color="#2BF47A" /> : null}

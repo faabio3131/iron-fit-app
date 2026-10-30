@@ -74,7 +74,7 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
       <View style={styles.card}>
         <Text style={styles.kicker}>IRON · TESTE GRÁTIS</Text>
         <Text style={styles.title}>Crie sua academia</Text>
-        <Text style={styles.subtitle}>O tenant, o OWNER e a assinatura de trial são provisionados pelo backend em uma única transação.</Text>
+        <Text style={styles.subtitle}>Sua academia e seu acesso de proprietário são configurados com segurança ao iniciar o período gratuito.</Text>
 
         <TextInput testID="trial-name" style={styles.input} value={name} onChangeText={setName} placeholder="Seu nome" placeholderTextColor="#64748b" />
         <TextInput testID="trial-gym-name" style={styles.input} value={gymName} onChangeText={setGymName} placeholder="Nome da academia" placeholderTextColor="#64748b" />
@@ -96,12 +96,12 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <TouchableOpacity accessibilityRole="button" testID="trial-submit" style={[styles.primary, disabled && styles.disabled]} onPress={submit} disabled={disabled}>
-          {loading ? <ActivityIndicator color="#04140b" /> : <Text style={styles.primaryText}>Criar trial</Text>}
+          {loading ? <ActivityIndicator color="#04140b" /> : <Text style={styles.primaryText}>Iniciar período gratuito</Text>}
         </TouchableOpacity>
         <TouchableOpacity accessibilityRole="button" style={styles.secondary} onPress={onCancel} disabled={loading}>
           <Text style={styles.secondaryText}>Já tenho conta</Text>
         </TouchableOpacity>
-        <Text style={styles.finePrint}>Nenhuma cobrança é criada nesta etapa. Billing SaaS pertence ao bloco comercial específico.</Text>
+        <Text style={styles.finePrint}>Nenhuma cobrança é criada nesta etapa. A assinatura do IRON é gerenciada pela FM Tecnologia.</Text>
       </View>
     </ScrollView>
   );
