@@ -14,6 +14,8 @@ beforeEach(() => {
       return { id: 'device-new', active: false };
     if (path === '/access/devices/d-a/provision' && opts?.method === 'POST')
       return { deviceId: 'd-a', deviceToken: 'secret-for-installer' };
+    if (path === '/access/devices/d-a/firmware' && opts?.method === 'PATCH')
+      return { id: 'd-a', firmwareVersion: 'firmware-1', certificationStatus: 'NOT_HOMOLOGATED' };
     throw new Error('Unexpected API: ' + path);
   });
 });
@@ -71,4 +73,20 @@ test('manager can see existing devices but cannot provision installation credent
   const ui = mount(false, [{ id: 'd-a', name: 'Entrada', active: false }]);
   expect(ui.getByTestId('access-device-d-a')).toBeTruthy();
   expect(ui.queryByTestId('access-hardware-provision-d-a')).toBeNull();
+});
+
+test('owner configures real firmware and receives explicit loss of prior homologation', async () => {
+  const ui = mount(true, [{ id: 'd-a', name: 'Entrada', active: false }]);
+  fireEvent.changeText(ui.getByTestId('access-hardware-firmware-d-a'), 'firmware-1');
+  fireEvent.press(ui.getByTestId('access-hardware-save-firmware-d-a'));
+  await waitFor(() => expect(onUpdated).toHaveBeenCalledTimes(1));
+  expect(mockApi).toHaveBeenCalledWith('/access/devices/d-a/firmware', undefined, {
+    method: 'PATCH', body: JSON.stringify({ firmwareVersion: 'firmware-1' }),
+  });
+  expect(ui.getByText(/A homologação anterior foi invalidada/)).toBeTruthy();
+});
+
+test('non-owner cannot configure physical device firmware', () => {
+  const ui = mount(false, [{ id: 'd-a', name: 'Entrada', active: false }]);
+  expect(ui.queryByTestId('access-hardware-save-firmware-d-a')).toBeNull();
 });
