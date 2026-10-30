@@ -269,7 +269,7 @@ function TenantCommercialWebApp() {
       if (key === 'assessments') next.students = await api('/students');
       if (key === 'workouts' || key === 'intelligence') { [next.workouts, next.students] = await Promise.all([api('/workouts'), api('/students')]); }
       if (key === 'schedule') { [next.slots, next.students] = await Promise.all([api('/schedule-slots'), api('/students')]); }
-      if (key === 'access') { [next.events, next.students, next.credentials, next.devices] = await Promise.all([api('/access/events'), api('/students'), api('/access/credentials'), can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? api('/access/devices') : Promise.resolve([])]); }
+      if (key === 'access') { [next.events, next.students, next.credentials, next.devices, next.physicalAttempts] = await Promise.all([api('/access/events'), api('/students'), api('/access/credentials'), can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? api('/access/devices') : Promise.resolve([]), api('/access/hardware/attempts')]); }
       if (key === 'financial') { [next.accounts, next.charges, next.students] = await Promise.all([api('/financial/accounts'), api('/financial/charges'), api('/students')]); }
       if (key === 'entitlements') { [next.features, next.configurations] = await Promise.all([api('/product-entitlements/tenant/features'), api('/product-entitlements/tenant/configurations')]); next.subscription = subscription; }
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
@@ -567,6 +567,7 @@ function TenantCommercialWebApp() {
       students={list(data.students)}
       credentials={list(data.credentials)}
       events={list(data.events)}
+      physicalAttempts={list(data.physicalAttempts)}
       devices={list(data.devices)}
       canManageDevices={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
       canEnrollDevices={can('SUPER_ADMIN', 'OWNER')}
