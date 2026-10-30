@@ -63,7 +63,7 @@ test('C02 owner Aggregator Hub consumes real tenant-scoped queues and advisory a
   expect(view.getByText(/Taxa de conciliação/)).toBeTruthy();
   expect(view.queryByText(/Exceções de repasse/)).toBeNull();
   expect(view.getByText(/Visitas provisórias/)).toBeTruthy();
-  expect(view.getByText(/adapter implementado não comprova integração externa homologada/)).toBeTruthy();
+  expect(view.getByText(/integração implementada não comprova homologação externa/)).toBeTruthy();
   expect(mockApi).toHaveBeenCalledWith('/aggregator/intelligence/overview?days=30');
   expect(mockApi).toHaveBeenCalledWith('/aggregator/operations/risk-queue?limit=25');
   expect(mockApi).toHaveBeenCalledWith('/aggregator/operations/settlement-queue?limit=25');
