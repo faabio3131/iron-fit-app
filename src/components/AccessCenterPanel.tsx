@@ -9,7 +9,7 @@ type Credential = {
   studentId?: string; student?: { user?: { name?: string } };
 };
 type Device = {
-  id: string; name?: string; type?: string; protocol?: string; manufacturer?: string | null; model?: string | null; certificationStatus?: string | null; certificationRef?: string | null;
+  id: string; name?: string; type?: string; protocol?: string; manufacturer?: string | null; model?: string | null; firmwareVersion?: string | null; certificationStatus?: string | null; certificationRef?: string | null;
   active?: boolean; lastSyncAt?: string | null; tokenRotatedAt?: string | null;
 };
 type PhysicalAttempt = {
@@ -93,6 +93,7 @@ export function AccessCenterPanel({
   const [hardwareNotice, setHardwareNotice] = useState('');
   const [hardwareError, setHardwareError] = useState('');
   const [oneTimeDeviceToken, setOneTimeDeviceToken] = useState<{ id: string; token: string } | null>(null);
+  const [deviceFirmwareInputs, setDeviceFirmwareInputs] = useState<Record<string, string>>({});
 
 
   const studentMatches = students.filter((entry) => (entry.name ?? entry.user?.name ?? '').toLocaleLowerCase('pt-BR')
@@ -174,6 +175,33 @@ export function AccessCenterPanel({
     setDecision('ALL'); setFrom(''); setTo(''); setFilteredEvents(null); setEventError(''); setEventFilterApplied(false);
   }
 
+
+  async function configureHardwareFirmware(deviceId: string) {
+    if (!canEnrollDevices || hardwareBusy) return;
+    const firmwareVersion = (deviceFirmwareInputs[deviceId] ?? '').trim();
+    if (!firmwareVersion) return;
+    setHardwareBusy(true);
+    setHardwareError('');
+    setHardwareNotice('');
+    try {
+      const result = await api('/access/devices/' + encodeURIComponent(deviceId) + '/firmware', undefined, {
+        method: 'PATCH', body: JSON.stringify({ firmwareVersion }),
+      });
+      if (!result || result.firmwareVersion !== firmwareVersion) {
+        setHardwareError('Não foi possível confirmar a versão do firmware.');
+        return;
+      }
+      setHardwareNotice('Firmware registrado. A homologação anterior foi invalidada quando houve alteração.');
+      setDeviceFirmwareInputs((current) => ({ ...current, [deviceId]: '' }));
+      try { await onUpdated(); } catch {
+        setHardwareError('Firmware registrado, mas o inventário não atualizou.');
+      }
+    } catch (reason) {
+      setHardwareError(failure(reason));
+    } finally {
+      setHardwareBusy(false);
+    }
+  }
 
   async function provisionHardwareDevice(deviceId: string) {
     if (!canEnrollDevices || hardwareBusy) return;
@@ -389,6 +417,20 @@ export function AccessCenterPanel({
         <Text style={styles.muted}>Homologação: {device.certificationStatus === 'PRODUCTION_HOMOLOGATED' && device.certificationRef
           ? 'Homologado para este dispositivo'
           : 'Pendente de homologação externa — acesso físico desativado'}</Text>
+        <Text style={styles.muted}>Firmware: {device.firmwareVersion ?? 'Não configurado'}</Text>
+        {canEnrollDevices && device.active !== true ? <View style={styles.actions}>
+          <TextInput
+            testID={'access-hardware-firmware-' + device.id}
+            accessibilityLabel={'Firmware do dispositivo ' + (device.name ?? device.id)}
+            style={styles.input}
+            value={deviceFirmwareInputs[device.id] ?? ''}
+            onChangeText={(value) => setDeviceFirmwareInputs((current) => ({ ...current, [device.id]: value }))}
+            placeholder="Versão exata do firmware" placeholderTextColor="#8395ab"
+          />
+          <Action secondary testID={'access-hardware-save-firmware-' + device.id}
+            label="Salvar firmware" disabled={hardwareBusy || !(deviceFirmwareInputs[device.id] ?? '').trim()}
+            onPress={() => { void configureHardwareFirmware(device.id); }} />
+        </View> : null}
         <Text style={styles.muted}>Última sincronização: {formattedDate(device.lastSyncAt)}</Text>
         {canEnrollDevices && device.active !== true ? <Action
           testID={'access-hardware-provision-' + device.id}
