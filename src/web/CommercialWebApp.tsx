@@ -569,6 +569,7 @@ function TenantCommercialWebApp() {
       events={list(data.events)}
       devices={list(data.devices)}
       canManageDevices={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
+      canEnrollDevices={can('SUPER_ADMIN', 'OWNER')}
       onUpdated={() => loadModule('access')}
     />;
   }
