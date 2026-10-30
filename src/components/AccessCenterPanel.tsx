@@ -18,6 +18,7 @@ type PhysicalAttempt = {
   deviceId: string;
   manufacturer?: string;
   state: string;
+  denialReason?: string | null;
   direction: string;
   createdAt?: string;
 };
@@ -328,6 +329,7 @@ export function AccessCenterPanel({
           : 'Solicitação em processamento'
         }</Text>
         <Text style={styles.muted}>{item.manufacturer ?? 'Fabricante'} · {item.direction === 'ENTRY' ? 'Entrada' : 'Saída'} · {formattedDate(item.createdAt)}</Text>
+        {item.state === 'DENIED' && item.denialReason ? <Text style={styles.warning}>Motivo: {item.denialReason}</Text> : null}
       </View>)}
       {!physicalAttempts.length ? <Text style={styles.muted}>Nenhuma passagem física registrada.</Text> : null}
     </GlowCard>
