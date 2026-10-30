@@ -23,3 +23,9 @@ test('access empty-state copy explains next user action rather than backend impl
   expect(source).toContain('Para configurar dispositivos, utilize uma integração de acesso');
   expect(source).not.toContain('O Access Center não cria dispositivos sem um contrato canônico de backend');
 });
+
+test('trial completion feedback is fully customer-facing Portuguese', () => {
+  const source = webSource('WebAuthEntry.tsx');
+  expect(source).toContain('Período gratuito iniciado.');
+  expect(source).not.toContain('Trial criado.');
+});
