@@ -48,7 +48,7 @@ const staff = ['SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION', 'TRAINER'];
 const modules: ModuleDefinition[] = [
   { key: 'overview', label: 'Visão geral', icon: 'grid-outline', roles: operational },
   { key: 'alerts', label: 'Alertas', icon: 'notifications-outline', roles: ['OWNER', 'MANAGER'] },
-  { key: 'onboarding', label: 'Onboarding', icon: 'rocket-outline', roles: ['OWNER', 'MANAGER'] },
+  { key: 'onboarding', label: 'Configuração inicial', icon: 'rocket-outline', roles: ['OWNER', 'MANAGER'] },
   { key: 'students', label: 'Alunos', icon: 'people-outline', roles: staff },
   { key: 'team', label: 'Equipe', icon: 'shield-checkmark-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER'] },
   { key: 'equipment', label: 'Equipamentos', icon: 'barbell-outline', roles: staff, entitlement: ['equipment.catalog', 'equipment.inventory'] },
