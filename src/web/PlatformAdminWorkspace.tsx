@@ -239,7 +239,7 @@ export function PlatformAdminWorkspace() {
           {notice ? <Text style={styles.ok}>{notice}</Text> : null}
 
           <TextField label="Endereço da Evolution (HTTPS)" value={baseUrl} onChangeText={setBaseUrl} testID="platform-evolution-base-url" />
-          <TextField label="Webhook HTTPS (opcional; somente endpoint verificado)" value={webhookUrl} onChangeText={setWebhookUrl} testID="platform-evolution-webhook-url" />
+          <TextField label="Endereço HTTPS de notificações (opcional; somente endereço verificado)" value={webhookUrl} onChangeText={setWebhookUrl} testID="platform-evolution-webhook-url" />
           <SecretField label={configured ? 'Nova chave da Evolution' : 'Chave da Evolution'} value={apiKey} onChangeText={setApiKey} testID="platform-evolution-key" />
           <Text style={styles.muted}>Confirmação de segurança</Text>
           <SecretField label="Sua senha de administrador" value={password} onChangeText={setPassword} testID="platform-evolution-password" />
