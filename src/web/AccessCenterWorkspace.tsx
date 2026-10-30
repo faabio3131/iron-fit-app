@@ -409,7 +409,7 @@ export function AccessCenterWorkspace({
           >
             <Text style={styles.secondaryButtonText}>Rotacionar token</Text>
           </TouchableOpacity> : null}
-        </View>) : <View style={styles.emptyState}><Text style={styles.emptyTitle}>Nenhum dispositivo configurado</Text><Text style={styles.emptyText}>O Access Center não cria dispositivos sem um contrato canônico de backend.</Text></View>}
+        </View>) : <View style={styles.emptyState}><Text style={styles.emptyTitle}>Nenhum dispositivo configurado</Text><Text style={styles.emptyText}>Para configurar dispositivos, utilize uma integração de acesso disponível e autorizada para sua academia.</Text></View>}
       </View>
 
       {lastDeviceToken?.deviceToken ? <View style={styles.oneTimeSecret} testID="access-device-token-one-time">
