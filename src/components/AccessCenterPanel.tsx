@@ -77,6 +77,7 @@ export function AccessCenterPanel({
   const [hardwareName, setHardwareName] = useState('');
   const [hardwareModel, setHardwareModel] = useState('');
   const [hardwareManufacturer, setHardwareManufacturer] = useState<'CONTROL_ID' | 'TOPDATA' | 'HENRY' | 'DIMEP'>('CONTROL_ID');
+  const [hardwareType, setHardwareType] = useState<'QR_CODE' | 'BIOMETRIC' | 'FACIAL' | 'TAG'>('QR_CODE');
   const [hardwareBusy, setHardwareBusy] = useState(false);
   const [hardwareNotice, setHardwareNotice] = useState('');
   const [hardwareError, setHardwareError] = useState('');
@@ -174,7 +175,7 @@ export function AccessCenterPanel({
           name: hardwareName.trim(),
           model: hardwareModel.trim(),
           manufacturer: hardwareManufacturer,
-          type: 'QR_CODE',
+          type: hardwareType,
         }),
       });
       if (!result?.id || result.active !== false) {
@@ -296,6 +297,20 @@ export function AccessCenterPanel({
             secondary={hardwareManufacturer !== code}
             disabled={hardwareBusy}
             onPress={() => setHardwareManufacturer(code)}
+          />)}
+        </View>
+        <Text style={styles.label}>Leitor/identificação</Text>
+        <View style={styles.actions}>
+          {([
+            ['QR_CODE', 'QR Code'],
+            ['BIOMETRIC', 'Digital'],
+            ['FACIAL', 'Facial'],
+            ['TAG', 'Cartão/Tag'],
+          ] as const).map(([code, label]) => <Action
+            key={code} testID={'access-hardware-type-' + code}
+            label={label} secondary={hardwareType !== code}
+            disabled={hardwareBusy}
+            onPress={() => setHardwareType(code)}
           />)}
         </View>
         <TextInput
