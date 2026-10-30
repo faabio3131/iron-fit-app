@@ -98,7 +98,7 @@ export function ExercisesLibraryPanel({ exercises, canCreate, onUpdated }: {
   return <View>
     <GlowCard style={styles.card}>
       <Text style={styles.heading}>Biblioteca de exercícios</Text>
-      <Text style={styles.muted}>Pesquise exercícios globais e identifique equipamentos compatíveis do inventário da academia.</Text>
+      <Text style={styles.muted}>Pesquise exercícios globais e identifique equipamentos compatíveis do inventário da academia. Onde não houver vídeo associado, a busca no YouTube ajuda na curadoria; resultados de busca não são demonstrações validadas.</Text>
       <TextInput testID="exercise-search" value={search} onChangeText={setSearch} style={styles.input}
         placeholder="Buscar pelo exercício ou movimento" placeholderTextColor="#64748b" />
       <View style={styles.actions}>
@@ -132,6 +132,8 @@ export function ExercisesLibraryPanel({ exercises, canCreate, onUpdated }: {
           </View> : null}
           <View style={styles.actions}>
             {hasVideo ? <Action testID={`exercise-video-${x.id}`} label="Abrir vídeo" onPress={() => { void Linking.openURL(x.videoUrl as string).catch(() => setError('Não foi possível abrir o vídeo.')); }} /> : null}
+            {!hasVideo ? <Action testID={`exercise-video-discover-${x.id}`} label="Pesquisar demonstração no YouTube"
+              onPress={() => { void Linking.openURL(`https://www.youtube.com/results?search_query=${encodeURIComponent(x.name + ' execução correta exercício')}`).catch(() => setError('Não foi possível abrir a pesquisa de vídeos.')); }} /> : null}
             <Action testID={`exercise-compatibility-${x.id}`} label="Ver equipamentos compatíveis"
               disabled={busy} onPress={() => { void loadCompatible(x.id); }} />
           </View>
