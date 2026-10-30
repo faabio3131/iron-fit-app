@@ -43,6 +43,9 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
   const [paymentProviders, setPaymentProviders] = useState<PaymentProvider[]>([]);
   const [providerError, setProviderError] = useState('');
   const [providerEvents, setProviderEvents] = useState<ProviderEvent[]>([]);
+  const [automationEnabled, setAutomationEnabled] = useState(false);
+  const [automationBusy, setAutomationBusy] = useState(false);
+  const [automationNotice, setAutomationNotice] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
   const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
   const [checkoutResults, setCheckoutResults] = useState<Record<string, CheckoutResult>>({});
@@ -63,6 +66,13 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
       .catch(() => {
         if (active) setProviderError('Não foi possível carregar os gateways habilitados desta academia.');
       });
+    void Promise.resolve(api('/financial/automation-policy'))
+      .then((value: unknown) => {
+        if (!active || !value || typeof value !== 'object') return;
+        const policy = value as { enabled?: boolean };
+        setAutomationEnabled(policy.enabled === true);
+      })
+      .catch(() => undefined);
     void Promise.resolve(api('/financial/gateway-events'))
       .then((value: unknown) => {
         if (!active || !Array.isArray(value)) return;
@@ -144,6 +154,26 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
     }
   }
 
+  async function configurePaymentAutomation(enabled: boolean) {
+    if (automationBusy || !selectedAccountId) return;
+    setAutomationBusy(true);
+    setAutomationNotice('');
+    try {
+      const result = await api('/financial/automation-policy', undefined, {
+        method: 'POST',
+        body: JSON.stringify({ accountId: selectedAccountId, enabled }),
+      }) as { enabled?: boolean };
+      setAutomationEnabled(result.enabled === true);
+      setAutomationNotice(result.enabled === true
+        ? 'Política da academia habilitada. A execução automática exige também autorização de infraestrutura e homologação externa.'
+        : 'Conciliação automática desativada para esta academia.');
+    } catch {
+      setAutomationNotice('Falha ao salvar a política financeira. Nenhuma alteração foi presumida.');
+    } finally {
+      setAutomationBusy(false);
+    }
+  }
+
   const account = accounts.find((item) => item.id === selectedAccountId && item.active !== false);
   const pendingCharge = charges.find((item) => item.id === confirmId && item.status === 'PENDING');
   const accountApproved = Boolean(account && pendingCharge && confirmAccountId === account?.id);
@@ -173,6 +203,16 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
           onPress={() => setSelectedProvider(provider.connectionId)} />)}
       </View>
       {checkoutError ? <Text style={styles.notice} testID="academy-checkout-error">{checkoutError}</Text> : null}
+    </View>
+    <View style={styles.confirm} testID="academy-payment-automation-policy">
+      <Text style={styles.heading}>Conciliação automática</Text>
+      <Text style={styles.muted}>Requer conta financeira ativa, autorização de infraestrutura e homologação do gateway. Nenhum webhook sozinho confirma um recebimento.</Text>
+      <Text style={styles.muted}>Política da academia: {automationEnabled ? 'Habilitada' : 'Desabilitada'}</Text>
+      <Btn testID="academy-automation-policy-toggle"
+        label={automationEnabled ? 'Desativar automação' : 'Habilitar automação'}
+        disabled={!account || saving || automationBusy}
+        onPress={() => { void configurePaymentAutomation(!automationEnabled); }} />
+      {automationNotice ? <Text testID="academy-automation-policy-notice" style={styles.notice}>{automationNotice}</Text> : null}
     </View>
     {providerEvents.length ? <View style={styles.confirm} testID="academy-gateway-events">
       <Text style={styles.heading}>Notificações dos gateways</Text>
