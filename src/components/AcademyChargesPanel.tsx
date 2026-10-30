@@ -183,7 +183,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
 
   return <GlowCard style={styles.card}>
     <Text style={styles.title}>Cobranças da academia</Text>
-    <Text style={styles.muted}>Academia → aluno. Recebimento manual gera lançamento financeiro e pode gerar registro fiscal. Não é o billing FM → academia.</Text>
+    <Text style={styles.muted}>Academia → aluno. Recebimento manual gera lançamento financeiro e pode gerar registro fiscal. Não é a assinatura que a FM Tecnologia cobra da academia.</Text>
     <View style={styles.filters}>
       <Btn testID="academy-charges-all" label="Todas" onPress={() => { reset(); setFilter('ALL'); }} />
       <Btn testID="academy-charges-pending" label="Pendentes" onPress={() => { reset(); setFilter('PENDING'); }} />
@@ -192,7 +192,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
     {!account ? <Text style={styles.notice}>Selecione uma conta financeira ativa na seção Contas antes de registrar um recebimento.</Text> : null}
     <View style={styles.confirm} testID="academy-payment-provider-choices">
       <Text style={styles.heading}>Recebimento online por gateway</Text>
-      <Text style={styles.muted}>Escolha uma conexão habilitada da academia. O checkout é criado pelo backend; a cobrança só pode ser considerada paga após confirmação e conciliação, nunca ao gerar o link.</Text>
+      <Text style={styles.muted}>Escolha uma conexão habilitada da academia. O link de pagamento é preparado pelo sistema; a cobrança só pode ser considerada paga após confirmação e conciliação, nunca ao gerar o link.</Text>
       {providerError ? <Text style={styles.notice}>{providerError}</Text> : null}
       {!paymentProviders.length ? <Text style={styles.notice}>Nenhum gateway de pagamento habilitado para esta academia.</Text> : null}
       <View style={styles.filters}>
@@ -206,7 +206,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
     </View>
     <View style={styles.confirm} testID="academy-payment-automation-policy">
       <Text style={styles.heading}>Conciliação automática</Text>
-      <Text style={styles.muted}>Requer conta financeira ativa, autorização de infraestrutura e homologação do gateway. Nenhum webhook sozinho confirma um recebimento.</Text>
+      <Text style={styles.muted}>Requer conta financeira ativa, autorização de infraestrutura e homologação do gateway. Uma notificação isolada do provedor não confirma o recebimento.</Text>
       <Text style={styles.muted}>Política da academia: {automationEnabled ? 'Habilitada' : 'Desabilitada'}</Text>
       <Btn testID="academy-automation-policy-toggle"
         label={automationEnabled ? 'Desativar automação' : 'Habilitar automação'}
@@ -235,7 +235,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
       <Text style={styles.muted}>Situação: {statusLabels[item.status ?? ''] ?? 'Não informada'} · Valor registrado: {recordedAmount(item.amount)} · Vencimento: {date(item.dueDate)}</Text>
       {item.status === 'PENDING' && selectedProvider ? <Btn
         testID={'academy-charge-online-' + item.id}
-        label={checkoutBusy === item.id ? 'Gerando checkout…' : 'Gerar link de pagamento'}
+        label={checkoutBusy === item.id ? 'Preparando pagamento…' : 'Gerar link de pagamento'}
         disabled={saving || !!checkoutBusy}
         onPress={() => { void generateCheckout(item.id); }} /> : null}
       {checkoutResults[item.id]?.checkoutUrl ? <Text selectable style={styles.detail} testID={'academy-charge-checkout-link-' + item.id}>Link de pagamento: {checkoutResults[item.id].checkoutUrl}</Text> : null}
