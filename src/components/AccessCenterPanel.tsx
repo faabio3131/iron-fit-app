@@ -12,6 +12,15 @@ type Device = {
   id: string; name?: string; type?: string; protocol?: string; manufacturer?: string | null; model?: string | null; certificationStatus?: string | null; certificationRef?: string | null;
   active?: boolean; lastSyncAt?: string | null; tokenRotatedAt?: string | null;
 };
+type PhysicalAttempt = {
+  id: string;
+  studentId?: string | null;
+  deviceId: string;
+  manufacturer?: string;
+  state: string;
+  direction: string;
+  createdAt?: string;
+};
 type Event = {
   id: string; allowed: boolean; occurredAt?: string; denialReason?: string | null;
   student?: { user?: { name?: string } }; device?: { name?: string };
@@ -48,12 +57,13 @@ function extractDate(value: string, boundary: 'from' | 'to') {
 }
 
 export function AccessCenterPanel({
-  students, credentials, devices, events, canManageDevices, canEnrollDevices = false, onUpdated,
+  students, credentials, devices, events, physicalAttempts = [], canManageDevices, canEnrollDevices = false, onUpdated,
 }: {
   students: Student[];
   credentials: Credential[];
   devices: Device[];
   events: Event[];
+  physicalAttempts?: PhysicalAttempt[];
   canManageDevices: boolean;
   canEnrollDevices?: boolean;
   onUpdated: () => Promise<void>;
@@ -303,6 +313,23 @@ export function AccessCenterPanel({
       </View>)}
       {!loadingEvents && !eventError && !shownEvents.length ? <Text style={styles.muted}>Nenhum evento registrado com os filtros atuais.</Text> : null}
       {shownEvents.length > 80 ? <Text style={styles.muted}>Exibindo os primeiros 80 eventos mais recentes.</Text> : null}
+    </GlowCard>
+    <GlowCard style={styles.card}>
+      <Text style={styles.title}>Passagens físicas</Text>
+      <Text style={styles.muted}>Separadas das decisões de QR Code. Apenas giro confirmado comprova passagem; comando aceito não equivale à entrada.</Text>
+      {physicalAttempts.slice(0, 60).map((item) => <View key={item.id} testID={'access-physical-'+item.id} style={styles.entry}>
+        <Text style={styles.entryTitle}>{
+          item.state === 'PASSAGE_CONFIRMED' ? 'Passagem confirmada'
+          : item.state === 'RELEASE_UNCERTAIN' ? 'Liberação incerta — verificar equipamento'
+          : item.state === 'COMMAND_ACCEPTED' ? 'Aguardando confirmação de giro'
+          : item.state === 'PASSAGE_NOT_CONFIRMED' ? 'Giro não realizado'
+          : item.state === 'DENIED' ? 'Acesso físico negado'
+          : item.state === 'EXPIRED' ? 'Autorização expirada'
+          : 'Solicitação em processamento'
+        }</Text>
+        <Text style={styles.muted}>{item.manufacturer ?? 'Fabricante'} · {item.direction === 'ENTRY' ? 'Entrada' : 'Saída'} · {formattedDate(item.createdAt)}</Text>
+      </View>)}
+      {!physicalAttempts.length ? <Text style={styles.muted}>Nenhuma passagem física registrada.</Text> : null}
     </GlowCard>
     {canManageDevices ? <GlowCard style={styles.card}>
       <Text style={styles.title}>Dispositivos de acesso</Text>
