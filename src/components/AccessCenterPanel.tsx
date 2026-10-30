@@ -48,14 +48,14 @@ function extractDate(value: string, boundary: 'from' | 'to') {
 }
 
 export function AccessCenterPanel({
-  students, credentials, devices, events, canManageDevices, canEnrollDevices, onUpdated,
+  students, credentials, devices, events, canManageDevices, canEnrollDevices = false, onUpdated,
 }: {
   students: Student[];
   credentials: Credential[];
   devices: Device[];
   events: Event[];
   canManageDevices: boolean;
-  canEnrollDevices: boolean;
+  canEnrollDevices?: boolean;
   onUpdated: () => Promise<void>;
 }) {
   const [studentSearch, setStudentSearch] = useState('');
