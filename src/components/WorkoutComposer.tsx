@@ -3,10 +3,12 @@ import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { GlowCard } from './GlowCard';
 import { api } from '../services/api';
 
+type WorkoutTemplate = { id: string; name: string; ready: boolean; goal: string; level: string; weeklyFrequency: number; notes: string; missingExercises: string[]; missingEquipment: string[]; sessions: { name: string; exercises: { exerciseId: string; equipmentId?: string; sets: number; reps: string; restSeconds: number }[] }[] };
+
 type Student = { id: string; name?: string };
 type Exercise = { id: string; name: string; muscleGroup?: string | null };
 type Assessment = { id: string; createdAt: string; weight?: number | null };
-type PrescribedExercise = { exerciseId: string; equipmentId?: string; sets: string; reps: string; restSeconds: string };
+type PrescribedExercise = { exerciseId: string; equipmentId?: string; sets: string; reps: string; restSeconds: string; suggestedLoad: string };
 type CompatibleEquipment = { id: string; name?: string; catalogItem?: { name?: string } };
 type SessionDraft = { key: number; name: string; estimatedMinutes: string; exercises: PrescribedExercise[] };
 const seed = (): SessionDraft[] => [{ key: 1, name: 'Sessão A', estimatedMinutes: '', exercises: [] }];
@@ -32,6 +34,8 @@ function positiveInt(text: string) {
 export function WorkoutComposer({ students, onUpdated }: {
   students: Student[]; onUpdated: () => Promise<void>;
 }) {
+  const [templates, setTemplates] = useState<WorkoutTemplate[] | null>(null);
+  const [templateError, setTemplateError] = useState('');
   const [studentId, setStudentId] = useState('');
   const [assessmentId, setAssessmentId] = useState('');
   const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -57,6 +61,20 @@ export function WorkoutComposer({ students, onUpdated }: {
       .catch((e: unknown) => { if (mounted) setError(e instanceof Error ? e.message : 'Não foi possível carregar exercícios.'); });
     return () => { mounted = false; };
   }, []);
+  useEffect(() => {
+    let mounted = true;
+    api('/workouts/templates').then(rows => { if (mounted) setTemplates(Array.isArray(rows) ? rows : []); })
+      .catch(() => { if (mounted) setTemplateError('Modelos indisponíveis. Você pode montar o treino manualmente.'); });
+    return () => { mounted = false; };
+  }, []);
+  function applyTemplate(template: WorkoutTemplate) {
+    if (!template.ready || busy) return;
+    setGoal(template.goal); setLevel(template.level); setFrequency(String(template.weeklyFrequency));
+    setNotes(template.notes); setError('');
+    setSessions(template.sessions.map((session, index) => ({ key: index + 1, name: session.name, estimatedMinutes: '', exercises: session.exercises.map(exercise => ({ exerciseId: exercise.exerciseId, ...(exercise.equipmentId ? { equipmentId: exercise.equipmentId } : {}), sets: String(exercise.sets), reps: exercise.reps, restSeconds: String(exercise.restSeconds), suggestedLoad: '' })) })));
+    setNotice('Modelo carregado para edição. Revise a avaliação, as restrições e a carga antes de salvar e aprovar.');
+  }
+
   useEffect(() => {
     if (!studentId) return;
     let mounted = true;
@@ -90,7 +108,7 @@ export function WorkoutComposer({ students, onUpdated }: {
   function addExercise(key: number) {
     if (!selectedExerciseId || !exerciseLibrary.some((row) => row.id === selectedExerciseId)) return;
     setSessions((rows) => rows.map((session) => session.key === key
-      ? { ...session, exercises: [...session.exercises, { exerciseId: selectedExerciseId, ...(compatibleExerciseId === selectedExerciseId && selectedEquipmentId ? { equipmentId: selectedEquipmentId } : {}), sets: '3', reps: '12', restSeconds: '60' }] } : session));
+      ? { ...session, exercises: [...session.exercises, { exerciseId: selectedExerciseId, ...(compatibleExerciseId === selectedExerciseId && selectedEquipmentId ? { equipmentId: selectedEquipmentId } : {}), sets: '3', reps: '12', restSeconds: '60', suggestedLoad: '' }] } : session));
   }
   function changeExercise(key: number, index: number, patch: Partial<PrescribedExercise>) {
     setSessions((rows) => rows.map((session) => session.key === key
@@ -127,6 +145,7 @@ export function WorkoutComposer({ students, onUpdated }: {
             ...(entry.equipmentId ? { equipmentId: entry.equipmentId } : {}),
             ...(entry.sets.trim() ? { sets: Number(entry.sets) } : {}),
             ...(entry.reps.trim() ? { reps: entry.reps.trim() } : {}),
+            ...(entry.suggestedLoad.trim() ? { suggestedLoad: entry.suggestedLoad.trim() } : {}),
             ...(entry.restSeconds.trim() ? { restSeconds: Number(entry.restSeconds) } : {}),
           })),
         })),
@@ -149,6 +168,12 @@ export function WorkoutComposer({ students, onUpdated }: {
   return <GlowCard style={styles.card}>
     <Text style={styles.heading}>Workout Studio — criação manual</Text>
     <Text style={styles.muted}>Monte sessões e prescreva exercícios da biblioteca canônica. O treino inicia em rascunho, sem ativação automática.</Text>
+    <Text style={styles.label}>Modelos de partida</Text>
+    <Text style={styles.muted}>A biblioteca e os aparelhos operacionais da sua academia são conferidos pelo servidor. Revise cada ficha para o aluno antes da aprovação.</Text>
+    {templateError ? <Text style={styles.muted}>{templateError}</Text> : templates === null ? <Text style={styles.muted}>Consultando modelos disponíveis…</Text> : templates.map(template => <View key={template.id}>
+      <Button testID={`studio-template-${template.id}`} label={`Usar ${template.name}`} disabled={!template.ready || busy} onPress={() => applyTemplate(template)} />
+      {!template.ready ? <Text style={styles.muted}>{template.missingExercises.length ? `Exercícios ausentes na biblioteca: ${template.missingExercises.join(', ')}. ` : ''}{template.missingEquipment.length ? `Selecione aparelhos compatíveis no inventário para: ${template.missingEquipment.join(', ')}.` : ''}</Text> : null}
+    </View>)}
     <Text style={styles.label}>Aluno</Text>
     <View style={styles.actions}>{students.map((student) => <Button key={student.id}
       testID={`studio-student-${student.id}`} label={`${student.name ?? 'Aluno'}${student.id === studentId ? ' ✓' : ''}`}
@@ -196,6 +221,7 @@ export function WorkoutComposer({ students, onUpdated }: {
         <View style={styles.form}>
           <Input label="Séries" value={entry.sets} onChangeText={(sets) => changeExercise(session.key, i, { sets })} />
           <Input label="Repetições" value={entry.reps} onChangeText={(reps) => changeExercise(session.key, i, { reps })} />
+          <Input label="Carga ou orientação" testID={`studio-exercise-load-${session.key}-${i}`} value={entry.suggestedLoad} onChangeText={(suggestedLoad) => changeExercise(session.key, i, { suggestedLoad })} />
           <Input label="Descanso (segundos)" value={entry.restSeconds} onChangeText={(restSeconds) => changeExercise(session.key, i, { restSeconds })} />
         </View>
         <Button label="Retirar exercício" testID={`studio-exercise-remove-${session.key}-${i}`}
