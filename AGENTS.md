@@ -672,3 +672,11 @@ Objetivo final:
 - Backend dependente `feat/pilot-reception-desk-20261104`: /reception, política opt-in com OWNER+step-up, plano da academia, idempotência e liquidação financeira canônica. Sem nova autoridade de billing FM. Não publicar UI sem a API/migration correspondente.
 - Validação local candidata: typecheck PASS; lint zero erros/24 warnings herdados; 88 suítes/390 testes PASS. Nova CI e gate cruzado no backend obrigatórios antes de merge; não inferir homologação/deploy por testes.
 - Próximo passo: CI app + backend/browser/PostgreSQL → corrigir → integrar somente verde → pós-merge → próxima fase interna do piloto. Nenhum dado real ou segredo solicitado ao cliente para seed.
+
+
+## CURRENT — Fase 3 / Workout Studio (04/11/2026)
+
+- Fase 2 integrada: backend #218 `af86fa2`, app #83 `b0f161c`; CI pré-merge 41877912066/41877081658 SUCCESS, 937 testes backend/390 app e 9 jornadas HTTP PostgreSQL PASS. Pós-merges 41880622803/41880677293 devem ser consultados.
+- Branch atual `feat/pilot-workout-templates-20261104`: cinco modelos de partida no composer existente, resolvidos pelo backend segundo biblioteca/inventário do tenant. Modelo indisponível é desabilitado com motivo; falha do endpoint opcional não bloqueia criação manual. Carregar modelo não grava nem aprova treino.
+- Validação local: typecheck/lint sem erros; 89 suítes/392 testes PASS. Backend correspondente tem 941 testes PASS e novo teste HTTP/modelo/revisão humana; CI cruzada pendente.
+- Próximo passo: CI nos dois repositórios + navegador real antes de merge; depois pós-merge e Fase 4. Sem deploy. Geração por IA real continua sob integração governada existente e revisão humana.

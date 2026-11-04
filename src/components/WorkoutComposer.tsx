@@ -3,6 +3,8 @@ import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { GlowCard } from './GlowCard';
 import { api } from '../services/api';
 
+type WorkoutTemplate = { id: string; name: string; ready: boolean; goal: string; level: string; weeklyFrequency: number; notes: string; missingExercises: string[]; missingEquipment: string[]; sessions: { name: string; exercises: { exerciseId: string; equipmentId?: string; sets: number; reps: string; restSeconds: number }[] }[] };
+
 type Student = { id: string; name?: string };
 type Exercise = { id: string; name: string; muscleGroup?: string | null };
 type Assessment = { id: string; createdAt: string; weight?: number | null };
@@ -32,6 +34,8 @@ function positiveInt(text: string) {
 export function WorkoutComposer({ students, onUpdated }: {
   students: Student[]; onUpdated: () => Promise<void>;
 }) {
+  const [templates, setTemplates] = useState<WorkoutTemplate[] | null>(null);
+  const [templateError, setTemplateError] = useState('');
   const [studentId, setStudentId] = useState('');
   const [assessmentId, setAssessmentId] = useState('');
   const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -57,6 +61,20 @@ export function WorkoutComposer({ students, onUpdated }: {
       .catch((e: unknown) => { if (mounted) setError(e instanceof Error ? e.message : 'Não foi possível carregar exercícios.'); });
     return () => { mounted = false; };
   }, []);
+  useEffect(() => {
+    let mounted = true;
+    api('/workouts/templates').then(rows => { if (mounted) setTemplates(Array.isArray(rows) ? rows : []); })
+      .catch(() => { if (mounted) setTemplateError('Modelos indisponíveis. Você pode montar o treino manualmente.'); });
+    return () => { mounted = false; };
+  }, []);
+  function applyTemplate(template: WorkoutTemplate) {
+    if (!template.ready || busy) return;
+    setGoal(template.goal); setLevel(template.level); setFrequency(String(template.weeklyFrequency));
+    setNotes(template.notes); setError('');
+    setSessions(template.sessions.map((session, index) => ({ key: index + 1, name: session.name, estimatedMinutes: '', exercises: session.exercises.map(exercise => ({ exerciseId: exercise.exerciseId, ...(exercise.equipmentId ? { equipmentId: exercise.equipmentId } : {}), sets: String(exercise.sets), reps: exercise.reps, restSeconds: String(exercise.restSeconds) })) })));
+    setNotice('Modelo carregado para edição. Revise a avaliação, as restrições e a carga antes de salvar e aprovar.');
+  }
+
   useEffect(() => {
     if (!studentId) return;
     let mounted = true;
@@ -149,6 +167,12 @@ export function WorkoutComposer({ students, onUpdated }: {
   return <GlowCard style={styles.card}>
     <Text style={styles.heading}>Workout Studio — criação manual</Text>
     <Text style={styles.muted}>Monte sessões e prescreva exercícios da biblioteca canônica. O treino inicia em rascunho, sem ativação automática.</Text>
+    <Text style={styles.label}>Modelos de partida</Text>
+    <Text style={styles.muted}>A biblioteca e os aparelhos operacionais da sua academia são conferidos pelo servidor. Revise cada ficha para o aluno antes da aprovação.</Text>
+    {templateError ? <Text style={styles.muted}>{templateError}</Text> : templates === null ? <Text style={styles.muted}>Consultando modelos disponíveis…</Text> : templates.map(template => <View key={template.id}>
+      <Button testID={`studio-template-${template.id}`} label={`Usar ${template.name}`} disabled={!template.ready || busy} onPress={() => applyTemplate(template)} />
+      {!template.ready ? <Text style={styles.muted}>{template.missingExercises.length ? `Exercícios ausentes na biblioteca: ${template.missingExercises.join(', ')}. ` : ''}{template.missingEquipment.length ? `Selecione aparelhos compatíveis no inventário para: ${template.missingEquipment.join(', ')}.` : ''}</Text> : null}
+    </View>)}
     <Text style={styles.label}>Aluno</Text>
     <View style={styles.actions}>{students.map((student) => <Button key={student.id}
       testID={`studio-student-${student.id}`} label={`${student.name ?? 'Aluno'}${student.id === studentId ? ' ✓' : ''}`}
