@@ -663,3 +663,12 @@ Objetivo final:
 - **Sem deploy nem homologação externa executados nesta reconciliação.** A existência de PR de promoção não prova operação efetiva do provider.
 
 **Próxima ação permitida:** reconciliar o critério formal de prontidão R, a matriz dos providers e evidências de ambientes/serviços efetivamente observáveis. Só programar gaps internos reproduzíveis. Não abrir um novo bloco genérico P ou Q sem falha específica.
+
+
+## CURRENT — Piloto comercial / Fase 2 (04/11/2026)
+
+- Entrada do piloto exclusivamente por Testar grátis e convite da equipe. Backend #217 integrado em a5e8430, pré/pós CI 41872805440/41874060440 SUCCESS. Seed #216 encerrado sem merge.
+- Branch atual `feat/pilot-reception-workspace-20261104`: módulo Matrícula e caixa OWNER/RECEPTION, fechamento do próprio operador e configuração do balcão na área Financeiro protegida do OWNER. CPF, nascimento e URL HTTPS de foto adicionados ao cadastro real e perfil do aluno.
+- Backend dependente `feat/pilot-reception-desk-20261104`: /reception, política opt-in com OWNER+step-up, plano da academia, idempotência e liquidação financeira canônica. Sem nova autoridade de billing FM. Não publicar UI sem a API/migration correspondente.
+- Validação local candidata: typecheck PASS; lint zero erros/24 warnings herdados; 88 suítes/390 testes PASS. Nova CI e gate cruzado no backend obrigatórios antes de merge; não inferir homologação/deploy por testes.
+- Próximo passo: CI app + backend/browser/PostgreSQL → corrigir → integrar somente verde → pós-merge → próxima fase interna do piloto. Nenhum dado real ou segredo solicitado ao cliente para seed.

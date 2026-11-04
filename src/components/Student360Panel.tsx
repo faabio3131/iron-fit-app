@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { api } from '../services/api';
 import { GlowCard } from './GlowCard';
 import { brlFromMinor } from '../utils/academy-money';
 
 type StudentSummary = { id: string; name: string; email?: string; status?: string };
 type StudentProfile = StudentSummary & {
+  cpf?: string | null; photoUrl?: string | null; birthDate?: string | null;
   phone?: string | null; goal?: string | null; level?: string | null;
   enrollmentDate?: string; consentHealth?: boolean; consentComm?: boolean; consentBiometry?: boolean;
 };
@@ -136,6 +137,8 @@ export function Student360Panel({ students, canReadWorkouts, canReadAccess, canR
     {profile && !loading ? <>
       <Block title="Perfil do aluno">
         <Text style={styles.title}>{profile.name}</Text>
+        {profile.photoUrl ? <Image source={{ uri: profile.photoUrl }} accessibilityLabel="Foto do aluno" style={{ width: 80, height: 80, borderRadius: 40 }} /> : null}
+        <Text style={styles.muted}>CPF: {profile.cpf ?? 'Não informado'} · Nascimento: {profile.birthDate ? day(profile.birthDate) : 'Não informado'}</Text>
         <Text style={styles.muted}>{profile.email ?? 'Sem e-mail'} · {profile.phone ?? 'Sem telefone'}</Text>
         <Text style={styles.white}>Matrícula: {status(profile.status)} · Início: {day(profile.enrollmentDate)}</Text>
         <Text style={styles.white}>Objetivo: {profile.goal ?? 'Não definido'} · Nível: {profile.level ?? 'Não definido'}</Text>
