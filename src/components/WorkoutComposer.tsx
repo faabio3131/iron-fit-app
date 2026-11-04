@@ -8,7 +8,7 @@ type WorkoutTemplate = { id: string; name: string; ready: boolean; goal: string;
 type Student = { id: string; name?: string };
 type Exercise = { id: string; name: string; muscleGroup?: string | null };
 type Assessment = { id: string; createdAt: string; weight?: number | null };
-type PrescribedExercise = { exerciseId: string; equipmentId?: string; sets: string; reps: string; restSeconds: string };
+type PrescribedExercise = { exerciseId: string; equipmentId?: string; sets: string; reps: string; restSeconds: string; suggestedLoad: string };
 type CompatibleEquipment = { id: string; name?: string; catalogItem?: { name?: string } };
 type SessionDraft = { key: number; name: string; estimatedMinutes: string; exercises: PrescribedExercise[] };
 const seed = (): SessionDraft[] => [{ key: 1, name: 'Sessão A', estimatedMinutes: '', exercises: [] }];
@@ -71,7 +71,7 @@ export function WorkoutComposer({ students, onUpdated }: {
     if (!template.ready || busy) return;
     setGoal(template.goal); setLevel(template.level); setFrequency(String(template.weeklyFrequency));
     setNotes(template.notes); setError('');
-    setSessions(template.sessions.map((session, index) => ({ key: index + 1, name: session.name, estimatedMinutes: '', exercises: session.exercises.map(exercise => ({ exerciseId: exercise.exerciseId, ...(exercise.equipmentId ? { equipmentId: exercise.equipmentId } : {}), sets: String(exercise.sets), reps: exercise.reps, restSeconds: String(exercise.restSeconds) })) })));
+    setSessions(template.sessions.map((session, index) => ({ key: index + 1, name: session.name, estimatedMinutes: '', exercises: session.exercises.map(exercise => ({ exerciseId: exercise.exerciseId, ...(exercise.equipmentId ? { equipmentId: exercise.equipmentId } : {}), sets: String(exercise.sets), reps: exercise.reps, restSeconds: String(exercise.restSeconds), suggestedLoad: '' })) })));
     setNotice('Modelo carregado para edição. Revise a avaliação, as restrições e a carga antes de salvar e aprovar.');
   }
 
@@ -108,7 +108,7 @@ export function WorkoutComposer({ students, onUpdated }: {
   function addExercise(key: number) {
     if (!selectedExerciseId || !exerciseLibrary.some((row) => row.id === selectedExerciseId)) return;
     setSessions((rows) => rows.map((session) => session.key === key
-      ? { ...session, exercises: [...session.exercises, { exerciseId: selectedExerciseId, ...(compatibleExerciseId === selectedExerciseId && selectedEquipmentId ? { equipmentId: selectedEquipmentId } : {}), sets: '3', reps: '12', restSeconds: '60' }] } : session));
+      ? { ...session, exercises: [...session.exercises, { exerciseId: selectedExerciseId, ...(compatibleExerciseId === selectedExerciseId && selectedEquipmentId ? { equipmentId: selectedEquipmentId } : {}), sets: '3', reps: '12', restSeconds: '60', suggestedLoad: '' }] } : session));
   }
   function changeExercise(key: number, index: number, patch: Partial<PrescribedExercise>) {
     setSessions((rows) => rows.map((session) => session.key === key
@@ -145,6 +145,7 @@ export function WorkoutComposer({ students, onUpdated }: {
             ...(entry.equipmentId ? { equipmentId: entry.equipmentId } : {}),
             ...(entry.sets.trim() ? { sets: Number(entry.sets) } : {}),
             ...(entry.reps.trim() ? { reps: entry.reps.trim() } : {}),
+            ...(entry.suggestedLoad.trim() ? { suggestedLoad: entry.suggestedLoad.trim() } : {}),
             ...(entry.restSeconds.trim() ? { restSeconds: Number(entry.restSeconds) } : {}),
           })),
         })),
@@ -220,6 +221,7 @@ export function WorkoutComposer({ students, onUpdated }: {
         <View style={styles.form}>
           <Input label="Séries" value={entry.sets} onChangeText={(sets) => changeExercise(session.key, i, { sets })} />
           <Input label="Repetições" value={entry.reps} onChangeText={(reps) => changeExercise(session.key, i, { reps })} />
+          <Input label="Carga ou orientação" testID={`studio-exercise-load-${session.key}-${i}`} value={entry.suggestedLoad} onChangeText={(suggestedLoad) => changeExercise(session.key, i, { suggestedLoad })} />
           <Input label="Descanso (segundos)" value={entry.restSeconds} onChangeText={(restSeconds) => changeExercise(session.key, i, { restSeconds })} />
         </View>
         <Button label="Retirar exercício" testID={`studio-exercise-remove-${session.key}-${i}`}

@@ -678,5 +678,7 @@ Objetivo final:
 
 - Fase 2 integrada: backend #218 `af86fa2`, app #83 `b0f161c`; CI pré-merge 41877912066/41877081658 SUCCESS, 937 testes backend/390 app e 9 jornadas HTTP PostgreSQL PASS. Pós-merges 41880622803/41880677293 devem ser consultados.
 - Branch atual `feat/pilot-workout-templates-20261104`: cinco modelos de partida no composer existente, resolvidos pelo backend segundo biblioteca/inventário do tenant. Modelo indisponível é desabilitado com motivo; falha do endpoint opcional não bloqueia criação manual. Carregar modelo não grava nem aprova treino.
-- Validação local: typecheck/lint sem erros; 89 suítes/392 testes PASS. Backend correspondente tem 941 testes PASS e novo teste HTTP/modelo/revisão humana; CI cruzada pendente.
+- Validação local: typecheck/lint sem erros; 89 suítes/393 testes PASS. Backend correspondente tem 941 testes PASS e novo teste HTTP/modelo/revisão humana; CI cruzada pendente.
 - Próximo passo: CI nos dois repositórios + navegador real antes de merge; depois pós-merge e Fase 4. Sem deploy. Geração por IA real continua sob integração governada existente e revisão humana.
+
+- Conferência da Fase 3 também completou carga/orientação no composer e na revisão profissional. O backend e a tela do aluno já suportavam suggestedLoad; agora a UI transmite o campo sem perder a aprovação humana. Gate de navegador deve verificar a carga do professor até a tela do aluno.

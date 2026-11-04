@@ -23,3 +23,18 @@ test('missing equipment keeps the template disabled while manual composition rem
   expect(view.getByTestId('studio-session-name-1').props.value).toBe('Sessão A');
   expect(view.getByText(/Selecione aparelhos compatíveis/)).toBeTruthy();
 });
+
+test('the trainer can prescribe load in the existing composer and it reaches the canonical draft payload', async () => {
+  mocked.mockImplementation(async (path: string, _token: unknown, options: any) => options?.method === 'POST' ? { id: 'draft', status: 'DRAFT' } : path === '/exercises' ? [{ id: 'exercise', name: 'Agachamento' }] : path === '/workouts/templates' ? [template] : []);
+  const view = render(<WorkoutComposer students={[{ id: 'student', name: 'Ana' }]} onUpdated={async () => undefined} />);
+  await waitFor(() => expect(view.getByTestId('studio-template-adaptation')).toBeTruthy());
+  fireEvent.press(view.getByTestId('studio-template-adaptation'));
+  fireEvent.press(view.getByTestId('studio-student-student'));
+  fireEvent.changeText(view.getByTestId('studio-exercise-load-1-0'), 'Peso corporal');
+  await waitFor(() => expect(view.getByTestId('manual-workout-create').props.accessibilityState?.disabled).toBe(false));
+  fireEvent.press(view.getByTestId('manual-workout-create'));
+  await waitFor(() => expect(mocked.mock.calls.some(([path, , options]) => path === '/workouts' && options?.method === 'POST')).toBe(true));
+  const call = mocked.mock.calls.find(([path, , options]) => path === '/workouts' && options?.method === 'POST');
+  expect(JSON.parse(call![2].body).sessions[0].exercises[0].suggestedLoad).toBe('Peso corporal');
+  expect(mocked.mock.calls.some(([, , options]) => options?.method === 'PATCH')).toBe(false);
+});

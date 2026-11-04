@@ -515,7 +515,7 @@ function TenantCommercialWebApp() {
                   <Text style={styles.rowTitle}>{session.name ?? 'Sessão'}</Text>
                   {(Array.isArray(session.exercises) ? session.exercises : []).map((entry: any, index: number) =>
                     <View key={entry.id ?? index}>
-                      <Text style={styles.muted}>{entry.exercise?.name ?? 'Exercício'} · {entry.sets ?? '—'} séries · {entry.reps ?? '—'} repetições · descanso {entry.restSeconds ?? '—'}s</Text>
+                      <Text style={styles.muted}>{entry.exercise?.name ?? 'Exercício'} · {entry.sets ?? '—'} séries · {entry.reps ?? '—'} repetições · carga: {entry.suggestedLoad || 'a definir'} · descanso {entry.restSeconds ?? '—'}s</Text>
                       {typeof entry.exercise?.videoUrl === 'string' && /^https:\/\//i.test(entry.exercise.videoUrl)
                         ? <Button testID={`workout-exercise-video-${entry.id ?? index}`} secondary label="Assistir vídeo do exercício"
                             onPress={() => { void Linking.openURL(entry.exercise.videoUrl).catch(() => setError('Não foi possível abrir o vídeo do exercício.')); }} />
