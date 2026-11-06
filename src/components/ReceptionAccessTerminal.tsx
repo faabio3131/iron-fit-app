@@ -1,6 +1,6 @@
 import { accessRequestKey as requestKey } from '../utils/access-request-key';
 import React, { useRef, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { api } from '../services/api';
 
@@ -11,6 +11,7 @@ export function ReceptionAccessTerminal({ students }: { students: Student[] }) {
   const [qr, setQr] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [retryNeeded, setRetryNeeded] = useState(false);
   const [history, setHistory] = useState<Decision[]>([]);
   const pending = useRef<{ requestId: string; studentId?: string; qrToken?: string } | null>(null);
   const locked = useRef(false);
@@ -19,6 +20,11 @@ export function ReceptionAccessTerminal({ students }: { students: Student[] }) {
   const matches = query.trim() ? students.filter(student => [student.user?.name ?? student.name ?? '', student.cpf ?? '', student.id].some(value => value.toLowerCase().includes(query.trim().toLowerCase()))).slice(0, 8) : [];
   async function check(input?: { studentId?: string; qrToken?: string }) {
     if (locked.current) return;
+    if (input?.qrToken && input.qrToken.length < 16) {
+      setError('QR inválido. Tente ler novamente.');
+      setQr('');
+      return;
+    }
     // After a lost response only the same canonical request can be retried.
     if (!pending.current && input) pending.current = { requestId: requestKey(), ...input };
     if (!pending.current) return;
@@ -26,29 +32,38 @@ export function ReceptionAccessTerminal({ students }: { students: Student[] }) {
     try {
       const result: Decision = await api('/access/terminal/check-in', undefined, { method: 'POST', body: JSON.stringify(pending.current) });
       setHistory(items => [result, ...items.filter(item => item.eventId !== result.eventId)].slice(0, 10));
-      pending.current = null; setQr(''); setQuery('');
-    } catch {
+      pending.current = null; setRetryNeeded(false); setQr(''); setQuery('');
+    } catch (reason) {
+      const status = reason instanceof Error ? (reason as Error & { status?: number }).status : undefined;
+      if (status === 400 || status === 401 || status === 403) {
+        pending.current = null;
+        setRetryNeeded(false);
+        setQr('');
+        setError(status === 400 ? 'Consulta inválida. Verifique o aluno ou leia o QR novamente.' : 'Sua sessão não tem acesso ao terminal.');
+        return;
+      }
+      setRetryNeeded(true);
       setError('Decisão não confirmada. Repita a mesma consulta antes de registrar outra entrada.');
     } finally { locked.current = false; setBusy(false); scanner.current?.focus(); }
   }
   return <View style={styles.card} testID="reception-access-terminal">
     <Text style={styles.title}>Terminal da recepção</Text>
     <Text style={styles.help}>Consulte o aluno ou leia seu QR com o leitor USB em modo teclado. Uma decisão registrada não confirma giro de catraca.</Text>
-    <TextInput ref={scanner} testID="terminal-qr" accessibilityLabel="Leitor QR da recepção" secureTextEntry autoCapitalize="none" autoCorrect={false}
-      placeholder="Leia o QR e pressione Enter" placeholderTextColor="#94a3b8" value={qr} editable={!busy && !error} onChangeText={setQr}
+    <TextInput ref={scanner} testID="terminal-qr" accessibilityLabel="Leitor QR da recepção" secureTextEntry autoFocus={Platform.OS === 'web'} blurOnSubmit={false} maxLength={512} autoCapitalize="none" autoCorrect={false}
+      placeholder="Leia o QR e pressione Enter" placeholderTextColor="#94a3b8" value={qr} editable={!busy && !retryNeeded} onChangeText={setQr}
       onSubmitEditing={event => { const value = event.nativeEvent.text.trim(); if (value) void check({ qrToken: value }); }} style={styles.input} />
-    <TouchableOpacity accessibilityRole="button" disabled={busy || !!error || !qr.trim()} onPress={() => void check({ qrToken: qr.trim() })} style={styles.button}><Text style={styles.buttonText}>Consultar QR</Text></TouchableOpacity>
+    <TouchableOpacity accessibilityRole="button" disabled={busy || retryNeeded || !qr.trim()} onPress={() => void check({ qrToken: qr.trim() })} style={styles.button}><Text style={styles.buttonText}>Consultar QR</Text></TouchableOpacity>
     <TextInput testID="terminal-search" accessibilityLabel="Nome, CPF ou matrícula para entrada" placeholder="Nome, CPF ou matrícula" placeholderTextColor="#94a3b8"
-      value={query} editable={!busy && !error} onChangeText={setQuery} style={styles.input} />
+      value={query} editable={!busy && !retryNeeded} onChangeText={setQuery} style={styles.input} />
     {matches.map(student => <View style={styles.row} key={student.id}>
       {student.photoUrl ? <Image source={{ uri: student.photoUrl }} style={styles.photo} accessibilityLabel="Foto do aluno" /> : null}
       <Text style={styles.name}>{student.user?.name ?? student.name ?? 'Aluno'}</Text>
       <TouchableOpacity accessibilityRole="button" accessibilityLabel={'Consultar entrada de ' + (student.user?.name ?? student.name ?? 'aluno')}
-        testID={'terminal-check-' + student.id} disabled={busy || !!error} onPress={() => void check({ studentId: student.id })} style={styles.button}><Text style={styles.buttonText}>Consultar entrada</Text></TouchableOpacity>
+        testID={'terminal-check-' + student.id} disabled={busy || retryNeeded} onPress={() => void check({ studentId: student.id })} style={styles.button}><Text style={styles.buttonText}>Consultar entrada</Text></TouchableOpacity>
     </View>)}
     {query.trim() && !matches.length ? <Text style={styles.help}>Nenhum aluno encontrado na listagem recebida desta academia.</Text> : null}
     {busy ? <ActivityIndicator color="#60a5fa" /> : null}
-    {error ? <View><Text style={styles.error}>{error}</Text><TouchableOpacity accessibilityRole="button" testID="terminal-retry" disabled={busy} onPress={() => void check()} style={styles.button}><Text style={styles.buttonText}>Repetir consulta pendente</Text></TouchableOpacity></View> : null}
+    {error ? <View><Text style={styles.error}>{error}</Text>{retryNeeded ? <TouchableOpacity accessibilityRole="button" testID="terminal-retry" disabled={busy} onPress={() => void check()} style={styles.button}><Text style={styles.buttonText}>Repetir consulta pendente</Text></TouchableOpacity> : null}</View> : null}
     {decision ? <View testID="terminal-decision" accessibilityLiveRegion="polite" style={[styles.result, decision.status === 'DENIED' ? styles.denied : decision.status === 'REVIEW' ? styles.warning : styles.allowed]}>
       {decision.student?.photoUrl ? <Image source={{ uri: decision.student.photoUrl }} style={styles.photo} accessibilityLabel="Foto do aluno consultado" /> : null}
       <Text style={styles.title}>{decision.status === 'DENIED' ? 'Entrada negada' : decision.status === 'REVIEW' ? 'Entrada permitida com aviso' : 'Entrada permitida'}</Text>

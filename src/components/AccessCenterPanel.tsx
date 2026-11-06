@@ -59,7 +59,7 @@ function extractDate(value: string, boundary: 'from' | 'to') {
 }
 
 export function AccessCenterPanel({
-  students, credentials, devices, events, physicalAttempts = [], canManageDevices, canEnrollDevices = false, onUpdated,
+  students, credentials, devices, events, physicalAttempts = [], canManageDevices, canEnrollDevices = false, canOperateTerminal = false, onUpdated,
 }: {
   students: Student[];
   credentials: Credential[];
@@ -68,6 +68,7 @@ export function AccessCenterPanel({
   physicalAttempts?: PhysicalAttempt[];
   canManageDevices: boolean;
   canEnrollDevices?: boolean;
+  canOperateTerminal?: boolean;
   onUpdated: () => Promise<void>;
 }) {
   const [studentSearch, setStudentSearch] = useState('');
@@ -261,7 +262,7 @@ export function AccessCenterPanel({
     }
   }
   return <View>
-    <ReceptionAccessTerminal students={students} />
+    {canOperateTerminal ? <ReceptionAccessTerminal students={students} /> : null}
     <GlowCard style={styles.card}>
       <Text style={styles.title}>Central de acessos</Text>
       <Text style={styles.muted}>Credenciais, decisões e dispositivos da academia autenticada. A autorização de entrada física é sempre decidida pelo backend/dispositivo autorizado.</Text>
