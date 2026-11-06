@@ -95,8 +95,8 @@ liveTest(
           email,
           password,
           name: 'B6 Web Owner',
-          gymName: `B6 Web ${id.slice(0,
-          cnpj: fixtureCnpj(id), 8)}`,
+          gymName: `B6 Web ${id.slice(0, 8)}`,
+          cnpj: fixtureCnpj(id),
           timezone: 'America/Sao_Paulo',
         }),
       });
