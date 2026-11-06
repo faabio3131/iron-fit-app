@@ -90,6 +90,7 @@ test('trial explains password requirements instead of silently disabling submit'
   expect(view.getByText(/De 12 a 128 caracteres/)).toBeTruthy();
   fireEvent.changeText(view.getByTestId('trial-name'), 'Owner QA');
   fireEvent.changeText(view.getByTestId('trial-gym-name'), 'Academia QA');
+  fireEvent.changeText(view.getByTestId('trial-cnpj'), '11222333000181');
   fireEvent.changeText(view.getByTestId('trial-email'), 'owner@example.com');
   fireEvent.changeText(view.getByTestId('trial-password'), 'short');
   fireEvent.press(view.getByTestId('trial-submit'));
@@ -121,6 +122,7 @@ test('visitor creates trial, authenticates and reaches tenant-scoped commercial 
   fireEvent.press(view.getByTestId('start-trial'));
   fireEvent.changeText(view.getByTestId('trial-name'), 'Owner Web');
   fireEvent.changeText(view.getByTestId('trial-gym-name'), 'Academia Web');
+  fireEvent.changeText(view.getByTestId('trial-cnpj'), '11222333000181');
   fireEvent.changeText(view.getByTestId('trial-email'), 'OWNER@EXAMPLE.COM');
   fireEvent.changeText(view.getByTestId('trial-password'), 'Strong-Pass-2026!');
   fireEvent.press(view.getByTestId('trial-submit'));
