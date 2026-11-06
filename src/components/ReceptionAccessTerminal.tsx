@@ -35,16 +35,16 @@ export function ReceptionAccessTerminal({ students }: { students: Student[] }) {
     <Text style={styles.title}>Terminal da recepção</Text>
     <Text style={styles.help}>Consulte o aluno ou leia seu QR com o leitor USB em modo teclado. Uma decisão registrada não confirma giro de catraca.</Text>
     <TextInput ref={scanner} testID="terminal-qr" accessibilityLabel="Leitor QR da recepção" secureTextEntry autoCapitalize="none" autoCorrect={false}
-      placeholder="Leia o QR e pressione Enter" placeholderTextColor="#94a3b8" value={qr} editable={!busy && !pending.current} onChangeText={setQr}
+      placeholder="Leia o QR e pressione Enter" placeholderTextColor="#94a3b8" value={qr} editable={!busy && !error} onChangeText={setQr}
       onSubmitEditing={event => { const value = event.nativeEvent.text.trim(); if (value) void check({ qrToken: value }); }} style={styles.input} />
-    <TouchableOpacity accessibilityRole="button" disabled={busy || !!pending.current || !qr.trim()} onPress={() => void check({ qrToken: qr.trim() })} style={styles.button}><Text style={styles.buttonText}>Consultar QR</Text></TouchableOpacity>
+    <TouchableOpacity accessibilityRole="button" disabled={busy || !!error || !qr.trim()} onPress={() => void check({ qrToken: qr.trim() })} style={styles.button}><Text style={styles.buttonText}>Consultar QR</Text></TouchableOpacity>
     <TextInput testID="terminal-search" accessibilityLabel="Nome, CPF ou matrícula para entrada" placeholder="Nome, CPF ou matrícula" placeholderTextColor="#94a3b8"
-      value={query} editable={!busy && !pending.current} onChangeText={setQuery} style={styles.input} />
+      value={query} editable={!busy && !error} onChangeText={setQuery} style={styles.input} />
     {matches.map(student => <View style={styles.row} key={student.id}>
       {student.photoUrl ? <Image source={{ uri: student.photoUrl }} style={styles.photo} accessibilityLabel="Foto do aluno" /> : null}
       <Text style={styles.name}>{student.user?.name ?? student.name ?? 'Aluno'}</Text>
       <TouchableOpacity accessibilityRole="button" accessibilityLabel={'Consultar entrada de ' + (student.user?.name ?? student.name ?? 'aluno')}
-        testID={'terminal-check-' + student.id} disabled={busy || !!pending.current} onPress={() => void check({ studentId: student.id })} style={styles.button}><Text style={styles.buttonText}>Consultar entrada</Text></TouchableOpacity>
+        testID={'terminal-check-' + student.id} disabled={busy || !!error} onPress={() => void check({ studentId: student.id })} style={styles.button}><Text style={styles.buttonText}>Consultar entrada</Text></TouchableOpacity>
     </View>)}
     {query.trim() && !matches.length ? <Text style={styles.help}>Nenhum aluno encontrado na listagem recebida desta academia.</Text> : null}
     {busy ? <ActivityIndicator color="#60a5fa" /> : null}
