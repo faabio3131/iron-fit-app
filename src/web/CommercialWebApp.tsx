@@ -574,6 +574,7 @@ function TenantCommercialWebApp() {
       devices={list(data.devices)}
       canManageDevices={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
       canEnrollDevices={can('SUPER_ADMIN', 'OWNER')}
+      canOperateTerminal={!!activeTenantId && can('OWNER', 'MANAGER', 'RECEPTION')}
       onUpdated={() => loadModule('access')}
     />;
   }

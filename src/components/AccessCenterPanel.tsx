@@ -1,9 +1,10 @@
+import { ReceptionAccessTerminal } from './ReceptionAccessTerminal';
 import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GlowCard } from './GlowCard';
 import { api } from '../services/api';
 
-type Student = { id: string; name?: string; user?: { name?: string } };
+type Student = { id: string; cpf?: string | null; photoUrl?: string | null; name?: string; user?: { name?: string } };
 type Credential = {
   id: string; type?: string; status?: string; active?: boolean; expiresAt?: string | null;
   studentId?: string; student?: { user?: { name?: string } };
@@ -58,7 +59,7 @@ function extractDate(value: string, boundary: 'from' | 'to') {
 }
 
 export function AccessCenterPanel({
-  students, credentials, devices, events, physicalAttempts = [], canManageDevices, canEnrollDevices = false, onUpdated,
+  students, credentials, devices, events, physicalAttempts = [], canManageDevices, canEnrollDevices = false, canOperateTerminal = false, onUpdated,
 }: {
   students: Student[];
   credentials: Credential[];
@@ -67,6 +68,7 @@ export function AccessCenterPanel({
   physicalAttempts?: PhysicalAttempt[];
   canManageDevices: boolean;
   canEnrollDevices?: boolean;
+  canOperateTerminal?: boolean;
   onUpdated: () => Promise<void>;
 }) {
   const [studentSearch, setStudentSearch] = useState('');
@@ -260,6 +262,7 @@ export function AccessCenterPanel({
     }
   }
   return <View>
+    {canOperateTerminal ? <ReceptionAccessTerminal students={students} /> : null}
     <GlowCard style={styles.card}>
       <Text style={styles.title}>Central de acessos</Text>
       <Text style={styles.muted}>Credenciais, decisões e dispositivos da academia autenticada. A autorização de entrada física é sempre decidida pelo backend/dispositivo autorizado.</Text>
