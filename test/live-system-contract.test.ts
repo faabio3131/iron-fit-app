@@ -12,6 +12,15 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
+function fixtureCnpj(id: string) {
+  let value = String(10000000 + Number.parseInt(id.slice(0, 8), 16) % 90000000) + '0001';
+  for (const weights of [[5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2], [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]]) {
+    const remainder = weights.reduce((sum, weight, index) => sum + Number(value[index]) * weight, 0) % 11;
+    value += remainder < 2 ? 0 : 11 - remainder;
+  }
+  return value;
+}
+
 const liveTest = process.env.IRON_LIVE_E2E === 'true' ? test : test.skip;
 
 type FetchLikeResponse = {
@@ -86,7 +95,8 @@ liveTest(
           email,
           password,
           name: 'B6 Web Owner',
-          gymName: `B6 Web ${id.slice(0, 8)}`,
+          gymName: `B6 Web ${id.slice(0,
+          cnpj: fixtureCnpj(id), 8)}`,
           timezone: 'America/Sao_Paulo',
         }),
       });

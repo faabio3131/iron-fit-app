@@ -26,6 +26,7 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
   const requestId = useMemo(() => uuidV4(), []);
   const [name, setName] = useState('');
   const [gymName, setGymName] = useState('');
+  const [cnpj, setCnpj] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -36,6 +37,7 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
 
   const missing = name.trim().length < 2 ? 'Informe seu nome (mínimo de 2 caracteres).'
     : gymName.trim().length < 2 ? 'Informe o nome da academia (mínimo de 2 caracteres).'
+    : !/^(?:[A-Z0-9]{12}[0-9]{2}|[A-Z0-9]{2}\.[A-Z0-9]{3}\.[A-Z0-9]{3}\/[A-Z0-9]{4}-[0-9]{2})$/i.test(cnpj.trim()) ? 'Informe o CNPJ da academia.'
     : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? 'Informe um e-mail válido.'
     : !strongPassword(password) ? PASSWORD_POLICY_TEXT
     : !timezone.trim() ? 'Informe o fuso horário.' : '';
@@ -57,6 +59,7 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
           password,
           name: name.trim(),
           gymName: gymName.trim(),
+          cnpj: cnpj.trim().toUpperCase(),
           timezone: timezone.trim(),
           ...(phone.trim() ? { phone: phone.trim() } : {}),
         }),
@@ -78,6 +81,7 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
 
         <TextInput testID="trial-name" style={styles.input} value={name} onChangeText={setName} placeholder="Seu nome" placeholderTextColor="#64748b" />
         <TextInput testID="trial-gym-name" style={styles.input} value={gymName} onChangeText={setGymName} placeholder="Nome da academia" placeholderTextColor="#64748b" />
+        <TextInput testID="trial-cnpj" accessibilityLabel="CNPJ da academia" style={styles.input} value={cnpj} onChangeText={setCnpj} autoCapitalize="characters" autoCorrect={false} maxLength={18} placeholder="CNPJ da academia (obrigatório)" placeholderTextColor="#64748b" />
         <TextInput testID="trial-email" style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="E-mail" placeholderTextColor="#64748b" />
         <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Telefone (opcional)" placeholderTextColor="#64748b" />
         <Text style={styles.policy}>De 12 a 128 caracteres, incluindo pelo menos uma letra maiúscula, uma minúscula, um número e um símbolo.</Text>
