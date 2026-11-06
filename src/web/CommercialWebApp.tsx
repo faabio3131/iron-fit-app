@@ -1,3 +1,4 @@
+import { ReceptionDesk, ReceptionDeskAdmin } from './ReceptionDesk';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
@@ -36,7 +37,7 @@ import { api } from '../services/api';
 import { ManagerAlertBell, ManagerAlertsPanel } from '../components/ManagerAlertsPanel';
 import { PlatformAdminWorkspace } from './PlatformAdminWorkspace';
 
-type ModuleKey = 'overview' | 'alerts' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'intelligence' | 'aggregator' | 'schedule' | 'access' | 'communication' | 'financial' | 'fiscal' | 'saasBilling' | 'security' | 'privacy' | 'entitlements' | 'integrations' | 'creator';
+type ModuleKey = 'overview' | 'alerts' | 'reception' | 'onboarding' | 'students' | 'team' | 'equipment' | 'exercises' | 'assessments' | 'workouts' | 'intelligence' | 'aggregator' | 'schedule' | 'access' | 'communication' | 'financial' | 'fiscal' | 'saasBilling' | 'security' | 'privacy' | 'entitlements' | 'integrations' | 'creator';
 type Entitlement = { featureKey: string; kind: 'FEATURE' | 'LIMIT' | 'POLICY'; value: boolean | number | string[] | null; source?: string; reason?: string | null };
 type ModuleDefinition = { key: ModuleKey; label: string; icon: React.ComponentProps<typeof Ionicons>['name']; roles?: string[]; entitlement?: string[] };
 const restrictedAdminModules: ModuleKey[] = ['financial', 'fiscal', 'saasBilling', 'entitlements', 'integrations'];
@@ -49,6 +50,7 @@ const modules: ModuleDefinition[] = [
   { key: 'overview', label: 'Visão geral', icon: 'grid-outline', roles: operational },
   { key: 'alerts', label: 'Alertas', icon: 'notifications-outline', roles: ['OWNER', 'MANAGER'] },
   { key: 'onboarding', label: 'Configuração inicial', icon: 'rocket-outline', roles: ['OWNER', 'MANAGER'] },
+  { key: 'reception', label: 'Matrícula e caixa', icon: 'receipt-outline', roles: ['OWNER', 'RECEPTION'] },
   { key: 'students', label: 'Alunos', icon: 'people-outline', roles: staff },
   { key: 'team', label: 'Equipe', icon: 'shield-checkmark-outline', roles: ['SUPER_ADMIN', 'OWNER', 'MANAGER'] },
   { key: 'equipment', label: 'Equipamentos', icon: 'barbell-outline', roles: staff, entitlement: ['equipment.catalog', 'equipment.inventory'] },
@@ -194,7 +196,7 @@ function TenantCommercialWebApp() {
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedFinancialStudent, setSelectedFinancialStudent] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
-  const [student, setStudent] = useState({ name: '', email: '', phone: '' });
+  const [student, setStudent] = useState({ name: '', email: '', phone: '', cpf: '', birthDate: '', photoUrl: '' });
   const [lastStudentInvite, setLastStudentInvite] = useState<any>(null);
   const [selectedCatalogEquipment, setSelectedCatalogEquipment] = useState('');
   const [exercise, setExercise] = useState({ name: '', muscleGroup: '', level: '' });
@@ -269,7 +271,8 @@ function TenantCommercialWebApp() {
       if (key === 'assessments') next.students = await api('/students');
       if (key === 'workouts' || key === 'intelligence') { [next.workouts, next.students] = await Promise.all([api('/workouts'), api('/students')]); }
       if (key === 'schedule') { [next.slots, next.students] = await Promise.all([api('/schedule-slots'), api('/students')]); }
-      if (key === 'access') { [next.events, next.students, next.credentials, next.devices] = await Promise.all([api('/access/events'), api('/students'), api('/access/credentials'), can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? api('/access/devices') : Promise.resolve([])]); }
+      if (key === 'access') { [next.events, next.students, next.credentials, next.devices, next.physicalAttempts] = await Promise.all([api('/access/events'), api('/students'), api('/access/credentials'), can('SUPER_ADMIN', 'OWNER', 'MANAGER') ? api('/access/devices') : Promise.resolve([]), api('/access/hardware/attempts')]); }
+      if (key === 'reception') next.students = await api('/students');
       if (key === 'financial') { [next.accounts, next.charges, next.students] = await Promise.all([api('/financial/accounts'), api('/financial/charges'), api('/students')]); }
       if (key === 'entitlements') { [next.features, next.configurations] = await Promise.all([api('/product-entitlements/tenant/features'), api('/product-entitlements/tenant/configurations')]); next.subscription = subscription; }
       if (key === 'creator') { [next.items, next.overview, next.analytics] = await Promise.all([api('/creator-network/content/tenant/items'), api('/creator-network/operations/tenant/overview'), api('/creator-network/operations/tenant/analytics?days=30')]); }
@@ -445,7 +448,7 @@ function TenantCommercialWebApp() {
     />;
   }
   function studentsView() {
-    return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Cadastrar aluno"><View style={styles.form}><Field label="Nome" value={student.name} onChangeText={(name) => setStudent((v) => ({ ...v, name }))} /><Field label="E-mail" value={student.email} onChangeText={(email) => setStudent((v) => ({ ...v, email }))} /><Field label="Telefone" value={student.phone} onChangeText={(phone) => setStudent((v) => ({ ...v, phone }))} /></View><Button testID="student-create" label="Cadastrar aluno" disabled={saving || !student.name.trim() || !student.email.trim()} onPress={() => void mutate(async () => { const created = await api('/students', undefined, { method: 'POST', body: JSON.stringify({ name: student.name.trim(), email: student.email.trim().toLowerCase(), ...(student.phone.trim() ? { phone: student.phone.trim() } : {}) }) }); setLastStudentInvite(created?.onboarding?.required ? created.onboarding : null); return created; }, () => setStudent({ name: '', email: '', phone: '' }))} />{lastStudentInvite ? <View style={styles.invite}><Text style={styles.rowTitle}>Convite de ativação — exibir uma vez</Text><Text selectable style={styles.json}>{lastStudentInvite.token}</Text><Text style={styles.muted}>Expira em: {String(lastStudentInvite.expiresAt ?? '—')}</Text></View> : null}</Section> : null}<Student360Panel key={activeTenantId ?? 'sem-academia'} students={list(data.students)} canReadWorkouts={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER')} canReadAccess={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')} canReadFinance={can('SUPER_ADMIN', 'OWNER') && adminStepUpActive} canEditConsents={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')} /></>;
+    return <>{can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION') ? <Section title="Cadastrar aluno"><View style={styles.form}><Field label="Nome" value={student.name} onChangeText={(name) => setStudent((v) => ({ ...v, name }))} /><Field label="E-mail" value={student.email} onChangeText={(email) => setStudent((v) => ({ ...v, email }))} /><Field label="Telefone" value={student.phone} onChangeText={(phone) => setStudent((v) => ({ ...v, phone }))} /><Field label="CPF (opcional)" value={student.cpf} onChangeText={(cpf) => setStudent((v) => ({ ...v, cpf }))} /><Field label="Nascimento (AAAA-MM-DD)" value={student.birthDate} onChangeText={(birthDate) => setStudent((v) => ({ ...v, birthDate }))} /><Field label="Foto de perfil (URL HTTPS)" value={student.photoUrl} onChangeText={(photoUrl) => setStudent((v) => ({ ...v, photoUrl }))} /></View><Button testID="student-create" label="Cadastrar aluno" disabled={saving || !student.name.trim() || !student.email.trim()} onPress={() => void mutate(async () => { const created = await api('/students', undefined, { method: 'POST', body: JSON.stringify({ name: student.name.trim(), email: student.email.trim().toLowerCase(), ...(student.phone.trim() ? { phone: student.phone.trim() } : {}), ...(student.cpf.trim() ? { cpf: student.cpf.trim() } : {}), ...(student.birthDate.trim() ? { birthDate: student.birthDate.trim() } : {}), ...(student.photoUrl.trim() ? { photoUrl: student.photoUrl.trim() } : {}) }) }); setLastStudentInvite(created?.onboarding?.required ? created.onboarding : null); return created; }, () => setStudent({ name: '', email: '', phone: '', cpf: '', birthDate: '', photoUrl: '' }))} />{lastStudentInvite ? <View style={styles.invite}><Text style={styles.rowTitle}>Convite de ativação — exibir uma vez</Text><Text selectable style={styles.json}>{lastStudentInvite.token}</Text><Text style={styles.muted}>Expira em: {String(lastStudentInvite.expiresAt ?? '—')}</Text></View> : null}</Section> : null}<Student360Panel key={activeTenantId ?? 'sem-academia'} students={list(data.students)} canReadWorkouts={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'TRAINER')} canReadAccess={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')} canReadFinance={can('SUPER_ADMIN', 'OWNER') && adminStepUpActive} canEditConsents={can('SUPER_ADMIN', 'OWNER', 'MANAGER', 'RECEPTION')} /></>;
   }
   function teamView() {
     return <TeamManagementPanel
@@ -512,7 +515,7 @@ function TenantCommercialWebApp() {
                   <Text style={styles.rowTitle}>{session.name ?? 'Sessão'}</Text>
                   {(Array.isArray(session.exercises) ? session.exercises : []).map((entry: any, index: number) =>
                     <View key={entry.id ?? index}>
-                      <Text style={styles.muted}>{entry.exercise?.name ?? 'Exercício'} · {entry.sets ?? '—'} séries · {entry.reps ?? '—'} repetições · descanso {entry.restSeconds ?? '—'}s</Text>
+                      <Text style={styles.muted}>{entry.exercise?.name ?? 'Exercício'} · {entry.sets ?? '—'} séries · {entry.reps ?? '—'} repetições · carga: {entry.suggestedLoad || 'a definir'} · descanso {entry.restSeconds ?? '—'}s</Text>
                       {typeof entry.exercise?.videoUrl === 'string' && /^https:\/\//i.test(entry.exercise.videoUrl)
                         ? <Button testID={`workout-exercise-video-${entry.id ?? index}`} secondary label="Assistir vídeo do exercício"
                             onPress={() => { void Linking.openURL(entry.exercise.videoUrl).catch(() => setError('Não foi possível abrir o vídeo do exercício.')); }} />
@@ -567,8 +570,11 @@ function TenantCommercialWebApp() {
       students={list(data.students)}
       credentials={list(data.credentials)}
       events={list(data.events)}
+      physicalAttempts={list(data.physicalAttempts)}
       devices={list(data.devices)}
       canManageDevices={can('SUPER_ADMIN', 'OWNER', 'MANAGER')}
+      canEnrollDevices={can('SUPER_ADMIN', 'OWNER')}
+      canOperateTerminal={!!activeTenantId && can('OWNER', 'MANAGER', 'RECEPTION')}
       onUpdated={() => loadModule('access')}
     />;
   }
@@ -589,6 +595,7 @@ function TenantCommercialWebApp() {
       subscriptionMinor !== null && (!studentPlan.nextBillingAt.trim() || !!subscriptionDate);
     const chargeValid = !!selectedFinancialStudent && chargeMinor !== null && !!dueDate;
     return <>
+      {can('OWNER') ? <ReceptionDeskAdmin key={activeTenantId ?? 'sem-academia'} accounts={accounts} /> : null}
       <Section title="Contas financeiras" subtitle="Caixa e contas pertencem somente à academia; cobrança da FM Tecnologia é gerida no FM Command.">
         <View style={styles.form}>
           <Field testID="finance-account-name" label="Nome da conta" value={account.name}
@@ -707,6 +714,7 @@ function TenantCommercialWebApp() {
   }
   function content() {
     if (isRestrictedAdminModule(active) && !adminStepUpActive) return adminGateView();
+    if (active === 'reception') return <ReceptionDesk key={activeTenantId ?? 'sem-academia'} students={list(data.students)} />;
     if (active === 'alerts') return <ManagerAlertsPanel key={activeTenantId ?? 'sem-academia'} />;
     if (active === 'overview') return overview(); if (active === 'onboarding') return onboardingView(); if (active === 'students') return studentsView(); if (active === 'team') return teamView(); if (active === 'equipment') return equipmentView(); if (active === 'exercises') return exercisesView(); if (active === 'assessments') return assessmentsView(); if (active === 'workouts') return workoutsView(); if (active === 'intelligence') return intelligenceView(); if (active === 'aggregator') return <AggregatorHubPanel key={activeTenantId ?? 'sem-academia'} canManage={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'schedule') return scheduleView(); if (active === 'access') return accessView(); if (active === 'communication') return <CommunicationCenterPanel key={activeTenantId ?? 'sem-academia'} canManageAutomations={can('SUPER_ADMIN', 'OWNER', 'MANAGER')} />; if (active === 'financial') return financialView(); if (active === 'fiscal') return <FiscalCenter />; if (active === 'saasBilling') return <SaasBillingPanel onCommercialStateChanged={loadShell} />; if (active === 'security') return <AccountSecurityPanel />; if (active === 'privacy') return <PrivacyCenter canOperatePrivacy={can('SUPER_ADMIN')} />; if (active === 'entitlements') return entitlementsView(); if (active === 'integrations') return <IntegrationCredentialsPanel canStartOAuth={can('OWNER')} />; return creatorView();
   }

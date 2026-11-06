@@ -1,3 +1,4 @@
+import { StudentAccessQrCard } from '../components/StudentAccessQrCard';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
@@ -97,6 +98,7 @@ export function ProfileScreen() {
         <Text style={styles.name}>{profile?.name || '—'}</Text>
         <Text style={styles.email}>{profile?.email || '—'}</Text>
       </View>
+      {profile?.roles?.includes('STUDENT') ? <StudentAccessQrCard key={activeTenantId ?? 'none'} /> : null}
       <View style={styles.infoCard}>
         <InfoRow
           icon="business"
