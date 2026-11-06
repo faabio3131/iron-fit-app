@@ -1,0 +1,24 @@
+name: Generate Expo patch lock
+on:
+  push:
+    branches: ['ops/pilot-expo-lock-20261106']
+permissions:
+  contents: read
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          cp package-lock.json /tmp/iron-lock-before.json
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund 'expo@~57.0.32' '@expo/metro-runtime@~57.0.18' 'expo-splash-screen@~57.0.11'
+          node <<'NODE'
+          const before = require('/tmp/iron-lock-before.json').packages;
+          const after = require('./package-lock.json').packages;
+          const delta = Object.fromEntries([...new Set([...Object.keys(before), ...Object.keys(after)])].filter(k => JSON.stringify(before[k]) !== JSON.stringify(after[k])).map(k => [k, after[k] ?? null]));
+          const payload = JSON.stringify({ delta, pkg: require('./package.json') });
+          for (let i=0; i<payload.length; i+=1800) console.log('IRON_EXPO_LOCK ' + JSON.stringify(payload.slice(i,i+1800)));
+          NODE
