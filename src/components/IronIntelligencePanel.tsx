@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GlowCard } from './GlowCard';
+import { AiQuotaUsageCard } from './AiQuotaUsageCard';
 import { api } from '../services/api';
 type Student = { id: string; name?: string };
 type Assessment = { id: string; createdAt: string };
@@ -30,6 +31,7 @@ export function IronIntelligencePanel({ students, workouts, onUpdated }: {
   const [error, setError] = useState('');
   const [result, setResult] = useState<CandidateResponse | null>(null);
   const [refreshWarning, setRefreshWarning] = useState('');
+  const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const candidates = workouts.filter((w) => w.createdByAI);
 
   useEffect(() => {
@@ -74,10 +76,11 @@ export function IronIntelligencePanel({ students, workouts, onUpdated }: {
       if (status === 403) setError('A geração de IA não está liberada para esta academia ou perfil.');
       else if ([502, 503, 504].includes(status)) setError('O serviço de IA está indisponível. Você pode criar o treino manualmente no Workout Studio.');
       else setError(reason instanceof Error ? reason.message : 'Não foi possível gerar o candidato.');
-    } finally { setBusy(false); }
+    } finally { setBusy(false); setQuotaRefreshKey((current) => current + 1); }
   }
 
   return <View>
+    <AiQuotaUsageCard refreshKey={quotaRefreshKey} />
     <GlowCard style={styles.card}>
       <Text style={styles.title}>IRON Intelligence — sugestão de treino</Text>
       <Text style={styles.muted}>IA é consultiva. Somente o backend FM autorizado usa provedores e credenciais centrais; a academia não configura chave de modelo. Esta tela não é um chat de aluno.</Text>
