@@ -682,3 +682,7 @@ Objetivo final:
 - Próximo passo: CI nos dois repositórios + navegador real antes de merge; depois pós-merge e Fase 4. Sem deploy. Geração por IA real continua sob integração governada existente e revisão humana.
 
 - Conferência da Fase 3 também completou carga/orientação no composer e na revisão profissional. O backend e a tela do aluno já suportavam suggestedLoad; agora a UI transmite o campo sem perder a aprovação humana. Gate de navegador deve verificar a carga do professor até a tela do aluno.
+
+
+## CURRENT — AGENTES.md de fechamento interno (09/11/2026)
+O cronograma operacional vivo até IRON FIT CORE V1.0.0 GO-LIVE CERTIFIED está em [AGENTES.md](AGENTES.md) nesta árvore e no backend canônico. Este checkpoint tem precedência sobre WPs históricos ainda listados acima; confirmar HEAD/CI antes de marcar cada fase. Cakto e licença SaaS são governados por FM Command, não por botões locais; Macro O final exige aprovação visual humana explícita.
