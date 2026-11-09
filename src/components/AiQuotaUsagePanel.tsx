@@ -23,7 +23,7 @@ function validMeter(value: unknown): value is Meter {
   const v = value as Record<string, unknown>;
   return ['allowance','used','remaining','percent'].every(key =>
     typeof v[key] === 'number' && Number.isSafeInteger(v[key]) && Number(v[key]) >= 0)
-    && v.used as number <= Number(v.allowance);
+    && Number(v.used) <= Number(v.allowance);
 }
 function validQuotas(v: unknown): v is Quotas {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return false;
