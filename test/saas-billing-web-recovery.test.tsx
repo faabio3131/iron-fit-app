@@ -80,7 +80,7 @@ test('C03 blocked subscription still exposes protected recovery and privacy with
   const source = await readFile('src/web/CommercialWebApp.tsx', 'utf8');
   expect(source).toContain("item.key === 'saasBilling' || item.key === 'security'");
   expect(source).toContain('As operações permanecem bloqueadas até a regularização');
-  expect(source).toContain('<SaasBillingPanel canPurchase={can('OWNER')} onCommercialStateChanged={loadShell} />');
+  expect(source).toContain("<SaasBillingPanel canPurchase={can(\'OWNER\')} onCommercialStateChanged={loadShell} />");
   expect(source).toContain("key: 'saasBilling'");
   expect(source).not.toContain('blocked ? [] : modules.filter');
 });
