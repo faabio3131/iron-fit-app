@@ -13,7 +13,7 @@ const quota = (used: number, allowance: number, extraAllowance=0) => ({
     periodStart:'2026-11-01T00:00:00.000Z',periodEnd:'2026-12-01T00:00:00.000Z'},
   advisory: {includedAllowance:400,extraAllowance:0,allowance:400,used:15,remaining:385,percent:3,
     periodStart:'2026-11-01T00:00:00.000Z',periodEnd:'2026-12-01T00:00:00.000Z'},
-  rollover:false,thresholds:{warning:70,critical:90,exhausted:100},
+  rollover:false,creditPurchaseStatus:'AVAILABLE',thresholds:{warning:70,critical:90,exhausted:100},
 });
 
 beforeEach(()=>{
@@ -65,4 +65,22 @@ test('fails closed on invalid checkout URL and does not show fake purchase butto
   fireEvent.press(view.getByTestId('ai-buy-100'));
   await waitFor(()=>expect(view.getByTestId('ai-quota-error')).toBeTruthy());
   expect(Linking.openURL).not.toHaveBeenCalled();
+});
+
+test('OWNER sees no fake purchase action while commercial backend says NOT_CONFIGURED',async()=>{
+  mockApi.mockResolvedValue({...quota(10,50),creditPurchaseStatus:'NOT_CONFIGURED'});
+  const view=render(<AiQuotaUsagePanel canPurchase/>);
+  await waitFor(()=>expect(view.getByTestId('ai-workout-quota')).toBeTruthy());
+  expect(view.queryByTestId('ai-buy-100')).toBeNull();
+  expect(view.getByTestId('ai-packs-unavailable')).toBeTruthy();
+  expect(Linking.openURL).not.toHaveBeenCalled();
+});
+
+test('missing purchase capability fails closed without hiding usable quota meter',async()=>{
+  const fromLegacy:Record<string,unknown>={...quota(4,50)};
+  delete fromLegacy.creditPurchaseStatus;
+  mockApi.mockResolvedValue(fromLegacy);
+  const view=render(<AiQuotaUsagePanel canPurchase/>);
+  await waitFor(()=>expect(view.getByTestId('ai-workout-quota')).toBeTruthy());
+  expect(view.queryByTestId('ai-buy-100')).toBeNull();
 });

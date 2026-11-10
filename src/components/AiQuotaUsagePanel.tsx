@@ -8,7 +8,7 @@ type Meter = {
   used: number; remaining: number; percent: number;
   periodStart: string | null; periodEnd: string | null;
 };
-type Quotas = { workouts: Meter; advisory: Meter; rollover: false; thresholds: {
+type Quotas = { workouts: Meter; advisory: Meter; rollover: false; creditPurchaseStatus?: string; thresholds: {
   warning: number; critical: number; exhausted: number;
 } };
 type Package = { code: string; count: number; price: string };
@@ -110,7 +110,7 @@ export function AiQuotaUsagePanel({ canPurchase, revision = 0 }: { canPurchase: 
       {quotas && <Text testID="ai-advisory-quota" style={styles.muted}>
         Outras ações de IA: {quotas.advisory.remaining} de {quotas.advisory.allowance} disponíveis.
       </Text>}
-      {canPurchase && meter.includedAllowance > 0 ? <>
+      {canPurchase && meter.includedAllowance > 0 && quotas?.creditPurchaseStatus === 'AVAILABLE' ? <>
         <Text style={styles.label}>Adicionar créditos para gerar treinos</Text>
         <View style={styles.packages}>{PACKS.map(pack =>
           <TouchableOpacity key={pack.code} testID={'ai-buy-'+pack.count} accessibilityRole="button"
@@ -118,6 +118,8 @@ export function AiQuotaUsagePanel({ canPurchase, revision = 0 }: { canPurchase: 
             <Text style={styles.buyText}>+{pack.count} treinos · {pack.price}</Text>
           </TouchableOpacity>)}</View>
       </> : null}
+      {canPurchase && meter.includedAllowance > 0 && quotas?.creditPurchaseStatus !== 'AVAILABLE' ?
+        <Text testID="ai-packs-unavailable" style={styles.muted}>Créditos adicionais estarão disponíveis após a habilitação comercial.</Text> : null}
       {notice ? <Text testID="ai-quota-checkout-notice" style={styles.muted}>{notice}</Text> : null}
     </> : null}
   </View>;
