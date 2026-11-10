@@ -546,6 +546,7 @@ function TenantCommercialWebApp() {
   function intelligenceView() {
     return <IronIntelligencePanel key={activeTenantId ?? 'sem-academia'}
       students={list(data.students)} workouts={list(data.workouts)}
+      canPurchaseAiCredits={can('OWNER')}
       onUpdated={() => loadModule('intelligence')} />;
   }
   function scheduleView() {
