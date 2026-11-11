@@ -20,8 +20,9 @@ export function initialTrialEntryMode(href?: string): Mode {
 }
 
 function currentTrialEntryMode(): Mode {
-  if (typeof window === 'undefined') return 'login';
-  return initialTrialEntryMode(window.location.href);
+  // React Native/Jest may provide a window object without a location object.
+  const runtime = globalThis as typeof globalThis & { location?: { href?: string } };
+  return initialTrialEntryMode(runtime.location?.href);
 }
 
 export function WebAuthEntry() {
