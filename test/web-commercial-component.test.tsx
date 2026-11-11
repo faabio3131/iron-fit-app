@@ -51,12 +51,43 @@ describe('commercial web shell', () => {
   test('renders owner shell and entitlement-gated modules from canonical responses', async () => {
     const view = render(<CommercialWebApp />);
     await waitFor(() => expect(view.getByTestId('commercial-web-app')).toBeTruthy());
-    await waitFor(() => expect(view.getByText('Academia Teste')).toBeTruthy());
+    await waitFor(() => expect(view.getByTestId('onboarding-workspace')).toBeTruthy());
+    await waitFor(() => expect(view.getByTestId('onboarding-academy-name').props.value).toBe('Academia Teste'));
     expect(view.getByTestId('nav-equipment')).toBeTruthy();
     expect(view.queryByTestId('nav-creator')).toBeNull();
     expect(mockApi).toHaveBeenCalledWith('/product-entitlements/tenant/features');
     expect(mockApi).toHaveBeenCalledWith('/commercial/trial/status');
   });
+});
+
+test('official trial OWNER lands in canonical onboarding with gym profile prefilled', async () => {
+  mockApi.mockReset();
+  mockApi.mockImplementation(async (path: string) => payloadFor(path));
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByTestId('onboarding-workspace')).toBeTruthy());
+  expect(view.getByTestId('onboarding-academy-name').props.value).toBe('Academia Teste');
+  expect(view.getByTestId('onboarding-academy-timezone').props.value).toBe('America/Sao_Paulo');
+  expect(mockApi).toHaveBeenCalledWith('/commercial/trial/status');
+  expect(mockApi).toHaveBeenCalledWith('/commercial/onboarding');
+  expect(mockApi).toHaveBeenCalledWith('/gyms/gym-1');
+  expect(view.getByTestId('nav-onboarding')).toBeTruthy();
+  expect(view.getByTestId('nav-overview')).toBeTruthy();
+  expect(view.queryByTestId('subscription-blocked')).toBeNull();
+});
+
+test('paid OWNER with completed onboarding stays in the standard cockpit', async () => {
+  mockApi.mockReset();
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/commercial/trial/status') return { status: 'ACTIVE' };
+    if (path === '/commercial/onboarding') {
+      return { status: 'COMPLETED', completedSteps: ['ACADEMY_PROFILE', 'EQUIPMENT_INVENTORY', 'TEAM_REVIEW', 'FINISH'], nextStep: null };
+    }
+    return payloadFor(path);
+  });
+  const view = render(<CommercialWebApp />);
+  await waitFor(() => expect(view.getByText('Academia Teste')).toBeTruthy());
+  expect(view.queryByTestId('onboarding-workspace')).toBeNull();
+  expect(mockApi).toHaveBeenCalledWith('/dashboard/summary');
 });
 
 test('C03 suspended tenant exposes only recovery navigation and requires owner step-up before SaaS billing', async () => {
