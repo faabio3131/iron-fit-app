@@ -51,7 +51,8 @@ describe('commercial web shell', () => {
   test('renders owner shell and entitlement-gated modules from canonical responses', async () => {
     const view = render(<CommercialWebApp />);
     await waitFor(() => expect(view.getByTestId('commercial-web-app')).toBeTruthy());
-    await waitFor(() => expect(view.getByText('Academia Teste')).toBeTruthy());
+    await waitFor(() => expect(view.getByTestId('onboarding-workspace')).toBeTruthy());
+    await waitFor(() => expect(view.getByTestId('onboarding-academy-name').props.value).toBe('Academia Teste'));
     expect(view.getByTestId('nav-equipment')).toBeTruthy();
     expect(view.queryByTestId('nav-creator')).toBeNull();
     expect(mockApi).toHaveBeenCalledWith('/product-entitlements/tenant/features');
