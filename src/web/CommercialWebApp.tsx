@@ -1,6 +1,6 @@
 import { ReceptionDesk, ReceptionDeskAdmin } from './ReceptionDesk';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { AccountSecurityPanel } from '../components/AccountSecurityPanel';
 import { IronBrand } from '../components/IronBrand';
@@ -32,6 +32,7 @@ import { FinancialWorkspace } from './FinancialWorkspace';
 import { EntitlementsWorkspace } from './EntitlementsWorkspace';
 import { FiscalCenter } from './FiscalCenter';
 import { useAuth } from '../context/AuthContext';
+import { shouldGuideNewTrialOnboarding } from './trial-onboarding-entry';
 import { brlFromMinor, brlToMinor, positiveBrlToMinor } from '../utils/academy-money';
 import { api } from '../services/api';
 import { ManagerAlertBell, ManagerAlertsPanel } from '../components/ManagerAlertsPanel';
@@ -184,6 +185,7 @@ function TenantCommercialWebApp() {
   const roles = useMemo<string[]>(() => Array.isArray(profile?.roles) ? profile.roles : [], [profile]);
   const permissions = useMemo<string[]>(() => Array.isArray(profile?.permissions) ? profile.permissions : [], [profile]);
   const [active, setActive] = useState<ModuleKey>('overview');
+  const firstTrialRouteChecked = useRef(false);
   const [entitlements, setEntitlements] = useState<Entitlement[]>([]);
   const [subscription, setSubscription] = useState<any>(null);
   const [trial, setTrial] = useState<any>(null);
@@ -240,10 +242,26 @@ function TenantCommercialWebApp() {
     setSubscription(current);
     setTrial(trialState);
     setOnboarding(onboardingState);
+    if (!firstTrialRouteChecked.current) {
+      firstTrialRouteChecked.current = true;
+      if (shouldGuideNewTrialOnboarding({
+        activeTenantId, roles, subscriptionStatus: current?.status,
+        trialStatus: trialState?.status, onboardingStatus: onboardingState?.status,
+        nextStep: onboardingState?.nextStep,
+      })) {
+        // The owner sees the existing canonical onboarding first. The gym
+        // profile is read from their authenticated tenant, never from a URL.
+        const gym = await api(`/gyms/${activeTenantId}`).catch(() => null);
+        if (typeof gym?.name === 'string' && typeof gym?.timezone === 'string') {
+          setAcademy({ name: gym.name, timezone: gym.timezone });
+        }
+        setActive('onboarding');
+      }
+    }
     setAdminStepUpActive(stepUpState?.active === true);
     setAdminStepUpExpiresAt(stepUpState?.expiresAt ? String(stepUpState.expiresAt) : null);
     setShellReady(true);
-  }, [can]);
+  }, [activeTenantId, can, roles]);
 
   const loadModule = useCallback(async (key: ModuleKey) => {
     setLoading(true); setError('');
