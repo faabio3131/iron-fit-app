@@ -132,7 +132,9 @@ test('visitor creates trial, authenticates and reaches tenant-scoped commercial 
   fireEvent.press(view.getByTestId('login-submit'));
 
   await waitFor(() => expect(view.getByTestId('commercial-web-app')).toBeTruthy());
-  await waitFor(() => expect(view.getByText('Academia Web')).toBeTruthy());
+  await waitFor(() => expect(view.getByTestId('onboarding-workspace')).toBeTruthy());
+  await waitFor(() => expect(view.getByTestId('onboarding-academy-name').props.value).toBe('Academia Web'));
+  expect(view.getByTestId('nav-onboarding')).toBeTruthy();
 
   const trialCall = fetchMock.mock.calls.find(([input]) => String(input).endsWith('/commercial/trial/start'));
   const trialBody = JSON.parse(String(trialCall?.[1]?.body ?? '{}'));
