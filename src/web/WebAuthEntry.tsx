@@ -5,8 +5,27 @@ import { TrialSignupScreen } from './TrialSignupScreen';
 
 type Mode = 'login' | 'trial' | 'recovery';
 
+/**
+ * The institutional site's "Teste grátis" CTA opens the existing canonical
+ * signup screen directly. The query string only selects UI, never grants a
+ * role, tenant, trial, or entitlement; those are created by the guarded API.
+ */
+export function initialTrialEntryMode(href?: string): Mode {
+  if (!href) return 'login';
+  try {
+    return new URL(href).searchParams.get('iniciar-teste') === '1' ? 'trial' : 'login';
+  } catch {
+    return 'login';
+  }
+}
+
+function currentTrialEntryMode(): Mode {
+  if (typeof window === 'undefined') return 'login';
+  return initialTrialEntryMode(window.location.href);
+}
+
 export function WebAuthEntry() {
-  const [mode, setMode] = useState<Mode>('login');
+  const [mode, setMode] = useState<Mode>(currentTrialEntryMode);
   const [createdEmail, setCreatedEmail] = useState('');
   const [notice, setNotice] = useState('');
 
