@@ -5,7 +5,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~57.0.18",
     "@expo/vector-icons": "^15.1.1",
-    "expo": "~57.0.32",
+    "expo": "~57.0.33",
     "expo-font": "~57.0.4",
     "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.11",
@@ -49,6 +49,7 @@
   "overrides": {
     "shell-quote": "1.11.0",
     "source-map-js": "1.2.2",
-    "node-forge": "1.4.3"
+    "node-forge": "1.4.3",
+    "zod": "^4.6.6"
   }
 }
