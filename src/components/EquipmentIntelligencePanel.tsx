@@ -17,6 +17,21 @@ type Candidate = {
 const candidateStatus: Record<string, string> = {
   PENDING: 'Em análise', APPROVED: 'Aprovado', REJECTED: 'Recusado', MERGED: 'Vinculado ao catálogo',
 };
+const categoryLabels: Record<string, string> = {
+  CABLE_FUNCTIONAL: 'Cabos e funcional',
+  CARDIO: 'Cardio',
+  FREE_WEIGHTS: 'Pesos livres',
+  FUNCTIONAL_CONDITIONING: 'Condicionamento funcional',
+  PILATES_REHAB: 'Pilates e reabilitação',
+  PLATE_LOADED: 'Aparelhos com anilha',
+  RACKS_BENCHES: 'Racks e bancos',
+  SELECTORIZED_STRENGTH: 'Musculação seletorizada',
+  SPECIALIZED_STRENGTH: 'Força especializada',
+};
+function categoryLabel(category?: string | null): string | undefined {
+  if (!category) return undefined;
+  return categoryLabels[category] ?? category;
+}
 function Action({ label, testID, onPress, disabled = false }: {
   label: string; testID?: string; onPress: () => void; disabled?: boolean;
 }) {
@@ -121,7 +136,7 @@ export function EquipmentIntelligencePanel({ inventory, catalog, canManage, canM
       <Text style={styles.metric}>{inventory.length} equipamento(s)</Text>
       {inventory.length ? inventory.map((i) => <View key={i.id} style={styles.entry}>
         <Text style={styles.white}>{i.catalogItem?.name ?? i.name ?? 'Equipamento'}</Text>
-        <Text style={styles.muted}>{i.catalogItem?.category ?? 'Categoria não informada'}</Text>
+        <Text style={styles.muted}>{categoryLabel(i.catalogItem?.category) ?? 'Categoria não informada'}</Text>
         <EquipmentOperationControl id={i.id} status={i.operationalStatus} canManage={canManageOperations} onUpdated={onUpdated} />
         {canManage && i.catalogItemId ? pendingDeselect === i.catalogItemId ?
           <View style={styles.actions}><Text style={styles.muted}>Confirma retirar este equipamento do inventário?</Text>
@@ -143,7 +158,7 @@ export function EquipmentIntelligencePanel({ inventory, catalog, canManage, canM
       </View>
       <ScrollView horizontal contentContainerStyle={styles.actions}>
         <Action label="Todas as categorias" onPress={() => setCategory('')} />
-        {categories.map((c) => <Action key={c} label={c} onPress={() => setCategory(c)} />)}
+        {categories.map((c) => <Action key={c} label={categoryLabel(c) ?? c} onPress={() => setCategory(c)} />)}
       </ScrollView>
       {visible.map((item) => {
         const selected = selectedIds.has(item.id) || item.selected === true;
@@ -151,7 +166,7 @@ export function EquipmentIntelligencePanel({ inventory, catalog, canManage, canM
           onPress={() => { setSelectedCatalogEquipment(item.id); setPendingDeselect(''); }}
           style={[styles.entry, selectedCatalogEquipment === item.id && styles.selected]}>
           <Text style={styles.white}>{item.name}</Text>
-          <Text style={styles.muted}>{item.category ?? 'Outros'} · {selected ? 'No inventário' : 'Disponível'}</Text>
+          <Text style={styles.muted}>{categoryLabel(item.category) ?? 'Outros'} · {selected ? 'No inventário' : 'Disponível'}</Text>
           <Text style={styles.muted}>{item.manufacturerName ?? item.metadata?.manufacturerName ?? 'Fabricante não informado'}
             {item.modelName ?? item.metadata?.modelName ? ` · ${item.modelName ?? item.metadata?.modelName}` : ''}</Text>
         </TouchableOpacity>;
@@ -187,7 +202,7 @@ export function EquipmentIntelligencePanel({ inventory, catalog, canManage, canM
     </Block> : null}
     {canGovern ? <Block title="Governança do catálogo (FM)" subtitle="Somente SUPER_ADMIN. A decisão é auditada no backend.">
       {governance.filter((c) => c.status === 'PENDING').map((c) => <View key={c.id} style={styles.entry}>
-        <Text style={styles.white}>{c.proposedName} · {c.proposedCategory ?? 'Sem categoria canônica'}</Text>
+        <Text style={styles.white}>{c.proposedName} · {categoryLabel(c.proposedCategory) ?? 'Sem categoria canônica'}</Text>
         <Text style={styles.muted}>Academia proponente registrada no backend.</Text>
         {reviewing?.id === c.id ? <View style={styles.actions}>
           <Text style={styles.muted}>Revisão: {reviewing.decision === 'APPROVE' ? 'Aprovar e publicar no catálogo' : 'Recusar a proposta'}</Text>
