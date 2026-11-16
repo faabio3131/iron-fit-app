@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { ActivityIndicator, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { api } from '../services/api';
+import { colors } from '../theme/colors';
 
 type Student = { id: string; cpf?: string | null; photoUrl?: string | null; name?: string; user?: { name?: string } };
 type Decision = { eventId: string; status: 'ALLOWED' | 'DENIED' | 'REVIEW'; allowed: boolean; denialReason: string | null; warning: string | null; occurredAt: string; student: { id: string; name: string; photoUrl?: string | null } | null };
@@ -62,7 +63,7 @@ export function ReceptionAccessTerminal({ students }: { students: Student[] }) {
         testID={'terminal-check-' + student.id} disabled={busy || retryNeeded} onPress={() => void check({ studentId: student.id })} style={styles.button}><Text style={styles.buttonText}>Consultar entrada</Text></TouchableOpacity>
     </View>)}
     {query.trim() && !matches.length ? <Text style={styles.help}>Nenhum aluno encontrado na listagem recebida desta academia.</Text> : null}
-    {busy ? <ActivityIndicator color="#60a5fa" /> : null}
+    {busy ? <ActivityIndicator color="#2BF47A" /> : null}
     {error ? <View><Text style={styles.error}>{error}</Text>{retryNeeded ? <TouchableOpacity accessibilityRole="button" testID="terminal-retry" disabled={busy} onPress={() => void check()} style={styles.button}><Text style={styles.buttonText}>Repetir consulta pendente</Text></TouchableOpacity> : null}</View> : null}
     {decision ? <View testID="terminal-decision" accessibilityLiveRegion="polite" style={[styles.result, decision.status === 'DENIED' ? styles.denied : decision.status === 'REVIEW' ? styles.warning : styles.allowed]}>
       {decision.student?.photoUrl ? <Image source={{ uri: decision.student.photoUrl }} style={styles.photo} accessibilityLabel="Foto do aluno consultado" /> : null}
@@ -75,12 +76,12 @@ export function ReceptionAccessTerminal({ students }: { students: Student[] }) {
   </View>;
 }
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#0b1729', padding: 20, borderRadius: 18, gap: 12, marginBottom: 20, borderWidth: 1, borderColor: '#234569' },
+  card: { backgroundColor: colors.surface, padding: 20, borderRadius: 18, gap: 12, marginBottom: 20, borderWidth: 1, borderColor: colors.border },
   title: { color: '#eef7ff', fontSize: 22, fontWeight: '800' }, help: { color: '#b9cbe0', fontSize: 14 },
   input: { borderWidth: 1, borderColor: '#365371', borderRadius: 10, padding: 12, color: '#eef7ff', backgroundColor: '#07111f' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' }, name: { color: '#eef7ff', fontSize: 17 },
-  photo: { width: 72, height: 72, borderRadius: 12 }, button: { backgroundColor: '#155eac', borderRadius: 10, padding: 12 },
-  buttonText: { color: '#fff', fontWeight: '700' }, result: { padding: 20, borderRadius: 14, borderWidth: 2, gap: 10 },
-  allowed: { borderColor: '#34d399', backgroundColor: '#07352b' }, denied: { borderColor: '#fb7185', backgroundColor: '#401720' },
-  warning: { borderColor: '#fbbf24', backgroundColor: '#3b2d0d' }, error: { color: '#fda4af' },
+  photo: { width: 72, height: 72, borderRadius: 12 }, button: { backgroundColor: colors.accent, borderRadius: 10, padding: 12 },
+  buttonText: { color: colors.onAccent, fontWeight: '700' }, result: { padding: 20, borderRadius: 14, borderWidth: 2, gap: 10 },
+  allowed: { borderColor: colors.success, backgroundColor: colors.successBg }, denied: { borderColor: colors.danger, backgroundColor: colors.dangerBg },
+  warning: { borderColor: colors.warning, backgroundColor: colors.warningBg }, error: { color: colors.danger },
 });

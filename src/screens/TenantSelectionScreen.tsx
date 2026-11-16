@@ -126,7 +126,7 @@ export function TenantSelectionScreen() {
                   if (value) setMfaCode('');
                 }}
                 autoCapitalize="characters"
-                placeholder="Recovery code"
+                placeholder="Código de recuperação"
                 placeholderTextColor="#64748b"
               />
             </View>

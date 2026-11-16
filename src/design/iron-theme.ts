@@ -7,7 +7,7 @@ export const iron = {
   elevated: '#18181B',
   primary: '#2BF47A',
   action: '#19B95D',
-  cyan: '#7DFFB1',
+  accentAlt: '#7DFFB1',
   focus: '#7DFFB1',
   text: '#EEF1F5',
   muted: '#A1A6AE',
