@@ -91,7 +91,7 @@ export function RootNavigator() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0a0e1a" />
       <View style={styles.screen}>
-        {tab === 'treino' ? <WorkoutsScreen /> : null}
+        <View style={[styles.screen, tab !== 'treino' && styles.hidden]}><WorkoutsScreen /></View>
         {tab === 'intelligence' ? <IntelligenceScreen /> : null}
         {tab === 'agenda' ? <SchedulesScreen /> : null}
         {tab === 'progresso' ? <EvolutionScreen /> : null}
@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0e1a' },
   boot: { flex: 1, backgroundColor: '#0a0e1a', alignItems: 'center', justifyContent: 'center' },
   screen: { flex: 1 },
+  hidden: { display: 'none' },
   tabBar: { flexDirection: 'row', backgroundColor: '#131826', borderTopWidth: 1, borderTopColor: '#252d47', paddingBottom: 16 },
   recoveryTitle: { color: '#edf9f1', fontSize: 17, fontWeight: '800', textAlign: 'center', marginTop: 18 },
   recoveryExplanation: { color: '#a8bac6', fontSize: 13, textAlign: 'center', lineHeight: 20, marginHorizontal: 28, marginTop: 9, maxWidth: 420 },
