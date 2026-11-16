@@ -108,7 +108,7 @@ export function PasswordRecoveryScreen({ onBack }: { onBack: () => void }) {
               value={token}
               onChangeText={setToken}
               autoCapitalize="none"
-              placeholder="Token one-time"
+              placeholder="Código de uso único"
               placeholderTextColor="#64748b"
             />
             <TextInput

@@ -14,7 +14,7 @@ export function TabItem({ active, icon, label, onPress }: { active: boolean; ico
 
 const styles = StyleSheet.create({
   tabItem: { flex: 1, alignItems: 'center', paddingVertical: 10, position: 'relative' },
-  tabLabel: { color: '#64748b', fontSize: 10, fontWeight: '600', marginTop: 4 },
+  tabLabel: { color: '#64748b', fontSize: 11, fontWeight: '600', marginTop: 4 },
   tabLabelActive: { color: '#2BF47A' },
   tabIndicator: { position: 'absolute', top: 0, width: 24, height: 3, borderRadius: 2, backgroundColor: '#2BF47A' },
 });

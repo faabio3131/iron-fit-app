@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   userBubble: { alignSelf: 'flex-end', backgroundColor: '#1a9e52' },
   assistantBubble: { alignSelf: 'flex-start', backgroundColor: '#1e293b' },
   messageText: { color: '#f8fafc', fontSize: 13, lineHeight: 18 },
-  safeLabel: { color: '#fbbf24', fontSize: 9, fontWeight: '800', marginTop: 5 },
+  safeLabel: { color: '#fbbf24', fontSize: 12, lineHeight: 16, fontWeight: '800', marginTop: 5 },
   loading: { alignSelf: 'flex-start', margin: 8 },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 10 },
   input: { flex: 1, minHeight: 44, maxHeight: 110, backgroundColor: '#131826', color: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#334155', paddingHorizontal: 12, paddingVertical: 10 },

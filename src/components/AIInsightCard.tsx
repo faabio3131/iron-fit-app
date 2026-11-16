@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   title: { color: '#f1f5f9', fontSize: 16, fontWeight: '800' },
-  badge: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },
+  badge: { fontSize: 13, lineHeight: 18, fontWeight: '800', textTransform: 'uppercase', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },
   badgeAi: { color: '#86efac', backgroundColor: '#16653455' },
   badgeSafe: { color: '#fde68a', backgroundColor: '#92400e55' },
   summary: { color: '#cbd5e1', fontSize: 13, lineHeight: 19, marginBottom: 12 },

@@ -185,7 +185,7 @@ export function LoginScreen({
                   }}
                   autoCapitalize="characters"
                   autoCorrect={false}
-                  placeholder="Recovery code"
+                  placeholder="Código de recuperação"
                   placeholderTextColor="#64748b"
                 />
               </View>

@@ -31,7 +31,7 @@ function Btn({ label, onPress, disabled = false, testID, danger = false }: {
 }) {
   return <TouchableOpacity accessibilityRole="button" testID={testID} onPress={onPress}
     disabled={disabled} style={[styles.button, danger && styles.danger, disabled && styles.disabled]}>
-    <Text style={styles.buttonText}>{label}</Text>
+    <Text style={[styles.buttonText, danger && styles.dangerText]}>{label}</Text>
   </TouchableOpacity>;
 }
 
@@ -288,7 +288,7 @@ export function AcademyChargesPanel({ charges, accounts, selectedAccountId, savi
 }
 const styles = StyleSheet.create({
   card: { padding: 16, marginBottom: 12, gap: 10 },
-  title: { color: '#2f91ff', fontSize: 17, fontWeight: '800' },
+  title: { color: '#2BF47A', fontSize: 17, fontWeight: '800' },
   muted: { color: '#b0bfd2', fontSize: 12, lineHeight: 18 },
   notice: { color: '#f5c48b', fontSize: 12, lineHeight: 18 },
   heading: { color: '#f8fafc', fontSize: 14, fontWeight: '800' },
@@ -297,8 +297,9 @@ const styles = StyleSheet.create({
   confirm: { backgroundColor: '#2a1b1c', borderWidth: 1, borderColor: '#975044', padding: 12, borderRadius: 10, gap: 7 },
   dangerTitle: { color: '#ffcab0', fontSize: 14, fontWeight: '800' },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  button: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 9, backgroundColor: '#123452', borderWidth: 1, borderColor: '#2f91ff', alignSelf: 'flex-start' },
+  button: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 9, backgroundColor: '#2BF47A', borderWidth: 1, borderColor: '#2BF47A', alignSelf: 'flex-start' },
   danger: { backgroundColor: '#ae443a', borderColor: '#e67b71' },
-  buttonText: { fontSize: 12, fontWeight: '800', color: '#f2faf5' },
+  buttonText: { fontSize: 12, fontWeight: '800', color: '#04140b' },
+  dangerText: { color: '#f2faf5' },
   disabled: { opacity: 0.45 },
 });

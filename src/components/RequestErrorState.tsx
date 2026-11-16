@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../theme/colors';
 
 export function RequestErrorState({
   title = 'Não foi possível atualizar',
@@ -18,7 +19,7 @@ export function RequestErrorState({
   return (
     <View style={styles.card} testID={testID}>
       <View style={styles.icon}>
-        <Ionicons name="cloud-offline-outline" size={24} color="#67d6ff" />
+        <Ionicons name="cloud-offline-outline" size={24} color={colors.accent} />
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
@@ -63,13 +64,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   button: {
-    backgroundColor: '#176bc1',
+    backgroundColor: colors.accent,
     borderWidth: 1,
-    borderColor: '#2f91ff',
+    borderColor: colors.accent,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 9,
     marginTop: 12,
   },
-  buttonText: { color: '#eef7ff', fontSize: 11, fontWeight: '800' },
+  buttonText: { color: colors.onAccent, fontSize: 11, fontWeight: '800' },
 });

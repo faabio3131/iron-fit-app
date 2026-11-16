@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../theme/colors';
 
 export function StatCard({ icon, value, label, color }: { icon: any; value: string; label: string; color: string }) {
   return (
@@ -15,8 +16,8 @@ export function StatCard({ icon, value, label, color }: { icon: any; value: stri
 }
 
 const styles = StyleSheet.create({
-  card: { flex: 1, backgroundColor: '#071528', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#203b55' },
+  card: { flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
   iconBox: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  value: { color: '#eef7ff', fontSize: 28, fontWeight: '800', letterSpacing: -1 },
-  label: { color: '#9fb0c5', fontSize: 12, marginTop: 2 },
+  value: { color: colors.text, fontSize: 28, fontWeight: '800', letterSpacing: -1 },
+  label: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
 });
