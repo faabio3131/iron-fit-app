@@ -18,10 +18,10 @@ export function AuthFrame({ children }: { children: React.ReactNode }) {
             ['barbell-outline', 'Treinos e evolução'],
             ['people-outline', 'Alunos e equipe'],
             ['calendar-outline', 'Agenda e operação'],
-          ].map(([icon, label]) => <View key={label} style={styles.feature}><Ionicons name={icon as React.ComponentProps<typeof Ionicons>['name']} size={18} color={iron.cyan} /><Text style={styles.featureText}>{label}</Text></View>)}</View>
+          ].map(([icon, label]) => <View key={label} style={styles.feature}><Ionicons name={icon as React.ComponentProps<typeof Ionicons>['name']} size={18} color={iron.accentAlt} /><Text style={styles.featureText}>{label}</Text></View>)}</View>
         </>}
       </View>
-      <View style={styles.form}>{children}<View style={styles.footer}><Ionicons name="shield-checkmark-outline" color={iron.cyan} size={15} /><Text style={styles.footerText}>IRON FIT CORE · by FM Tecnologia</Text></View></View>
+      <View style={styles.form}>{children}<View style={styles.footer}><Ionicons name="shield-checkmark-outline" color={iron.accentAlt} size={15} /><Text style={styles.footerText}>IRON FIT CORE · by FM Tecnologia</Text></View></View>
     </View>
   </ScrollView>;
 }
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   stacked: { flexDirection: 'column', gap: 24, paddingVertical: 0 },
   identity: { flex: 1, minWidth: 0 },
   identityCompact: { flex: 0, width: '100%', maxWidth: 290 },
-  eyebrow: { color: iron.cyan, fontWeight: '700', fontSize: 11, letterSpacing: 2, marginBottom: 24 },
+  eyebrow: { color: iron.accentAlt, fontWeight: '700', fontSize: 11, letterSpacing: 2, marginBottom: 24 },
   title: { color: iron.text, fontSize: 44, lineHeight: 49, fontWeight: '800', letterSpacing: -1.6, marginTop: 22 },
   accent: { color: iron.primary },
   description: { color: iron.muted, fontSize: 16, lineHeight: 26, maxWidth: 440, marginTop: 18 },

@@ -185,7 +185,7 @@ export function ScheduleCalendarPanel({ slots, canCheckIn, onDateSelected, refre
       <Text style={[styles.dayNumber, selectedDate === day && styles.selectedText]}>{dateLabel(day)}</Text>
       {!loading && !error ? <Text style={styles.dayCount}>{dayBookings(day).length} reserva(s)</Text> : null}
     </TouchableOpacity>)}</View>
-    {loading ? <View style={styles.loading}><ActivityIndicator /><Text style={styles.muted}>Consultando agenda…</Text></View> : error ?
+    {loading ? <View style={styles.loading}><ActivityIndicator color="#2BF47A" /><Text style={styles.muted}>Consultando agenda…</Text></View> : error ?
       <View testID="agenda-error" style={styles.errorBox}><Text style={styles.error}>{error}</Text>
         <Action testID="agenda-retry" label="Tentar novamente" onPress={() => setReloadKey((current) => current + 1)} />
       </View> : mode === 'day' ?
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   daySelected: { borderColor: '#2BF47A', backgroundColor: '#123524' },
   dayLabel: { color: '#94a3b8', fontSize: 12 },
   dayNumber: { color: '#f8fafc', fontSize: 16, fontWeight: '800' },
-  dayCount: { color: '#94a3b8', fontSize: 10 },
+  dayCount: { color: '#94a3b8', fontSize: 13 },
   loading: { padding: 22, alignItems: 'center', gap: 8 },
   errorBox: { gap: 8, padding: 12, borderRadius: 9, backgroundColor: '#301215' },
   error: { color: '#fca5a5', fontSize: 12 },

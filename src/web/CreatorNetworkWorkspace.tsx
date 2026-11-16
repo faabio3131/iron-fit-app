@@ -265,7 +265,7 @@ export function CreatorNetworkWorkspace({
 const styles = StyleSheet.create({
   hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 14, marginBottom: 8 },
   heroCopy: { flex: 1, minWidth: 260 },
-  eyebrow: { color: '#56EC95', fontSize: 12, fontWeight: '900', letterSpacing: 0.8 },
+  eyebrow: { color: '#2BF47A', fontSize: 12, fontWeight: '900', letterSpacing: 0.8 },
   heroTitle: { color: '#EEF1F5', fontSize: 22, fontWeight: '900', marginTop: 3, marginBottom: 4 },
   muted: { color: '#A1A6AE', fontSize: 13, lineHeight: 18 },
   periodCard: { minWidth: 180, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10 },

@@ -111,8 +111,8 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#1a2035', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#252d47' }, cardTitle: { color: '#f1f5f9', fontSize: 16, fontWeight: '700' }, meta: { color: '#94a3b8', fontSize: 12, marginTop: 2, marginBottom: 16 },
   session: { marginBottom: 12 }, sessionTitle: { color: '#2BF47A', fontSize: 14, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' }, exercise: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#252d47' },
   number: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#131826', alignItems: 'center', justifyContent: 'center', marginRight: 12 }, numberText: { color: '#2BF47A', fontWeight: '700', fontSize: 12 }, exerciseContent: { flex: 1 }, exerciseName: { color: '#f1f5f9', fontSize: 15, fontWeight: '600' }, exerciseMeta: { color: '#94a3b8', fontSize: 11, marginTop: 4 },
-  guidedButton: { alignSelf: 'flex-start', backgroundColor: '#2f91ff', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 11, marginBottom: 12 },
-  guidedText: { color: '#050b14', fontWeight: '800', fontSize: 14 },
+  guidedButton: { alignSelf: 'flex-start', backgroundColor: '#2BF47A', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 11, marginBottom: 12 },
+  guidedText: { color: '#04140b', fontWeight: '800', fontSize: 14 },
   guidedHint: { color: '#9aadc1', fontSize: 12, marginBottom: 12 },
   videoButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2BF47A15', borderWidth: 1, borderColor: '#2BF47A40', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, alignSelf: 'flex-start', marginTop: 8, gap: 6 }, videoText: { color: '#2BF47A', fontWeight: '600', fontSize: 13 },
 });

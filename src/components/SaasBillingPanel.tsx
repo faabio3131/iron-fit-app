@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GlowCard } from './GlowCard';
 import { api } from '../services/api';
+import { colors } from '../theme/colors';
 
 type BillingAuthority = {
   billingAuthority: string;
@@ -181,7 +182,7 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
           <Text style={styles.buttonText}>Atualizar situação</Text>
         </TouchableOpacity>
       </View>
-      {loading ? <ActivityIndicator color="#3B82F6" /> : null}
+      {loading ? <ActivityIndicator color={colors.accent} /> : null}
       {error ? <Text testID="saas-billing-authority-error" style={styles.error}>{error}</Text> : null}
       {notice ? <Text style={styles.warning}>{notice}</Text> : null}
       {authority ? <View testID="saas-billing-command-authority" style={styles.authority}>
@@ -246,14 +247,14 @@ const styles = StyleSheet.create({
   card: { padding: 16, marginBottom: 12, gap: 12 },
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
   heading: { flexGrow: 1, flexBasis: 190, gap: 4 },
-  title: { color: '#60A5FA', fontSize: 17, fontWeight: '800' },
+  title: { color: colors.accent, fontSize: 17, fontWeight: '800' },
   muted: { color: '#afbed0', fontSize: 12, lineHeight: 18 },
   warning: { color: '#f3c18b', fontSize: 12, lineHeight: 18 },
   error: { color: '#fca5a5', fontSize: 12 },
-  authority: { backgroundColor: '#0E213D', borderRadius: 10, borderWidth: 1, borderColor: '#285293', padding: 12, gap: 8 },
-  authorityTitle: { color: '#DBEAFE', fontWeight: '800', fontSize: 13 },
-  button: { alignSelf: 'flex-start', backgroundColor: '#2563EB', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 9 },
-  buttonText: { color: '#FFFFFF', fontWeight: '800', fontSize: 12 },
+  authority: { backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, padding: 12, gap: 8 },
+  authorityTitle: { color: colors.text, fontWeight: '800', fontSize: 13 },
+  button: { alignSelf: 'flex-start', backgroundColor: colors.accent, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 9 },
+  buttonText: { color: colors.onAccent, fontWeight: '800', fontSize: 12 },
   disabled: { opacity: 0.45 },
   statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderBottomWidth: 1, borderBottomColor: '#29384c', paddingVertical: 10 },
   statusLabel: { color: '#a8b9cc', fontSize: 12 },
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
   offerRow: { paddingVertical: 12, gap: 8, borderBottomWidth: 1, borderBottomColor: '#29384c' },
   offerHeading: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   offerTitle: { color: '#F0F7FF', fontSize: 14, fontWeight: '700' },
-  offerPrice: { color: '#93C5FD', fontSize: 15, fontWeight: '800' },
+  offerPrice: { color: colors.accent, fontSize: 15, fontWeight: '800' },
   invoice: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#29384c', gap: 6 },
   invoiceHeader: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
   invoiceTitle: { color: '#eff7fa', fontWeight: '700', fontSize: 13 },

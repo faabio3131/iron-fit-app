@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { api } from '../services/api';
+import { colors } from '../theme/colors';
 
 type Qr = { credentialId: string; imageDataUrl: string; expiresAt: string };
 export function StudentAccessQrCard() {
@@ -36,12 +37,12 @@ export function StudentAccessQrCard() {
     {qr ? <><Image accessibilityLabel="Seu QR temporário de entrada" source={{ uri: qr.imageDataUrl }} style={styles.qr} /><Text style={styles.help}>Expira em {remaining} segundos. Não compartilhe.</Text></> : null}
     {error ? <Text style={styles.error}>{error}</Text> : null}
     <TouchableOpacity accessibilityRole="button" testID="student-qr-generate" disabled={busy} onPress={() => void generate()} style={styles.button}><Text style={styles.buttonText}>{busy ? 'Gerando…' : qr ? 'Gerar novo QR' : 'Gerar meu QR'}</Text></TouchableOpacity>
-    {busy ? <ActivityIndicator color="#60a5fa" /> : null}
+    {busy ? <ActivityIndicator color={colors.accent} /> : null}
   </View>;
 }
 const styles = StyleSheet.create({
-  card: { padding: 20, gap: 12, borderRadius: 18, borderWidth: 1, borderColor: '#234569', backgroundColor: '#0b1729', marginBottom: 20 },
-  title: { color: '#eef7ff', fontSize: 20, fontWeight: '800' }, help: { color: '#b9cbe0' }, error: { color: '#fda4af' },
-  qr: { width: 256, height: 256, alignSelf: 'center', backgroundColor: '#fff' }, button: { borderRadius: 10, backgroundColor: '#155eac', padding: 14 },
-  buttonText: { color: '#fff', fontWeight: '700', textAlign: 'center' },
+  card: { padding: 20, gap: 12, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, marginBottom: 20 },
+  title: { color: '#eef7ff', fontSize: 20, fontWeight: '800' }, help: { color: '#b9cbe0' }, error: { color: colors.danger },
+  qr: { width: 256, height: 256, alignSelf: 'center', backgroundColor: '#fff' }, button: { borderRadius: 10, backgroundColor: colors.accent, padding: 14 },
+  buttonText: { color: colors.onAccent, fontWeight: '700', textAlign: 'center' },
 });

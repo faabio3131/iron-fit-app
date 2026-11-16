@@ -96,7 +96,7 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
             <Ionicons name={passwordVisible ? "eye-off-outline" : "eye-outline"} size={22} color="#94a3b8" />
           </TouchableOpacity>
         </View>
-        <TextInput style={styles.input} value={timezone} onChangeText={setTimezone} autoCapitalize="none" placeholder="Timezone IANA" placeholderTextColor="#64748b" />
+        <TextInput style={styles.input} value={timezone} onChangeText={setTimezone} autoCapitalize="none" placeholder="Fuso horário (ex.: America/Sao_Paulo)" placeholderTextColor="#64748b" />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <TouchableOpacity accessibilityRole="button" testID="trial-submit" style={[styles.primary, disabled && styles.disabled]} onPress={submit} disabled={disabled}>
