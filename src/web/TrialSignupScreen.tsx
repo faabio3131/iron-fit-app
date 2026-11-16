@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { api } from '../services/api';
 import { PASSWORD_POLICY_TEXT, strongPassword } from '../security/password-policy';
+import { trialRequestFor, type TrialRequestState } from './trial-request-idempotency';
 
 function uuidV4() {
   const runtimeCrypto = (globalThis as typeof globalThis & { crypto?: { randomUUID?: () => string } }).crypto;
@@ -23,7 +24,7 @@ function browserTimezone() {
 }
 
 export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => void; onCreated: (email: string, trialEndsAt?: string) => void }) {
-  const requestId = useMemo(() => uuidV4(), []);
+  const pendingRequest = useRef<TrialRequestState | null>(null);
   const [name, setName] = useState('');
   const [gymName, setGymName] = useState('');
   const [cnpj, setCnpj] = useState('');
@@ -48,13 +49,17 @@ export function TrialSignupScreen({ onCancel, onCreated }: { onCancel: () => voi
     if (missing) { setError(missing); return; }
     setLoading(true);
     setError('');
+    const request = trialRequestFor(pendingRequest.current, {
+      email, name, gymName, cnpj, timezone, phone,
+    }, uuidV4);
+    pendingRequest.current = request;
     try {
       const result = await api('/commercial/trial/start', undefined, {
         method: 'POST',
         auth: false,
         retryOnUnauthorized: false,
         body: JSON.stringify({
-          requestId,
+          requestId: request.requestId,
           email: email.trim().toLowerCase(),
           password,
           name: name.trim(),
