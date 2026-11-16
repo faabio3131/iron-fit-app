@@ -48,7 +48,7 @@ export function GuidedWorkoutSession({ session, onClose }: { session: GuidedSess
     });
     return () => {
       clearInterval(interval);
-      subscription.remove();
+      subscription?.remove();
     };
   }, [restEndsAt]);
 
@@ -112,16 +112,16 @@ export function GuidedWorkoutSession({ session, onClose }: { session: GuidedSess
       {current.suggestedLoad ? <Text style={styles.muted}>Carga: {current.suggestedLoad}</Text> : null}
       {current.notes ? <Text style={styles.muted}>Observações: {current.notes}</Text> : null}
       <Text style={styles.muted}>Descanso prescrito: {current.restSeconds ?? 0} segundos</Text>
-      {current.exercise?.videoUrl ? <TouchableOpacity accessibilityRole="link" testID="guided-video" onPress={() => { void Linking.openURL(current.exercise!.videoUrl!); }} style={styles.video}>
+      {current.exercise?.videoUrl ? <TouchableOpacity accessibilityRole="button" testID="guided-video" onPress={() => { void Linking.openURL(current.exercise!.videoUrl!); }} style={styles.video}>
         <Text style={styles.videoText}>Assistir demonstração (opcional)</Text>
       </TouchableOpacity> : null}
-      {restEndsAt !== null ? <View style={styles.restBox} accessibilityLiveRegion="polite">
+      {restEndsAt !== null ? <View style={styles.restBox}>
         {resting ? <>
           <Text style={styles.restLabel}>Descanso entre séries</Text>
           <Text style={styles.timer} testID="guided-rest-countdown">{Math.floor(remaining / 60).toString().padStart(2, '0')}:{(remaining % 60).toString().padStart(2, '0')}</Text>
           <Action testID="guided-skip-rest" label="Pular descanso" onPress={endRest} secondary />
         </> : <>
-          <Text testID="guided-rest-ready" style={styles.success}>Descanso concluído! Próxima série liberada.</Text>
+          <Text accessibilityLiveRegion="polite" testID="guided-rest-ready" style={styles.success}>Descanso concluído! Próxima série liberada.</Text>
           <Action testID="guided-start-next" label="Iniciar próxima série" onPress={endRest} />
         </>}
       </View> : <Action testID="guided-complete-set" label={completedSets + 1 === current.sets
