@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   barColumn: { flex: 1, minWidth: 0, height: 140 },
   barTrack: { flex: 1, justifyContent: 'flex-end', borderBottomWidth: 1, borderBottomColor: iron.line },
   bar: { width: '100%', borderTopLeftRadius: 4, borderTopRightRadius: 4 },
-  axis: { color: iron.muted, fontSize: 9, height: 24, paddingTop: 7, textAlign: 'center' },
+  axis: { color: iron.muted, fontSize: 11, height: 24, paddingTop: 7, textAlign: 'center' },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: iron.line },
   alertRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: iron.line },
   rowText: { flex: 1, minWidth: 0 },
