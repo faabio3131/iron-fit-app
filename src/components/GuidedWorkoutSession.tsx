@@ -32,7 +32,7 @@ export function GuidedWorkoutSession({ session, onClose }: { session: GuidedSess
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [completedSets, setCompletedSets] = useState(0);
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
   const [finished, setFinished] = useState(false);
   const announcedRest = useRef<number | null>(null);
   const current = exercises[exerciseIndex];
