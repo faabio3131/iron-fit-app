@@ -22,6 +22,17 @@ type CommercialOffer = {
   planCode: string; name: string; interval: 'monthly' | 'yearly';
   amountMinor: number; currency: 'BRL';
 };
+export function commercialOffersErrorMessage(reason: unknown): string {
+  const status = (reason as { status?: unknown } | null)?.status;
+  if (status === 401) return 'Sua sessão não está válida. Entre novamente para consultar os planos.';
+  if (status === 403) return 'É necessário acesso de proprietário e reautenticação para consultar as ofertas.';
+  if (status === 404) return 'O catálogo comercial não está disponível nesta versão do servidor.';
+  if (status === 503 || (typeof status === 'number' && status >= 500))
+    return 'O serviço de planos está temporariamente indisponível. Atualize a situação ou tente mais tarde.';
+  if (reason instanceof Error && reason.message === 'INVALID_COMMERCIAL_CATALOG')
+    return 'O serviço comercial retornou um catálogo inválido. A contratação permanece bloqueada.';
+  return 'Não foi possível consultar os planos. Atualize a situação ou tente novamente.';
+}
 function validOffer(value: unknown): value is CommercialOffer {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const p = value as Record<string, unknown>;
@@ -39,6 +50,48 @@ export function validCaktoCheckout(value: unknown): value is string {
       !url.username && !url.password && !url.hash &&
       /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(url.searchParams.get('sck') ?? '');
   } catch { return false; }
+}
+type CanonicalBillingReadback = {
+  source: 'FM_COMMAND_CANONICAL';
+  authority: 'FM_COMMAND';
+  checkedAt: string;
+  subscription: null | {
+    planCode: string;
+    planName: string | null;
+    interval: 'monthly' | 'yearly' | null;
+    status: string;
+    paidThrough: string | null;
+  };
+  invoices: Array<{
+    status: string;
+    amountMinor: number;
+    currency: 'BRL';
+    periodEnd: string | null;
+  }>;
+  settlementConfirmedByThisView: false;
+};
+function validCanonicalBilling(value: unknown): value is CanonicalBillingReadback {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const data = value as Record<string, unknown>;
+  if (data.source !== 'FM_COMMAND_CANONICAL' || data.authority !== 'FM_COMMAND' ||
+      data.settlementConfirmedByThisView !== false || typeof data.checkedAt !== 'string' ||
+      !Array.isArray(data.invoices) || data.invoices.length > 24) return false;
+  if (data.subscription !== null) {
+    if (!data.subscription || typeof data.subscription !== 'object' ||
+        Array.isArray(data.subscription)) return false;
+    const record = data.subscription as Record<string, unknown>;
+    if (typeof record.status !== 'string' || record.status.length > 40 ||
+        (record.planName !== null && typeof record.planName !== 'string') ||
+        (record.interval !== null && !['monthly', 'yearly'].includes(String(record.interval))) ||
+        (record.paidThrough !== null && typeof record.paidThrough !== 'string')) return false;
+  }
+  return data.invoices.every((item: unknown) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
+    const row = item as Record<string, unknown>;
+    return typeof row.status === 'string' && typeof row.amountMinor === 'number' &&
+      Number.isSafeInteger(row.amountMinor) && row.amountMinor > 0 &&
+      row.currency === 'BRL' && (row.periodEnd === null || typeof row.periodEnd === 'string');
+  });
 }
 type BillingState = {
   agreement?: LegacyAgreement | null;
@@ -77,6 +130,8 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
 }) {
   const [authority, setAuthority] = useState<BillingAuthority | null>(null);
   const [billing, setBilling] = useState<BillingState | null>(null);
+  const [canonical, setCanonical] = useState<CanonicalBillingReadback | null>(null);
+  const [canonicalError, setCanonicalError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -105,23 +160,36 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
       }
       setAuthority(authorityResponse);
       setBilling(current);
+      try {
+        const official: unknown = await api('/commercial/billing/current');
+        if (!validCanonicalBilling(official)) throw new Error('INVALID_COMMAND_READBACK');
+        setCanonical(official);
+        setCanonicalError('');
+      } catch (reason) {
+        setCanonical(null);
+        const status = (reason as { status?: number } | null)?.status;
+        setCanonicalError(status === 403
+          ? 'Revalide o acesso administrativo para consultar sua assinatura atual.'
+          : 'A posição comercial oficial não pôde ser consultada no FM Command. Os registros antigos abaixo não representam sua assinatura atual.');
+      }
       if (canPurchase) {
         try {
           const result = await api('/commercial/billing/offers');
           const rows: unknown = result?.plans;
           if (!Array.isArray(rows) || rows.length > 30 || !rows.every(validOffer))
-            throw new Error('Catálogo de planos inválido.');
+            throw new Error('INVALID_COMMERCIAL_CATALOG');
           setOffers(rows);
-          setOffersError(rows.length ? '' : 'Planos Cakto ainda não disponíveis para contratação.');
-        } catch {
+          setOffersError(rows.length ? '' : 'Nenhuma oferta comercial está habilitada para contratação nesta academia.');
+        } catch (reason) {
           setOffers([]);
-          setOffersError('Contratação indisponível até a configuração comercial dos planos.');
+          setOffersError(commercialOffersErrorMessage(reason));
         }
       } else {
         setOffers([]); setOffersError('');
       }
     } catch (reason) {
-      setAuthority(null); setBilling(null); setOffers([]); setOffersError('');
+      setAuthority(null); setBilling(null); setCanonical(null); setCanonicalError('');
+      setOffers([]); setOffersError('');
       setError(reason instanceof Error ? reason.message : 'Não foi possível consultar a assinatura.');
     } finally { setLoading(false); }
   }, [canPurchase]);
@@ -212,24 +280,65 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
     </GlowCard> : null}
         {authority && !loading ? <>
       <GlowCard style={styles.card}>
-        <Text style={styles.title}>Situação conhecida no IRON</Text>
+        <Text style={styles.title}>Minha assinatura no FM Command</Text>
+        {canonical ? (canonical.subscription ? <>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Plano contratado</Text>
+            <Text testID="saas-billing-canonical-plan" style={styles.statusValue}>
+              {canonical.subscription.planName ?? 'Plano comercial registrado'}
+              {canonical.subscription.interval === 'monthly' ? ' · Mensal' : canonical.subscription.interval === 'yearly' ? ' · Anual' : ''}
+            </Text>
+          </View>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Situação comercial</Text>
+            <Text testID="saas-billing-canonical-status" style={styles.statusValue}>
+              {statusLabel(canonical.subscription.status.toUpperCase())}
+            </Text>
+          </View>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Cobertura paga registrada até</Text>
+            <Text style={styles.statusValue}>{readableDate(canonical.subscription.paidThrough)}</Text>
+          </View>
+          <Text style={styles.muted}>Dados oficiais de assinatura registrados no FM Command. A liberação de recursos depende exclusivamente da licença confirmada no IRON.</Text>
+        </> : <Text testID="saas-billing-canonical-empty" style={styles.muted}>
+          O FM Command não tem uma assinatura comercial registrada para esta academia nesta consulta. O período gratuito do IRON é consultado separadamente.
+        </Text>) : <Text testID="saas-billing-command-unavailable" style={styles.warning}>
+          {canonicalError || 'Posição comercial oficial ainda não disponível.'}
+        </Text>}
+      </GlowCard>
+      {canonical ? <GlowCard style={styles.card}>
+        <Text style={styles.title}>Faturas no FM Command</Text>
+        <Text style={styles.muted}>Registros financeiros da FM Tecnologia. Uma fatura ou evento de pagamento não ativa a licença sem confirmação oficial.</Text>
+        {canonical.invoices.length ? canonical.invoices.map((invoice, index) => <View key={index} style={styles.invoice}>
+          <View style={styles.invoiceHeader}>
+            <Text style={styles.invoiceTitle}>{statusLabel(invoice.status.toUpperCase())}</Text>
+            <Text style={styles.invoiceTitle}>{money(invoice.amountMinor, invoice.currency)}</Text>
+          </View>
+          <Text style={styles.muted}>Período até: {readableDate(invoice.periodEnd)}</Text>
+        </View>) : <Text style={styles.muted}>Nenhuma fatura comercial registrada para esta academia no FM Command.</Text>}
+      </GlowCard> : <GlowCard style={styles.card}>
+        <Text style={styles.title}>Registros anteriores da assinatura</Text>
         <Text style={styles.muted}>{legacy
           ? 'Histórico local de leitura, não uma posição financeira homologada do FM Command.'
           : 'Projeção disponibilizada pelo backend do IRON. Confirme cobranças e pagamentos no sistema corporativo.'}</Text>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Registro local</Text>
-          <Text testID="saas-billing-state" style={styles.statusValue}>{agreement ? statusLabel(agreement.status) : 'Não registrado'}</Text>
-        </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Plano registrado</Text>
-          <Text style={styles.statusValue}>{agreement?.price?.planVersion?.productPlan?.name ?? 'Não informado'}</Text>
-        </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Próxima data registrada</Text>
-          <Text style={styles.statusValue}>{readableDate(agreement?.nextBillingAt)}</Text>
-        </View>
-      </GlowCard>
-      <GlowCard style={styles.card}>
+        {agreement ? <>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Status no registro antigo</Text>
+            <Text testID="saas-billing-state" style={styles.statusValue}>{statusLabel(agreement.status)}</Text>
+          </View>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Plano no registro antigo</Text>
+            <Text style={styles.statusValue}>{agreement.price?.planVersion?.productPlan?.name ?? 'Não informado'}</Text>
+          </View>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Próxima data no registro antigo</Text>
+            <Text style={styles.statusValue}>{readableDate(agreement.nextBillingAt)}</Text>
+          </View>
+        </> : <Text testID="saas-billing-legacy-absence" style={styles.muted}>
+          Nenhum histórico de assinatura encontrado no módulo antigo. Isso não significa que sua academia não tenha assinatura no FM Command.
+        </Text>}
+      </GlowCard>}
+      {!canonical ? <GlowCard style={styles.card}>
         <Text style={styles.title}>Histórico de faturas do IRON</Text>
         <Text style={styles.muted}>Registros do módulo anterior, disponibilizados somente para consulta. Eles não substituem as faturas e liquidações do FM Command.</Text>
         {invoices.length ? invoices.slice(0, 24).map((invoice) => <View key={invoice.id} style={styles.invoice}>
@@ -238,8 +347,8 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
             <Text style={styles.invoiceTitle}>{money(invoice.amountDueMinor, invoice.currency)}</Text>
           </View>
           <Text style={styles.muted}>Vencimento: {readableDate(invoice.dueAt)} · Valor pago registrado: {money(invoice.amountPaidMinor, invoice.currency)}</Text>
-        </View>) : <Text style={styles.muted}>Nenhuma fatura histórica registrada neste ambiente.</Text>}
-      </GlowCard>
+        </View>) : <Text style={styles.muted}>Nenhuma fatura encontrada no módulo antigo. A situação financeira atual deve ser confirmada pelo FM Command.</Text>}
+      </GlowCard> : null}
     </> : null}
   </View>;
 }
