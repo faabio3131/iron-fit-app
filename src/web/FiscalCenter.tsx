@@ -43,6 +43,16 @@ type FiscalHandoff = {
   } | null;
 };
 
+type FiscalOperationalUsage = {
+  periodStart: string;
+  periodEndExclusive: string;
+  timezone: 'UTC';
+  authorizedCount: number;
+  cancelledCount: number;
+  source: 'IRON_FISCAL_HANDOFF';
+  billingStatus: 'NOT_A_COMMERCIAL_METER';
+};
+
 type FiscalActivationReadiness = {
   status: 'SCOPE_BINDING_REQUIRED' | 'BRIDGE_UNAVAILABLE' |
     'CAPABILITY_UNAVAILABLE' | 'CAPABILITY_NOT_READY' | 'CAPABILITY_READY';
@@ -161,6 +171,7 @@ function ActionButton({
 export function FiscalCenter() {
   const [binding, setBinding] = useState<any>(null);
   const [activation, setActivation] = useState<FiscalActivationReadiness | null>(null);
+  const [usage, setUsage] = useState<FiscalOperationalUsage | null>(null);
   const [handoffs, setHandoffs] = useState<FiscalHandoff[]>([]);
   const [filter, setFilter] = useState('');
   const [externalTenantId, setExternalTenantId] = useState('');
@@ -190,12 +201,16 @@ export function FiscalCenter() {
         : '/financial/fiscal/handoffs';
       const activationRequest: Promise<FiscalActivationReadiness | null> =
         api('/financial/fiscal/readiness').catch(() => null);
-      const [scopeBinding, rows, readiness] = await Promise.all([
+      const usageRequest: Promise<FiscalOperationalUsage | null> =
+        api('/financial/fiscal/usage').catch(() => null);
+      const [scopeBinding, rows, readiness, monthlyUsage] = await Promise.all([
         bindingRequest,
         api(handoffPath),
         activationRequest,
+        usageRequest,
       ]);
       setActivation(readiness);
+      setUsage(monthlyUsage);
       setBinding(scopeBinding);
       setHandoffs(Array.isArray(rows) ? rows : []);
       setExternalTenantId(scopeBinding?.externalTenantId ? String(scopeBinding.externalTenantId) : '');
@@ -350,6 +365,19 @@ export function FiscalCenter() {
           <Text style={styles.muted}>
             Município e provedor emissor: homologação não verificada nesta tela.
           </Text>
+          {usage ? (
+            <View testID="fiscal-operational-usage">
+              <Text style={styles.kicker}>Operação fiscal {usage.periodStart.slice(0, 7)} (UTC)</Text>
+              <Text style={styles.muted}>
+                Autorizações confirmadas: {usage.authorizedCount} · Cancelamentos confirmados: {usage.cancelledCount}
+              </Text>
+              <Text style={styles.muted}>
+                Contagem operacional por academia. Não é faturamento, franquia contratada nem consumo cobrável pelo FM Command.
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.muted}>Contagem operacional de notas indisponível.</Text>
+          )}
           <Text style={styles.muted}>
             {activation?.capabilityReadiness === 'PRODUCTION_APPROVED'
               ? 'O serviço informou capacidade para produção; confirme a homologação oficial e a emissão real antes da ativação.'
