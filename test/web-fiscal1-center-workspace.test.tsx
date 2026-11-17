@@ -85,6 +85,17 @@ describe('FISCAL-1 Fiscal Center', () => {
         return { environment: 'HOMOLOG', externalTenantId: 'tenant-a', externalUnitId: 'unit-a', active: true };
       }
       if (path === '/financial/fiscal/handoffs') return [];
+      if (path === '/financial/fiscal/usage') {
+        return {
+          periodStart: '2026-11-01T00:00:00.000Z',
+          periodEndExclusive: '2026-12-01T00:00:00.000Z',
+          timezone: 'UTC',
+          authorizedCount: 4,
+          cancelledCount: 1,
+          source: 'IRON_FISCAL_HANDOFF',
+          billingStatus: 'NOT_A_COMMERCIAL_METER',
+        };
+      }
       if (path === '/financial/fiscal/readiness') {
         return {
           status: 'CAPABILITY_READY',
@@ -104,6 +115,9 @@ describe('FISCAL-1 Fiscal Center', () => {
     const view = render(<FiscalCenter />);
     await waitFor(() => expect(view.getByTestId('fiscal-readiness-status').props.children)
       .toBe('Capacidade de NFS-e informada pelo serviço fiscal'));
+    expect(view.getByTestId('fiscal-operational-usage')).toBeTruthy();
+    expect(view.getByText(/Autorizações confirmadas: 4/)).toBeTruthy();
+    expect(view.getByText(/Não é faturamento, franquia contratada nem consumo cobrável/)).toBeTruthy();
     expect(view.getByText(/Certificado A1: não verificado/)).toBeTruthy();
     expect(view.getByText(/Município e provedor emissor: homologação não verificada/)).toBeTruthy();
     expect(view.getByText(/capacidade de homologação, não uma autorização/)).toBeTruthy();
