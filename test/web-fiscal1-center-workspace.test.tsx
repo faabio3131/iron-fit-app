@@ -78,4 +78,55 @@ describe('FISCAL-1 Fiscal Center', () => {
     expect(view.getByTestId('fiscal-cancel-confirm').props.accessibilityState.disabled).toBe(true);
     expect(view.getByText(/status final depende da confirmação/i)).toBeTruthy();
   });
+
+  test('shows live NFCore readiness without falsely claiming certificate or municipality homologation', async () => {
+    mockApi.mockImplementation(async (path: string) => {
+      if (path === '/financial/fiscal/scope-binding') {
+        return { environment: 'HOMOLOG', externalTenantId: 'tenant-a', externalUnitId: 'unit-a', active: true };
+      }
+      if (path === '/financial/fiscal/handoffs') return [];
+      if (path === '/financial/fiscal/readiness') {
+        return {
+          status: 'CAPABILITY_READY',
+          environment: 'HOMOLOG',
+          bindingConfigured: true,
+          bridgeReachable: true,
+          capabilityReadiness: 'HOMOLOGATION_READY',
+          capabilityVersion: 'v1',
+          certificateStatus: 'NOT_VERIFIED',
+          municipalityStatus: 'NOT_VERIFIED',
+          checkedAt: '2026-11-16T20:00:00.000Z',
+        };
+      }
+      throw new Error('Unexpected API path: ' + path);
+    });
+
+    const view = render(<FiscalCenter />);
+    await waitFor(() => expect(view.getByTestId('fiscal-readiness-status').props.children)
+      .toBe('Capacidade de NFS-e informada pelo serviço fiscal'));
+    expect(view.getByText(/Certificado A1: não verificado/)).toBeTruthy();
+    expect(view.getByText(/Município e provedor emissor: homologação não verificada/)).toBeTruthy();
+    expect(view.getByText(/capacidade de homologação, não uma autorização/)).toBeTruthy();
+    expect(view.queryByText('Emitir NFS-e')).toBeNull();
+  });
+
+  test('fails closed visually when the fiscal readiness endpoint is not deployed', async () => {
+    mockApi.mockImplementation(async (path: string) => {
+      if (path === '/financial/fiscal/scope-binding') {
+        const error = new Error('not found') as Error & { status?: number };
+        error.status = 404;
+        throw error;
+      }
+      if (path === '/financial/fiscal/handoffs') return [];
+      if (path === '/financial/fiscal/readiness') throw new Error('unavailable');
+      throw new Error('Unexpected API path: ' + path);
+    });
+
+    const view = render(<FiscalCenter />);
+    await waitFor(() =>
+      expect(view.getByText('Verificação de ativação indisponível neste servidor')).toBeTruthy(),
+    );
+    expect(view.getByText(/Certificado A1: não verificado/)).toBeTruthy();
+  });
+
 });
