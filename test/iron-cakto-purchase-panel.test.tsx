@@ -123,3 +123,44 @@ test('OWNER with expired step-up sees authorization reason instead of fake missi
   expect(view.getByText(/necessário acesso de proprietário e reautenticação/i)).toBeTruthy();
   expect(view.queryByTestId('iron-cakto-buy-IRON_PRO')).toBeNull();
 });
+
+test('OWNER sees canonical FM Command subscription and invoices instead of mistaking legacy for current', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') return { authority, projection: 'LEGACY_READ_ONLY', invoices: [] };
+    if (path === '/commercial/billing/current') return {
+      source: 'FM_COMMAND_CANONICAL', authority: 'FM_COMMAND',
+      checkedAt: '2026-11-17T15:00:00.000Z', settlementConfirmedByThisView: false,
+      subscription: { planCode: 'IRON_PRO_MONTHLY', planName: 'IRON Pro',
+        interval: 'monthly', status: 'pending', paidThrough: null },
+      invoices: [{ status: 'pending', amountMinor: 26900, currency: 'BRL', periodEnd: null }],
+    };
+    if (path === '/commercial/billing/offers') return { plans: [offer] };
+    throw new Error('Unexpected path ' + path);
+  });
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('saas-billing-canonical-plan')).toBeTruthy());
+  expect(view.getByText(/IRON Pro/)).toBeTruthy();
+  expect(view.getByTestId('saas-billing-canonical-status')).toBeTruthy();
+  expect(view.getByText('Faturas no FM Command')).toBeTruthy();
+  expect(view.queryByText('Não registrado')).toBeNull();
+  expect(view.queryByTestId('saas-billing-legacy-absence')).toBeNull();
+  expect(view.getByTestId('iron-cakto-buy-IRON_PRO')).toBeTruthy();
+});
+
+test('Command status mismatch fails closed with explicit warning and no fictional license', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') return { authority, projection: 'LEGACY_READ_ONLY', invoices: [] };
+    if (path === '/commercial/billing/current') return {
+      source: 'FORGED_SOURCE', authority: 'FM_COMMAND', checkedAt:'2026-11-17T15:00:00.000Z',
+      settlementConfirmedByThisView: true, subscription: null, invoices: [],
+    };
+    if (path === '/commercial/billing/offers') return { plans: [] };
+    throw new Error('Unexpected path ' + path);
+  });
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('saas-billing-command-unavailable')).toBeTruthy());
+  expect(view.queryByTestId('saas-billing-canonical-status')).toBeNull();
+  expect(view.queryByText(/licença ativa/i)).toBeNull();
+});
