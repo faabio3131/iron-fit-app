@@ -43,6 +43,27 @@ type FiscalHandoff = {
   } | null;
 };
 
+type FiscalActivationReadiness = {
+  status: 'SCOPE_BINDING_REQUIRED' | 'BRIDGE_UNAVAILABLE' |
+    'CAPABILITY_UNAVAILABLE' | 'CAPABILITY_NOT_READY' | 'CAPABILITY_READY';
+  environment: 'HOMOLOG' | 'PROD';
+  bindingConfigured: boolean;
+  bridgeReachable: boolean;
+  capabilityReadiness: string | null;
+  capabilityVersion: string | null;
+  certificateStatus: 'NOT_VERIFIED';
+  municipalityStatus: 'NOT_VERIFIED';
+  checkedAt: string | null;
+};
+
+const readinessLabels: Record<FiscalActivationReadiness['status'], string> = {
+  SCOPE_BINDING_REQUIRED: 'Vínculo fiscal ainda não configurado',
+  BRIDGE_UNAVAILABLE: 'Serviço fiscal não configurado ou indisponível',
+  CAPABILITY_UNAVAILABLE: 'Não foi possível consultar a capacidade fiscal',
+  CAPABILITY_NOT_READY: 'Emissão de NFS-e não habilitada para este escopo',
+  CAPABILITY_READY: 'Capacidade de NFS-e informada pelo serviço fiscal',
+};
+
 const statusLabels: Record<string, string> = {
   PENDING_CAPABILITY: 'Aguardando capacidade fiscal',
   READY_TO_ISSUE: 'Pronta para emissão',
@@ -139,6 +160,7 @@ function ActionButton({
 
 export function FiscalCenter() {
   const [binding, setBinding] = useState<any>(null);
+  const [activation, setActivation] = useState<FiscalActivationReadiness | null>(null);
   const [handoffs, setHandoffs] = useState<FiscalHandoff[]>([]);
   const [filter, setFilter] = useState('');
   const [externalTenantId, setExternalTenantId] = useState('');
@@ -166,10 +188,14 @@ export function FiscalCenter() {
       const handoffPath = filter
         ? '/financial/fiscal/handoffs?status=' + encodeURIComponent(filter)
         : '/financial/fiscal/handoffs';
-      const [scopeBinding, rows] = await Promise.all([
+      const activationRequest: Promise<FiscalActivationReadiness | null> =
+        api('/financial/fiscal/readiness').catch(() => null);
+      const [scopeBinding, rows, readiness] = await Promise.all([
         bindingRequest,
         api(handoffPath),
+        activationRequest,
       ]);
+      setActivation(readiness);
       setBinding(scopeBinding);
       setHandoffs(Array.isArray(rows) ? rows : []);
       setExternalTenantId(scopeBinding?.externalTenantId ? String(scopeBinding.externalTenantId) : '');
@@ -303,6 +329,34 @@ export function FiscalCenter() {
         <View style={[styles.summaryCard, summary.failed > 0 && styles.alertCard]}>
           <Text style={styles.kicker}>Falhas / rejeições</Text>
           <Text style={styles.bigValue}>{summary.failed}</Text>
+        </View>
+      </View>
+
+      <View style={styles.section} testID="fiscal-readiness">
+        <Text style={styles.sectionTitle}>Prontidão fiscal da academia</Text>
+        <Text style={styles.muted}>
+          Esta verificação consulta a capacidade de NFS-e do serviço fiscal para o vínculo da academia. Não equivale a uma nota autorizada.
+        </Text>
+        <View style={styles.bindingStatus}>
+          <Text style={styles.kicker}>Situação atual</Text>
+          <Text style={styles.bindingValue} testID="fiscal-readiness-status">
+            {activation
+              ? readinessLabels[activation.status] ?? 'Capacidade fiscal não reconhecida'
+              : 'Verificação de ativação indisponível neste servidor'}
+          </Text>
+          <Text style={styles.muted}>
+            Certificado A1: não verificado. O IRON ainda não possui um contrato autorizado para cadastrar ou consultar o A1 no cofre do NFCore.
+          </Text>
+          <Text style={styles.muted}>
+            Município e provedor emissor: homologação não verificada nesta tela.
+          </Text>
+          <Text style={styles.muted}>
+            {activation?.capabilityReadiness === 'PRODUCTION_APPROVED'
+              ? 'O serviço informou capacidade para produção; confirme a homologação oficial e a emissão real antes da ativação.'
+              : activation?.capabilityReadiness === 'HOMOLOGATION_READY'
+                ? 'O serviço informou capacidade de homologação, não uma autorização de emissão produtiva.'
+                : 'O sistema não presumirá autorização fiscal apenas pelo vínculo da academia.'}
+          </Text>
         </View>
       </View>
 
