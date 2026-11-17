@@ -22,6 +22,17 @@ type CommercialOffer = {
   planCode: string; name: string; interval: 'monthly' | 'yearly';
   amountMinor: number; currency: 'BRL';
 };
+export function commercialOffersErrorMessage(reason: unknown): string {
+  const status = (reason as { status?: unknown } | null)?.status;
+  if (status === 401) return 'Sua sessão não está válida. Entre novamente para consultar os planos.';
+  if (status === 403) return 'É necessário acesso de proprietário e reautenticação para consultar as ofertas.';
+  if (status === 404) return 'O catálogo comercial não está disponível nesta versão do servidor.';
+  if (status === 503 || (typeof status === 'number' && status >= 500))
+    return 'O serviço de planos está temporariamente indisponível. Atualize a situação ou tente mais tarde.';
+  if (reason instanceof Error && reason.message === 'INVALID_COMMERCIAL_CATALOG')
+    return 'O serviço comercial retornou um catálogo inválido. A contratação permanece bloqueada.';
+  return 'Não foi possível consultar os planos. Atualize a situação ou tente novamente.';
+}
 function validOffer(value: unknown): value is CommercialOffer {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const p = value as Record<string, unknown>;
@@ -110,12 +121,12 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
           const result = await api('/commercial/billing/offers');
           const rows: unknown = result?.plans;
           if (!Array.isArray(rows) || rows.length > 30 || !rows.every(validOffer))
-            throw new Error('Catálogo de planos inválido.');
+            throw new Error('INVALID_COMMERCIAL_CATALOG');
           setOffers(rows);
-          setOffersError(rows.length ? '' : 'Planos Cakto ainda não disponíveis para contratação.');
-        } catch {
+          setOffersError(rows.length ? '' : 'Nenhuma oferta comercial está habilitada para contratação nesta academia.');
+        } catch (reason) {
           setOffers([]);
-          setOffersError('Contratação indisponível até a configuração comercial dos planos.');
+          setOffersError(commercialOffersErrorMessage(reason));
         }
       } else {
         setOffers([]); setOffersError('');
@@ -212,22 +223,26 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
     </GlowCard> : null}
         {authority && !loading ? <>
       <GlowCard style={styles.card}>
-        <Text style={styles.title}>Situação conhecida no IRON</Text>
+        <Text style={styles.title}>Registros anteriores da assinatura</Text>
         <Text style={styles.muted}>{legacy
           ? 'Histórico local de leitura, não uma posição financeira homologada do FM Command.'
           : 'Projeção disponibilizada pelo backend do IRON. Confirme cobranças e pagamentos no sistema corporativo.'}</Text>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Registro local</Text>
-          <Text testID="saas-billing-state" style={styles.statusValue}>{agreement ? statusLabel(agreement.status) : 'Não registrado'}</Text>
-        </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Plano registrado</Text>
-          <Text style={styles.statusValue}>{agreement?.price?.planVersion?.productPlan?.name ?? 'Não informado'}</Text>
-        </View>
-        <View style={styles.statusRow}>
-          <Text style={styles.statusLabel}>Próxima data registrada</Text>
-          <Text style={styles.statusValue}>{readableDate(agreement?.nextBillingAt)}</Text>
-        </View>
+        {agreement ? <>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Status no registro antigo</Text>
+            <Text testID="saas-billing-state" style={styles.statusValue}>{statusLabel(agreement.status)}</Text>
+          </View>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Plano no registro antigo</Text>
+            <Text style={styles.statusValue}>{agreement.price?.planVersion?.productPlan?.name ?? 'Não informado'}</Text>
+          </View>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Próxima data no registro antigo</Text>
+            <Text style={styles.statusValue}>{readableDate(agreement.nextBillingAt)}</Text>
+          </View>
+        </> : <Text testID="saas-billing-legacy-absence" style={styles.muted}>
+          Nenhum histórico de assinatura encontrado no módulo antigo. Isso não significa que sua academia não tenha assinatura no FM Command.
+        </Text>}
       </GlowCard>
       <GlowCard style={styles.card}>
         <Text style={styles.title}>Histórico de faturas do IRON</Text>
@@ -238,7 +253,7 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
             <Text style={styles.invoiceTitle}>{money(invoice.amountDueMinor, invoice.currency)}</Text>
           </View>
           <Text style={styles.muted}>Vencimento: {readableDate(invoice.dueAt)} · Valor pago registrado: {money(invoice.amountPaidMinor, invoice.currency)}</Text>
-        </View>) : <Text style={styles.muted}>Nenhuma fatura histórica registrada neste ambiente.</Text>}
+        </View>) : <Text style={styles.muted}>Nenhuma fatura encontrada no módulo antigo. A situação financeira atual deve ser confirmada pelo FM Command.</Text>}
       </GlowCard>
     </> : null}
   </View>;
