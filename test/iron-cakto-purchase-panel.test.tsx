@@ -1,7 +1,7 @@
 import React from 'react';
 import { Linking } from 'react-native';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import { SaasBillingPanel, validCaktoCheckout } from '../src/components/SaasBillingPanel';
+import { SaasBillingPanel, validCaktoCheckout, commercialOffersErrorMessage } from '../src/components/SaasBillingPanel';
 
 const mockApi = jest.fn();
 jest.mock('../src/services/api', () => ({ api: (...args: unknown[]) => mockApi(...args) }));
@@ -86,5 +86,40 @@ test('configured commercial authority absent means no fake purchasable offers', 
   });
   const view = render(<SaasBillingPanel canPurchase />);
   await waitFor(() => expect(view.getByTestId('iron-cakto-offers-unavailable')).toBeTruthy());
+  expect(view.queryByTestId('iron-cakto-buy-IRON_PRO')).toBeNull();
+});
+
+test('commercial offer failures are classified without inventing a missing plan configuration', () => {
+  expect(commercialOffersErrorMessage(Object.assign(new Error('expired'), { status: 401 })))
+    .toMatch(/sessão não está válida/i);
+  expect(commercialOffersErrorMessage(Object.assign(new Error('step-up'), { status: 403 })))
+    .toMatch(/reautenticação/i);
+  expect(commercialOffersErrorMessage(Object.assign(new Error('down'), { status: 503 })))
+    .toMatch(/temporariamente indisponível/i);
+  expect(commercialOffersErrorMessage(new Error('INVALID_COMMERCIAL_CATALOG')))
+    .toMatch(/catálogo inválido/i);
+  expect(commercialOffersErrorMessage(new Error('network')))
+    .toMatch(/não foi possível consultar/i);
+});
+
+test('legacy read-model absence does not imply no FM Command subscription', async () => {
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('saas-billing-legacy-absence')).toBeTruthy());
+  expect(view.getByText(/não significa que sua academia não tenha assinatura no FM Command/i)).toBeTruthy();
+  expect(view.queryByText('Não registrado')).toBeNull();
+  expect(view.getByTestId('iron-cakto-buy-IRON_PRO')).toBeTruthy();
+});
+
+test('OWNER with expired step-up sees authorization reason instead of fake missing plans', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') return { authority, projection: 'LEGACY_READ_ONLY' };
+    if (path === '/commercial/billing/offers')
+      throw Object.assign(new Error('forbidden'), { status: 403 });
+    throw new Error('Unexpected path ' + path);
+  });
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('iron-cakto-offers-unavailable')).toBeTruthy());
+  expect(view.getByText(/necessário acesso de proprietário e reautenticação/i)).toBeTruthy();
   expect(view.queryByTestId('iron-cakto-buy-IRON_PRO')).toBeNull();
 });
