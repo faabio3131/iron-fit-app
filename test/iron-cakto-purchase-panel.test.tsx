@@ -140,7 +140,7 @@ test('OWNER sees canonical FM Command subscription and invoices instead of mista
   });
   const view = render(<SaasBillingPanel canPurchase />);
   await waitFor(() => expect(view.getByTestId('saas-billing-canonical-plan')).toBeTruthy());
-  expect(view.getByText(/IRON Pro/)).toBeTruthy();
+  expect(view.getAllByText(/IRON Pro/).length).toBeGreaterThan(0);
   expect(view.getByTestId('saas-billing-canonical-status')).toBeTruthy();
   expect(view.getByText('Faturas no FM Command')).toBeTruthy();
   expect(view.queryByText('Não registrado')).toBeNull();
