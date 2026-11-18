@@ -18,7 +18,11 @@ test('FISCAL-1 uses canonical fiscal APIs without browser tenant/provider author
 });
 
 test('FISCAL-1 does not promise external homologation or expose a fake issuance action', () => {
-  expect(fiscal).toContain('Homologação externa pendente');
+  expect(fiscal).toContain('Ativação fiscal não concluída');
+  expect(fiscal).toContain('A1, município e provedor aguardam verificação');
+  expect(fiscal).not.toContain('Engenharia pronta');
+  expect(fiscal).not.toContain('#2BF47A');
+  expect(fiscal).not.toContain('#56EC95');
   expect(fiscal).toContain('Provider, município, credencial e emissão real exigem evidência oficial');
   expect(fiscal).not.toContain('Emitir NFS-e');
   expect(fiscal).not.toContain('Emitir nota');
