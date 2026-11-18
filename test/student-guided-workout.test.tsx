@@ -145,7 +145,7 @@ test('student mobile posts a receipt and displays confirmed history', async () =
   expect(call?.[0]).toBe('/me/workouts/active/sessions/session-a/completions');
   expect(call?.[2]?.method).toBe('POST');
   expect(JSON.parse(call?.[2]?.body).requestId).toMatch(/^guided_/);
-  fireEvent.press(view.getByText('Voltar aos treinos'));
+  fireEvent.press(view.getByTestId('guided-back'));
   await waitFor(() => expect(view.getByTestId('workout-execution-history')).toBeTruthy());
   expect(view.getByText('Histórico de treinos realizados')).toBeTruthy();
   expect(view.getByText(/3 séries/)).toBeTruthy();
