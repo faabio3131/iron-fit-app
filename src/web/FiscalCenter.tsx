@@ -303,7 +303,7 @@ export function FiscalCenter() {
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator color="#2BF47A" />
+        <ActivityIndicator color="#2F91FF" />
         <Text style={styles.muted}>Carregando operação fiscal…</Text>
       </View>
     );
@@ -324,8 +324,8 @@ export function FiscalCenter() {
         </View>
         <View style={styles.externalStatus}>
           <Text style={styles.externalKicker}>Status externo</Text>
-          <Text style={styles.externalTitle}>Engenharia pronta</Text>
-          <Text style={styles.externalWarning}>Homologação externa pendente</Text>
+          <Text style={styles.externalTitle}>Ativação fiscal não concluída</Text>
+          <Text style={styles.externalWarning}>A1, município e provedor aguardam verificação</Text>
           <Text style={styles.meta}>
             Provider, município, credencial e emissão real exigem evidência oficial antes de produção.
           </Text>
@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
   loading: { minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 8 },
   hero: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, backgroundColor: '#0F0F12', borderWidth: 1, borderColor: '#24262B', borderRadius: 14, padding: 14, marginBottom: 8 },
   heroCopy: { flex: 1, minWidth: 280 },
-  eyebrow: { color: '#56EC95', fontSize: 12, fontWeight: '900', letterSpacing: 0.8 },
+  eyebrow: { color: '#67D6FF', fontSize: 12, fontWeight: '900', letterSpacing: 0.8 },
   heroTitle: { color: '#EEF1F5', fontSize: 22, fontWeight: '900', marginTop: 3, marginBottom: 4 },
   muted: { color: '#A1A6AE', fontSize: 13, lineHeight: 18 },
   externalStatus: { minWidth: 230, flexBasis: 280, backgroundColor: '#1a1410', borderWidth: 1, borderColor: '#7a5b20', borderRadius: 11, padding: 10 },
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: '#EEF1F5', fontSize: 16, fontWeight: '900', marginBottom: 4 },
   bindingStatus: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 10, padding: 9, marginTop: 7 },
   bindingValue: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
-  activeBadge: { color: '#7DFFB1', backgroundColor: '#142018', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
+  activeBadge: { color: '#67D6FF', backgroundColor: '#142018', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
   pendingBadge: { color: '#fde68a', backgroundColor: '#2a210d', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
   formGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
   field: { flexGrow: 1, flexBasis: 260, minWidth: 220 },
@@ -650,13 +650,13 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.45 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 7, marginBottom: 4 },
   chip: { minHeight: 36, justifyContent: 'center', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  chipActive: { backgroundColor: '#12271B', borderColor: '#2BF47A' },
+  chipActive: { backgroundColor: '#12271B', borderColor: '#2F91FF' },
   chipText: { color: '#DDE3E4', fontSize: 12, fontWeight: '800' },
   handoff: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10, marginTop: 7 },
   handoffHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
   handoffCopy: { flex: 1, minWidth: 220 },
   rowTitle: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
-  statusBadge: { alignSelf: 'flex-start', color: '#7DFFB1', backgroundColor: '#142018', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
+  statusBadge: { alignSelf: 'flex-start', color: '#67D6FF', backgroundColor: '#142018', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
   failedBadge: { alignSelf: 'flex-start', color: '#fecaca', backgroundColor: '#301215', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
   cancelledBadge: { alignSelf: 'flex-start', color: '#CDD4D6', backgroundColor: '#181C1B', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
@@ -668,5 +668,5 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   empty: { color: '#828A91', fontSize: 12, paddingVertical: 9 },
   error: { color: '#fca5a5', backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', padding: 9, borderRadius: 9, marginBottom: 8 },
-  notice: { color: '#7DFFB1', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 9, borderRadius: 9, marginBottom: 8 },
+  notice: { color: '#67D6FF', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 9, borderRadius: 9, marginBottom: 8 },
 });
