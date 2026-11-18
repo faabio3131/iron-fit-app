@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import {
   uploadIronA1Direct, validatedIronA1Grant,
 } from '../src/web/fiscal-a1-direct-upload';
@@ -73,10 +74,10 @@ test('P6 oversized A1 never reaches network, NFCore conflict/failed response nev
 });
 
 test('P6 direct uploader does not require DOM or expose certificate via IRON API', async () => {
-  const source = await (await import('node:fs/promises')).readFile(
+  const source = await readFile(
     'src/web/FiscalCenter.tsx', 'utf8',
   );
-  const boundary = await (await import('node:fs/promises')).readFile(
+  const boundary = await readFile(
     'src/web/CommercialWebApp.tsx', 'utf8',
   );
   expect(boundary).toContain("<FiscalCenter canManageA1={can('OWNER')} />");
