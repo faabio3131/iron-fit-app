@@ -24,6 +24,11 @@ function route(path: string, _token?: string, options?: { method?: string; body?
     { id: 'booking-a', date: '2026-10-21T12:00:00Z', status: 'CHECKED_IN', slot: { name: 'Treino funcional' } },
   ]);
   if (path === '/students/student-a/workouts') return Promise.resolve([{ id: 'workout-a', goal: 'Força', status: 'APPROVED', sessions: [] }]);
+  if (path === '/students/student-a/workout-executions') return Promise.resolve([
+    { id: 'execution-a', workoutId: 'workout-a', sessionId: 'session-a', sessionName: 'Treino A',
+      workoutGoal: 'Força', completedSets: 4, completedAt: '2026-11-18T15:30:00Z',
+      source: 'STUDENT_SELF_REPORTED' },
+  ]);
   if (path.startsWith('/access/credentials?studentId=')) return Promise.resolve([{ id: 'credential-a', type: 'QR_CODE', active: true }]);
   if (path.startsWith('/financial/charges?studentId=')) return Promise.resolve([{ id: 'charge-a', amount: 25000, dueDate: '2026-11-10', status: 'PENDING' }]);
   if (path.startsWith('/financial/subscriptions?studentId=')) return Promise.resolve([{ id: 'plan-a', planName: 'Premium', status: 'ACTIVE' }]);
@@ -38,6 +43,10 @@ test('C02 Alunos 360 shows canonical profile, assessments, bookings and permitte
   await waitFor(() => expect(view.getByText(/Treino funcional/)).toBeTruthy());
   expect(view.getAllByText('Ana Silva').length).toBeGreaterThan(0);
   expect(view.getByText(/Força · Aprovado/)).toBeTruthy();
+  expect(view.getByText('Sessões realizadas')).toBeTruthy();
+  expect(view.getByText('Treino A')).toBeTruthy();
+  expect(view.getByText(/4 séries/)).toBeTruthy();
+  expect(mockApi).toHaveBeenCalledWith('/students/student-a/workout-executions');
   expect(view.getByText(/Presença confirmada/)).toBeTruthy();
   expect(view.queryByText('Plano e financeiro da academia')).toBeNull();
   expect(mockApi.mock.calls.some(([path]) => String(path).startsWith('/financial/'))).toBe(false);
@@ -54,6 +63,7 @@ test('C02 owner finance is requested only with verified step-up flag; reception 
   expect(mockApi).toHaveBeenCalledWith('/financial/charges?studentId=student-a');
   expect(mockApi).toHaveBeenCalledWith('/financial/subscriptions?studentId=student-a');
   expect(mockApi).not.toHaveBeenCalledWith('/students/student-a/workouts');
+  expect(mockApi).not.toHaveBeenCalledWith('/students/student-a/workout-executions');
   view.unmount();
   mockApi.mockClear();
   const reception = render(<Student360Panel students={students}
@@ -62,6 +72,7 @@ test('C02 owner finance is requested only with verified step-up flag; reception 
   await waitFor(() => expect(reception.getByText('Credenciais de acesso')).toBeTruthy());
   expect(mockApi.mock.calls.some(([p]) => String(p).startsWith('/financial/'))).toBe(false);
   expect(mockApi).not.toHaveBeenCalledWith('/students/student-a/workouts');
+  expect(mockApi).not.toHaveBeenCalledWith('/students/student-a/workout-executions');
 });
 
 test('C02 consent changes require human confirmation and only transmit the explicit field', async () => {
@@ -102,4 +113,17 @@ test('C02 assessments restricted to read-only for reception', async () => {
   await waitFor(() => expect(view.getByText(/Melhora de força/)).toBeTruthy());
   expect(view.queryByTestId('assessment-create')).toBeNull();
   expect(mockApi.mock.calls.filter(([, , opts]) => opts?.method === 'POST')).toHaveLength(0);
+});
+
+test('C02 trainer sees an unavailable state rather than a fabricated empty history on upstream error', async () => {
+  mockApi.mockImplementation((path: string, _token?: string, options?: { method?: string; body?: string }) => {
+    if (path === '/students/student-a/workout-executions') return Promise.reject(new Error('503'));
+    return route(path, _token, options);
+  });
+  const view = render(<Student360Panel students={students}
+    canReadWorkouts canReadAccess={false} canReadFinance={false} canEditConsents={false} />);
+  fireEvent.press(view.getByTestId('student360-select-student-a'));
+  await waitFor(() => expect(view.getByTestId('student360-workout-history-unavailable')).toBeTruthy());
+  expect(view.queryByText('Nenhuma sessão realizada registrada.')).toBeNull();
+  expect(view.getByText(/Força · Aprovado/)).toBeTruthy();
 });
