@@ -34,6 +34,8 @@ export function validatedIronA1Grant(value: unknown): IronA1Grant | null {
   if (typeof v.uploadUrl !== 'string') return null;
   let u: URL;
   try { u = new URL(v.uploadUrl); } catch { return null; }
+  // Only the official NFCore domain (including its subdomains) may handle PFX.
+  if (u.hostname !== 'nfcore.com.br' && !u.hostname.endsWith('.nfcore.com.br')) return null;
   if (u.protocol !== 'https:' || !u.hostname || u.username || u.password ||
       u.pathname !== '/v1/iron/a1/upload' || u.hash || u.search ||
       (u.port && u.port !== '443')) return null;
