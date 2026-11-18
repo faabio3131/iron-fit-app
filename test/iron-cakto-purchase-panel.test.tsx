@@ -164,3 +164,91 @@ test('Command status mismatch fails closed with explicit warning and no fictiona
   expect(view.queryByTestId('saas-billing-canonical-status')).toBeNull();
   expect(view.queryByText(/licença ativa/i)).toBeNull();
 });
+
+
+test('P3 uncertain checkout HTTP retry preserves the original invoice idempotency key', async () => {
+  let requests = 0;
+  const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') return { authority, projection: 'LEGACY_READ_ONLY' };
+    if (path === '/commercial/billing/offers') return { plans: [offer] };
+    if (path === '/commercial/billing/checkout') {
+      requests++;
+      if (requests === 1) throw Object.assign(new Error('Resposta indisponível'), { status: 503 });
+      return { checkoutUrl: url, provider: 'CAKTO', productCode: 'IRON_FIT_CORE',
+        pendingConfirmation: true };
+    }
+    throw new Error('unexpected API path: ' + path);
+  });
+  try {
+    const view = render(<SaasBillingPanel canPurchase />);
+    await waitFor(() => expect(view.getByTestId('iron-cakto-buy-IRON_PRO')).toBeTruthy());
+    fireEvent.press(view.getByTestId('iron-cakto-buy-IRON_PRO'));
+    await waitFor(() => expect(view.getByText(/Resposta indisponível/)).toBeTruthy());
+    fireEvent.press(view.getByTestId('iron-cakto-buy-IRON_PRO'));
+    await waitFor(() => expect(open).toHaveBeenCalledWith(url));
+    const calls = mockApi.mock.calls.filter(([path]) => path === '/commercial/billing/checkout');
+    expect(calls).toHaveLength(2);
+    const [first, second] = calls.map(([, , options]) => JSON.parse(options.body));
+    expect(first.requestId).toMatch(/^[0-9a-f]{8}-[0-9a-f-]{27}$/i);
+    expect(second.requestId).toBe(first.requestId);
+    expect(second.planCode).toBe(first.planCode);
+    expect(second.amountMinor).toBeUndefined();
+    expect(view.getByText('Retomar checkout na Cakto')).toBeTruthy();
+  } finally { open.mockRestore(); }
+});
+
+test('P3 synchronous double press creates only one Command checkout request', async () => {
+  let resolveCheckout!: (value: unknown) => void;
+  const response = new Promise((resolve) => { resolveCheckout = resolve; });
+  const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') return { authority };
+    if (path === '/commercial/billing/offers') return { plans: [offer] };
+    if (path === '/commercial/billing/checkout') return response;
+    throw new Error('unexpected API path: ' + path);
+  });
+  try {
+    const view = render(<SaasBillingPanel canPurchase />);
+    await waitFor(() => expect(view.getByTestId('iron-cakto-buy-IRON_PRO')).toBeTruthy());
+    const button = view.getByTestId('iron-cakto-buy-IRON_PRO');
+    fireEvent.press(button);
+    fireEvent.press(button);
+    expect(mockApi.mock.calls.filter(([path]) => path === '/commercial/billing/checkout')).toHaveLength(1);
+    resolveCheckout({ checkoutUrl: url, provider: 'CAKTO', productCode: 'IRON_FIT_CORE', pendingConfirmation: true });
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(1));
+  } finally { open.mockRestore(); }
+});
+
+test('P3 different offers have distinct invoice keys and retrying a completed checkout reuses its key', async () => {
+  const other = { ...offer, planCode: 'IRON_SCALE', name: 'IRON Scale', interval: 'yearly' as const,
+    amountMinor: 149900 };
+  const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') return { authority };
+    if (path === '/commercial/billing/offers') return { plans: [offer, other] };
+    if (path === '/commercial/billing/checkout') return {
+      checkoutUrl: url, provider: 'CAKTO', productCode: 'IRON_FIT_CORE', pendingConfirmation: true,
+    };
+    throw new Error('unexpected API path: ' + path);
+  });
+  try {
+    const view = render(<SaasBillingPanel canPurchase />);
+    await waitFor(() => expect(view.getByTestId('iron-cakto-buy-IRON_PRO')).toBeTruthy());
+    fireEvent.press(view.getByTestId('iron-cakto-buy-IRON_PRO'));
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(1));
+    fireEvent.press(view.getByTestId('iron-cakto-buy-IRON_SCALE'));
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(2));
+    fireEvent.press(view.getByTestId('iron-cakto-buy-IRON_PRO'));
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(3));
+    const requests = mockApi.mock.calls.filter(([path]) => path === '/commercial/billing/checkout')
+      .map(([, , options]) => JSON.parse(options.body));
+    expect(requests).toHaveLength(3);
+    expect(requests[0].requestId).toBe(requests[2].requestId);
+    expect(requests[0].requestId).not.toBe(requests[1].requestId);
+    expect(requests.map((x) => x.planCode)).toEqual(['IRON_PRO', 'IRON_SCALE', 'IRON_PRO']);
+  } finally { open.mockRestore(); }
+});
