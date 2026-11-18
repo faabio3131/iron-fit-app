@@ -5,9 +5,11 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import { api } from '../services/api';
 import { IronInput as TextInput } from '../components/IronInput';
+import { uploadIronA1Direct, validatedIronA1Grant } from './fiscal-a1-direct-upload';
 
 type FiscalHandoff = {
   id: string;
@@ -168,7 +170,7 @@ function ActionButton({
   );
 }
 
-export function FiscalCenter() {
+export function FiscalCenter({ canManageA1 = false }: { canManageA1?: boolean }) {
   const [binding, setBinding] = useState<any>(null);
   const [activation, setActivation] = useState<FiscalActivationReadiness | null>(null);
   const [usage, setUsage] = useState<FiscalOperationalUsage | null>(null);
@@ -178,6 +180,11 @@ export function FiscalCenter() {
   const [externalUnitId, setExternalUnitId] = useState('');
   const [bindingPassword, setBindingPassword] = useState('');
   const [bindingFactor, setBindingFactor] = useState('');
+  const [a1File, setA1File] = useState<{ name: string; size: number; arrayBuffer: () => Promise<ArrayBuffer> } | null>(null);
+  const [a1Password, setA1Password] = useState('');
+  const [a1Busy, setA1Busy] = useState(false);
+  const [a1Status, setA1Status] = useState<'NOT_VERIFIED' | 'STORED' | 'ABSENT'>('NOT_VERIFIED');
+  const [a1Error, setA1Error] = useState('');
   const [cancelId, setCancelId] = useState('');
   const [cancelJustification, setCancelJustification] = useState('');
   const [cancelPassword, setCancelPassword] = useState('');
@@ -262,6 +269,66 @@ export function FiscalCenter() {
       setBindingPassword('');
       setBindingFactor('');
     });
+  }
+
+  function selectA1File() {
+    if (!canManageA1 || Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const element = document.createElement('input');
+    element.type = 'file';
+    element.accept = '.pfx,.p12,application/x-pkcs12';
+    element.onchange = () => {
+      const file = element.files?.[0];
+      setA1File(file && /\.(pfx|p12)$/i.test(file.name) && file.size <= 2_000_000 ? file : null);
+      setA1Error(file && (!/\.(pfx|p12)$/i.test(file.name) || file.size > 2_000_000)
+        ? 'Selecione um arquivo .pfx ou .p12 de até 2 MB.' : '');
+    };
+    element.click();
+  }
+
+  async function checkA1Status() {
+    if (!canManageA1 || a1Busy) return;
+    setA1Busy(true);
+    setA1Error('');
+    try {
+      const status = await api('/financial/fiscal/a1/status');
+      if ((status?.status !== 'STORED' && status?.status !== 'ABSENT') ||
+          status?.officialHomologation !== 'NOT_VERIFIED' ||
+          status?.source !== 'NFCORE_VAULT_READBACK') throw new Error('invalid status');
+      setA1Status(status.status);
+    } catch {
+      setA1Status('NOT_VERIFIED');
+      setA1Error('O status do certificado não pôde ser confirmado no NFCore.');
+    } finally { setA1Busy(false); }
+  }
+
+  async function uploadA1() {
+    if (!canManageA1 || a1Busy || !a1File || !a1Password) return;
+    setA1Busy(true);
+    setA1Error('');
+    try {
+      const candidate = await api('/financial/fiscal/a1/delegation', undefined, {
+        method: 'POST',
+      });
+      const grant = validatedIronA1Grant(candidate);
+      if (!grant) throw new Error('invalid delegation');
+      await uploadIronA1Direct(grant, a1File, a1Password);
+      const readback = await api('/financial/fiscal/a1/status');
+      if (readback?.status !== 'STORED' ||
+          readback?.officialHomologation !== 'NOT_VERIFIED' ||
+          readback?.source !== 'NFCORE_VAULT_READBACK') {
+        throw new Error('unconfirmed readback');
+      }
+      setA1Status('STORED');
+      setA1File(null);
+      setNotice('Certificado A1 armazenado no cofre NFCore. Homologação oficial ainda não comprovada.');
+    } catch {
+      setA1Status('NOT_VERIFIED');
+      setA1Error('O cofre não confirmou o A1. Revise o vínculo fiscal e solicite nova delegação.');
+    } finally {
+      // Never persist the password in browser storage, application logs or IRON API.
+      setA1Password('');
+      setA1Busy(false);
+    }
   }
 
   function cancelHandoff() {
@@ -360,7 +427,7 @@ export function FiscalCenter() {
               : 'Verificação de ativação indisponível neste servidor'}
           </Text>
           <Text style={styles.muted}>
-            Certificado A1: não verificado. O IRON ainda não possui um contrato autorizado para cadastrar ou consultar o A1 no cofre do NFCore.
+            Certificado A1: {a1Status === 'STORED' ? 'armazenado e confirmado pelo Vault NFCore em homologação' : a1Status === 'ABSENT' ? 'não encontrado no Vault NFCore' : 'sem leitura confirmada nesta sessão'}. Registro no cofre não significa homologação fiscal.
           </Text>
           <Text style={styles.muted}>
             Município e provedor emissor: homologação não verificada nesta tela.
@@ -387,6 +454,55 @@ export function FiscalCenter() {
           </Text>
         </View>
       </View>
+
+      {canManageA1 ? (
+        <View style={styles.section} testID="fiscal-a1-vault">
+          <Text style={styles.sectionTitle}>Certificado A1 — cofre fiscal NFCore</Text>
+          <Text style={styles.muted}>
+            Uso exclusivo do proprietário autorizado após reautenticação. O arquivo .pfx e sua senha são enviados diretamente do navegador ao NFCore, nunca ao servidor IRON.
+          </Text>
+          <Text testID="fiscal-a1-vault-status" style={styles.bindingValue}>
+            {a1Status === 'STORED' ? 'Armazenado no Vault (homologação externa pendente)' :
+              a1Status === 'ABSENT' ? 'Nenhum certificado A1 encontrado' : 'Status ainda não confirmado'}
+          </Text>
+          {a1Error ? <Text testID="fiscal-a1-error" style={styles.error}>{a1Error}</Text> : null}
+          <ActionButton
+            secondary
+            testID="fiscal-a1-read-status"
+            label={a1Busy ? 'Consultando…' : 'Consultar A1 no cofre'}
+            disabled={a1Busy}
+            onPress={() => { void checkA1Status(); }}
+          />
+          {Platform.OS === 'web' ? (
+            <>
+              <ActionButton
+                secondary
+                testID="fiscal-a1-select-file"
+                label={a1File ? 'Arquivo selecionado: ' + a1File.name : 'Selecionar certificado .pfx/.p12'}
+                disabled={a1Busy}
+                onPress={selectA1File}
+              />
+              <Text style={styles.label}>Senha do certificado (não armazenada no IRON)</Text>
+              <TextInput
+                testID="fiscal-a1-password"
+                accessibilityLabel="Senha do certificado A1"
+                style={styles.input}
+                value={a1Password}
+                onChangeText={setA1Password}
+                secureTextEntry
+              />
+              <ActionButton
+                testID="fiscal-a1-upload"
+                label={a1Busy ? 'Validando no cofre…' : 'Enviar diretamente ao NFCore'}
+                disabled={a1Busy || !a1File || !a1Password || !binding?.active ||
+                  activation?.environment !== 'HOMOLOG'}
+                onPress={() => { void uploadA1(); }}
+              />
+            </>
+          ) : <Text style={styles.muted}>Cadastro A1 disponível pelo navegador Web autorizado.</Text>}
+          <Text style={styles.muted}>Emissão fiscal oficial, município, provedor e conformidade profissional permanecem sem homologação externa.</Text>
+        </View>
+      ) : null}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Vínculo fiscal da academia</Text>
@@ -636,27 +752,27 @@ const styles = StyleSheet.create({
   sectionTitle: { color: '#EEF1F5', fontSize: 16, fontWeight: '900', marginBottom: 4 },
   bindingStatus: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 10, padding: 9, marginTop: 7 },
   bindingValue: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
-  activeBadge: { color: '#67D6FF', backgroundColor: '#142018', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
+  activeBadge: { color: '#67D6FF', backgroundColor: '#102D49', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
   pendingBadge: { color: '#fde68a', backgroundColor: '#2a210d', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
   formGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
   field: { flexGrow: 1, flexBasis: 260, minWidth: 220 },
   label: { color: '#A1A6AE', fontSize: 12, fontWeight: '800', marginTop: 7, marginBottom: 4 },
   input: { color: '#EEF1F5', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#252A2B', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13 },
   textArea: { minHeight: 82, textAlignVertical: 'top' },
-  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#19B95D', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 8 },
+  button: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', backgroundColor: '#176AE6', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 9, marginTop: 8 },
   secondaryButton: { backgroundColor: '#101416', borderWidth: 1, borderColor: '#292C31' },
   dangerButton: { borderColor: '#7f2d3a' },
   buttonText: { color: '#fff', fontSize: 12, fontWeight: '900' },
   disabled: { opacity: 0.45 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 7, marginBottom: 4 },
   chip: { minHeight: 36, justifyContent: 'center', backgroundColor: '#08080A', borderWidth: 1, borderColor: '#292C31', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  chipActive: { backgroundColor: '#12271B', borderColor: '#2F91FF' },
+  chipActive: { backgroundColor: '#132B4D', borderColor: '#2F91FF' },
   chipText: { color: '#DDE3E4', fontSize: 12, fontWeight: '800' },
   handoff: { backgroundColor: '#08080A', borderWidth: 1, borderColor: '#24262B', borderRadius: 11, padding: 10, marginTop: 7 },
   handoffHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
   handoffCopy: { flex: 1, minWidth: 220 },
   rowTitle: { color: '#EEF1F5', fontSize: 12, fontWeight: '900' },
-  statusBadge: { alignSelf: 'flex-start', color: '#67D6FF', backgroundColor: '#142018', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
+  statusBadge: { alignSelf: 'flex-start', color: '#67D6FF', backgroundColor: '#102D49', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
   failedBadge: { alignSelf: 'flex-start', color: '#fecaca', backgroundColor: '#301215', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
   cancelledBadge: { alignSelf: 'flex-start', color: '#CDD4D6', backgroundColor: '#181C1B', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 3, fontSize: 11, fontWeight: '800' },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
@@ -668,5 +784,5 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   empty: { color: '#828A91', fontSize: 12, paddingVertical: 9 },
   error: { color: '#fca5a5', backgroundColor: '#301215', borderWidth: 1, borderColor: '#7f2d3a', padding: 9, borderRadius: 9, marginBottom: 8 },
-  notice: { color: '#67D6FF', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F34', padding: 9, borderRadius: 9, marginBottom: 8 },
+  notice: { color: '#67D6FF', backgroundColor: '#121719', borderWidth: 1, borderColor: '#1E4F82', padding: 9, borderRadius: 9, marginBottom: 8 },
 });
