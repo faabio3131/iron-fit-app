@@ -120,7 +120,7 @@ describe('FISCAL-1 Fiscal Center', () => {
     expect(view.getByTestId('fiscal-operational-usage')).toBeTruthy();
     expect(view.getByText(/Autorizações confirmadas: 4/)).toBeTruthy();
     expect(view.getByText(/Não é faturamento, franquia contratada nem consumo cobrável/)).toBeTruthy();
-    expect(view.getByText(/Certificado A1: não verificado/)).toBeTruthy();
+    expect(view.getByText(/Certificado A1: sem leitura confirmada nesta sessão/)).toBeTruthy();
     expect(view.getByText(/Município e provedor emissor: homologação não verificada/)).toBeTruthy();
     expect(view.getByText(/capacidade de homologação, não uma autorização/)).toBeTruthy();
     expect(view.queryByText('Emitir NFS-e')).toBeNull();
@@ -142,7 +142,7 @@ describe('FISCAL-1 Fiscal Center', () => {
     await waitFor(() =>
       expect(view.getByText('Verificação de ativação indisponível neste servidor')).toBeTruthy(),
     );
-    expect(view.getByText(/Certificado A1: não verificado/)).toBeTruthy();
+    expect(view.getByText(/Certificado A1: sem leitura confirmada nesta sessão/)).toBeTruthy();
   });
 
 });

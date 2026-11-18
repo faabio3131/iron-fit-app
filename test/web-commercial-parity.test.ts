@@ -34,7 +34,8 @@ test('public web trial calls only the canonical commercial provisioning endpoint
 
 test('commercial web derives tenant from session and never submits browser-selected gymId', () => {
   expect(web).toMatch(/activeTenantId/);
-  expect(web).toMatch(/Tenant derivado da sessão autenticada/);
+  expect(web).toMatch(/Gestão operacional da academia/);
+  expect(web).not.toMatch(/Tenant derivado da sessão autenticada/);
   expect(web).not.toMatch(/JSON\.stringify\([^\n]*gymId/s);
   expect(web).not.toMatch(/localStorage|sessionStorage/);
 });
