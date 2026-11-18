@@ -31,12 +31,13 @@ test('no invented default: incomplete prescription cannot start guided execution
   expect(canGuideSession({ id: 'c', name: 'Sem exercícios', exercises: [] })).toBe(false);
 });
 
-test('guided progression honors prescribed rest, does not autoplay a video, and only finishes after all sets', () => {
+test('guided progression honors prescribed rest and confirms only after server completion', async () => {
   jest.useFakeTimers();
   jest.setSystemTime(new Date('2026-11-15T20:00:00Z'));
   const videoSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   try {
-    const view = render(<GuidedWorkoutSession session={session} onClose={jest.fn()} />);
+    const onComplete = jest.fn().mockResolvedValue(undefined);
+    const view = render(<GuidedWorkoutSession session={session} onClose={jest.fn()} onComplete={onComplete} />);
     expect(view.getByText('Série 1 de 2 · 10')).toBeTruthy();
     expect(view.getByText('Carga: 40 kg')).toBeTruthy();
     expect(videoSpy).not.toHaveBeenCalled();
@@ -55,7 +56,11 @@ test('guided progression honors prescribed rest, does not autoplay a video, and 
     expect(view.queryByTestId('guided-rest-countdown')).toBeNull();
     fireEvent.press(view.getByTestId('guided-complete-set'));
     expect(view.getByTestId('guided-finished')).toBeTruthy();
-    expect(view.getByText(/não registra presença nem histórico/)).toBeTruthy();
+    await act(async () => { await Promise.resolve(); });
+    expect(view.getByText('Sessão salva no histórico')).toBeTruthy();
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete.mock.calls[0][0]).toMatch(/^guided_[A-Za-z0-9_]+$/);
+    expect(view.getByText(/Não equivale a check-in presencial/i)).toBeTruthy();
     expect(videoSpy).not.toHaveBeenCalled();
     expect(mockedApi).not.toHaveBeenCalled();
     view.unmount();
@@ -68,7 +73,8 @@ test('guided progression honors prescribed rest, does not autoplay a video, and 
 test('student can explicitly skip prescribed rest without changing the prescription', () => {
   jest.useFakeTimers();
   try {
-    const view = render(<GuidedWorkoutSession session={session} onClose={jest.fn()} />);
+    const view = render(<GuidedWorkoutSession session={session} onClose={jest.fn()}
+      onComplete={jest.fn().mockResolvedValue(undefined)} />);
     fireEvent.press(view.getByTestId('guided-complete-set'));
     fireEvent.press(view.getByTestId('guided-skip-rest'));
     expect(view.getByText('Série 2 de 2 · 10')).toBeTruthy();
@@ -78,11 +84,13 @@ test('student can explicitly skip prescribed rest without changing the prescript
 });
 
 test('student can launch a guided session only for an ACTIVE plan with a complete prescription', async () => {
-  mockedApi.mockResolvedValue([
+  mockedApi.mockImplementation((path: string) => path === '/me/workout-executions'
+    ? Promise.resolve([])
+    : Promise.resolve([
     { id: 'active', status: 'ACTIVE', goal: 'Ativo', sessions: [session] },
     { id: 'approved', status: 'APPROVED', goal: 'Aguardando', sessions: [{ ...session, id: 'session-b' }] },
     { id: 'incomplete', status: 'ACTIVE', goal: 'Sem prescrição', sessions: [{ id: 'session-c', name: 'Treino C', exercises: [{ id: 'x', sets: null, exercise: { name: 'Agachamento' } }] }] },
-  ]);
+  ]));
   const view = render(<WorkoutsScreen />);
   await waitFor(() => expect(view.getByTestId('guided-launch-session-a')).toBeTruthy());
   expect(view.queryByTestId('guided-launch-session-b')).toBeNull();
@@ -92,5 +100,53 @@ test('student can launch a guided session only for an ACTIVE plan with a complet
   fireEvent.press(view.getByTestId('guided-back'));
   expect(view.getByTestId('guided-launch-session-a')).toBeTruthy();
   expect(mockedApi).toHaveBeenCalledWith('/me/workouts');
+  expect(mockedApi).toHaveBeenCalledWith('/me/workout-executions');
   expect(mockedApi.mock.calls.every(([, , options]) => options?.method === undefined)).toBe(true);
+});
+
+test('failed server write is not shown as success and retry reuses identical idempotency key', async () => {
+  const onComplete = jest.fn().mockRejectedValueOnce(new Error('Sem conexão')).mockResolvedValueOnce(undefined);
+  const view = render(<GuidedWorkoutSession session={session} onClose={jest.fn()} onComplete={onComplete} />);
+  fireEvent.press(view.getByTestId('guided-complete-set'));
+  fireEvent.press(view.getByTestId('guided-skip-rest'));
+  fireEvent.press(view.getByTestId('guided-complete-set'));
+  fireEvent.press(view.getByTestId('guided-complete-set'));
+  await waitFor(() => expect(view.getByTestId('guided-save-error')).toBeTruthy());
+  expect(view.queryByText('Sessão salva no histórico')).toBeNull();
+  fireEvent.press(view.getByTestId('guided-retry-save'));
+  await waitFor(() => expect(view.getByText('Sessão salva no histórico')).toBeTruthy());
+  expect(onComplete).toHaveBeenCalledTimes(2);
+  expect(onComplete.mock.calls[0][0]).toBe(onComplete.mock.calls[1][0]);
+});
+
+test('student mobile posts a receipt and displays confirmed history', async () => {
+  const receipt = {
+    id: 'execution-a', workoutId: 'active', sessionId: 'session-a',
+    sessionName: 'Treino A', source: 'STUDENT_SELF_REPORTED',
+    completedSets: 3, completedAt: '2026-11-18T13:30:00Z', replayed: false,
+  };
+  mockedApi.mockImplementation((path: string, _legacy: unknown, options: { method?: string }) => {
+    if (path === '/me/workouts') return Promise.resolve([
+      { id: 'active', status: 'ACTIVE', goal: 'Ativo', sessions: [session] },
+    ]);
+    if (path === '/me/workout-executions') return Promise.resolve([]);
+    if (path.endsWith('/completions') && options?.method === 'POST') return Promise.resolve(receipt);
+    return Promise.reject(new Error('Caminho inesperado'));
+  });
+  const view = render(<WorkoutsScreen />);
+  await waitFor(() => expect(view.getByTestId('guided-launch-session-a')).toBeTruthy());
+  fireEvent.press(view.getByTestId('guided-launch-session-a'));
+  fireEvent.press(view.getByTestId('guided-complete-set'));
+  fireEvent.press(view.getByTestId('guided-skip-rest'));
+  fireEvent.press(view.getByTestId('guided-complete-set'));
+  fireEvent.press(view.getByTestId('guided-complete-set'));
+  await waitFor(() => expect(view.getByText('Sessão salva no histórico')).toBeTruthy());
+  const call = mockedApi.mock.calls.find(([path]) => path.endsWith('/completions'));
+  expect(call?.[0]).toBe('/me/workouts/active/sessions/session-a/completions');
+  expect(call?.[2]?.method).toBe('POST');
+  expect(JSON.parse(call?.[2]?.body).requestId).toMatch(/^guided_/);
+  fireEvent.press(view.getByText('Voltar aos treinos'));
+  await waitFor(() => expect(view.getByTestId('workout-execution-history')).toBeTruthy());
+  expect(view.getByText('Histórico de treinos realizados')).toBeTruthy();
+  expect(view.getByText(/3 séries/)).toBeTruthy();
 });
