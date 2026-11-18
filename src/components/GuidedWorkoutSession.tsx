@@ -27,13 +27,23 @@ export function canGuideSession(session: GuidedSession): boolean {
   );
 }
 
-export function GuidedWorkoutSession({ session, onClose }: { session: GuidedSession; onClose: () => void }) {
+export function GuidedWorkoutSession({ session, onClose, onComplete }: {
+  session: GuidedSession;
+  onClose: () => void;
+  onComplete: (requestId: string) => Promise<void>;
+}) {
   const exercises = session.exercises ?? [];
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [completedSets, setCompletedSets] = useState(0);
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
   const [now, setNow] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+  const [saveError, setSaveError] = useState('');
+  const saveInFlight = useRef(false);
+  // An uncertain network retry reuses this ID; a new session gets a new ID.
+  // It is an idempotency identifier, not a credential.
+  const requestId = useRef<string | null>(null);
   const announcedRest = useRef<number | null>(null);
   const current = exercises[exerciseIndex];
   const remaining = restEndsAt === null ? 0 : Math.max(0, Math.ceil((restEndsAt - now) / 1000));
@@ -58,12 +68,33 @@ export function GuidedWorkoutSession({ session, onClose }: { session: GuidedSess
     AccessibilityInfo.announceForAccessibility?.('Descanso concluído. Próxima série liberada.');
   }, [restReady, restEndsAt]);
 
+  async function saveCompletion() {
+    if (saveInFlight.current || saveStatus === 'saved') return;
+    saveInFlight.current = true;
+    setSaveStatus('saving');
+    setSaveError('');
+    try {
+      if (!requestId.current) {
+        requestId.current = 'guided_' + Date.now().toString(36) + '_' +
+          Math.random().toString(36).slice(2) + '_' + Math.random().toString(36).slice(2);
+      }
+      await onComplete(requestId.current);
+      setSaveStatus('saved');
+    } catch (reason) {
+      setSaveStatus('failed');
+      setSaveError(reason instanceof Error ? reason.message : 'Falha ao registrar a sessão.');
+    } finally {
+      saveInFlight.current = false;
+    }
+  }
+
   function finishSet() {
     if (restEndsAt !== null || finished || !current) return;
     const nextSets = completedSets + 1;
     if (nextSets >= (current.sets ?? 0)) {
       if (exerciseIndex + 1 === exercises.length) {
         setFinished(true);
+        void saveCompletion();
       } else {
         setExerciseIndex(exerciseIndex + 1);
         setCompletedSets(0);
@@ -101,10 +132,21 @@ export function GuidedWorkoutSession({ session, onClose }: { session: GuidedSess
     <Text style={styles.overline}>TREINO GUIADO</Text>
     <Text style={styles.title}>{session.name}</Text>
     {finished ? <View style={styles.panel} testID="guided-finished">
-      <Text style={styles.success}>Sessão concluída!</Text>
-      <Text style={styles.muted}>Você percorreu todos os exercícios e séries desta sessão.</Text>
-      <Text style={styles.hint}>Esta confirmação é temporária nesta tela: não registra presença nem histórico de execução no servidor.</Text>
-      <Action label="Voltar aos treinos" onPress={onClose} />
+      <Text style={saveStatus === 'saved' ? styles.success : styles.title} testID="guided-save-status">
+        {saveStatus === 'saved' ? 'Sessão salva no histórico' : saveStatus === 'failed'
+          ? 'Sessão executada — não registrada' : 'Salvando a execução…'}
+      </Text>
+      <Text style={styles.muted}>Você concluiu todas as séries prescritas nesta sessão.</Text>
+      {saveStatus === 'failed' ? <>
+        <Text style={styles.error} testID="guided-save-error">
+          {saveError} O histórico não foi confirmado. Tente novamente antes de sair.
+        </Text>
+        <Action testID="guided-retry-save" label="Tentar salvar novamente" onPress={() => { void saveCompletion(); }} />
+      </> : null}
+      {saveStatus === 'saved'
+        ? <Text style={styles.hint}>Execução autodeclarada registrada no servidor. Não equivale a check-in presencial.</Text>
+        : null}
+      {saveStatus === 'saved' ? <Action label="Voltar aos treinos" onPress={onClose} /> : null}
     </View> : <View style={styles.panel}>
       <Text style={styles.muted}>Exercício {exerciseIndex + 1} de {exercises.length}</Text>
       <Text style={styles.exerciseName} testID="guided-exercise-name">{current.exercise?.name}</Text>
@@ -160,4 +202,5 @@ const styles = StyleSheet.create({
   restLabel: { color: '#b3c3d5', fontSize: 13, textAlign: 'center' },
   timer: { color: '#2BF47A', fontSize: 48, fontWeight: '800', fontVariant: ['tabular-nums'], textAlign: 'center' },
   success: { color: '#2BF47A', fontSize: 19, fontWeight: '800', textAlign: 'center' },
+  error: { color: '#ffb4b4', fontSize: 13, lineHeight: 20 },
 });

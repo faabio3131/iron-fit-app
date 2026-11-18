@@ -5,9 +5,11 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import { api } from '../services/api';
 import { IronInput as TextInput } from '../components/IronInput';
+import { uploadIronA1Direct, validatedIronA1Grant } from './fiscal-a1-direct-upload';
 
 type FiscalHandoff = {
   id: string;
@@ -168,7 +170,7 @@ function ActionButton({
   );
 }
 
-export function FiscalCenter() {
+export function FiscalCenter({ canManageA1 = false }: { canManageA1?: boolean }) {
   const [binding, setBinding] = useState<any>(null);
   const [activation, setActivation] = useState<FiscalActivationReadiness | null>(null);
   const [usage, setUsage] = useState<FiscalOperationalUsage | null>(null);
@@ -178,6 +180,11 @@ export function FiscalCenter() {
   const [externalUnitId, setExternalUnitId] = useState('');
   const [bindingPassword, setBindingPassword] = useState('');
   const [bindingFactor, setBindingFactor] = useState('');
+  const [a1File, setA1File] = useState<{ name: string; size: number; arrayBuffer: () => Promise<ArrayBuffer> } | null>(null);
+  const [a1Password, setA1Password] = useState('');
+  const [a1Busy, setA1Busy] = useState(false);
+  const [a1Status, setA1Status] = useState<'NOT_VERIFIED' | 'STORED' | 'ABSENT'>('NOT_VERIFIED');
+  const [a1Error, setA1Error] = useState('');
   const [cancelId, setCancelId] = useState('');
   const [cancelJustification, setCancelJustification] = useState('');
   const [cancelPassword, setCancelPassword] = useState('');
@@ -262,6 +269,66 @@ export function FiscalCenter() {
       setBindingPassword('');
       setBindingFactor('');
     });
+  }
+
+  function selectA1File() {
+    if (!canManageA1 || Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const element = document.createElement('input');
+    element.type = 'file';
+    element.accept = '.pfx,.p12,application/x-pkcs12';
+    element.onchange = () => {
+      const file = element.files?.[0];
+      setA1File(file && /\.(pfx|p12)$/i.test(file.name) && file.size <= 2_000_000 ? file : null);
+      setA1Error(file && (!/\.(pfx|p12)$/i.test(file.name) || file.size > 2_000_000)
+        ? 'Selecione um arquivo .pfx ou .p12 de até 2 MB.' : '');
+    };
+    element.click();
+  }
+
+  async function checkA1Status() {
+    if (!canManageA1 || a1Busy) return;
+    setA1Busy(true);
+    setA1Error('');
+    try {
+      const status = await api('/financial/fiscal/a1/status');
+      if ((status?.status !== 'STORED' && status?.status !== 'ABSENT') ||
+          status?.officialHomologation !== 'NOT_VERIFIED' ||
+          status?.source !== 'NFCORE_VAULT_READBACK') throw new Error('invalid status');
+      setA1Status(status.status);
+    } catch {
+      setA1Status('NOT_VERIFIED');
+      setA1Error('O status do certificado não pôde ser confirmado no NFCore.');
+    } finally { setA1Busy(false); }
+  }
+
+  async function uploadA1() {
+    if (!canManageA1 || a1Busy || !a1File || !a1Password) return;
+    setA1Busy(true);
+    setA1Error('');
+    try {
+      const candidate = await api('/financial/fiscal/a1/delegation', undefined, {
+        method: 'POST',
+      });
+      const grant = validatedIronA1Grant(candidate);
+      if (!grant) throw new Error('invalid delegation');
+      await uploadIronA1Direct(grant, a1File, a1Password);
+      const readback = await api('/financial/fiscal/a1/status');
+      if (readback?.status !== 'STORED' ||
+          readback?.officialHomologation !== 'NOT_VERIFIED' ||
+          readback?.source !== 'NFCORE_VAULT_READBACK') {
+        throw new Error('unconfirmed readback');
+      }
+      setA1Status('STORED');
+      setA1File(null);
+      setNotice('Certificado A1 armazenado no cofre NFCore. Homologação oficial ainda não comprovada.');
+    } catch {
+      setA1Status('NOT_VERIFIED');
+      setA1Error('O cofre não confirmou o A1. Revise o vínculo fiscal e solicite nova delegação.');
+    } finally {
+      // Never persist the password in browser storage, application logs or IRON API.
+      setA1Password('');
+      setA1Busy(false);
+    }
   }
 
   function cancelHandoff() {
@@ -360,7 +427,7 @@ export function FiscalCenter() {
               : 'Verificação de ativação indisponível neste servidor'}
           </Text>
           <Text style={styles.muted}>
-            Certificado A1: não verificado. O IRON ainda não possui um contrato autorizado para cadastrar ou consultar o A1 no cofre do NFCore.
+            Certificado A1: {a1Status === 'STORED' ? 'armazenado e confirmado pelo Vault NFCore em homologação' : a1Status === 'ABSENT' ? 'não encontrado no Vault NFCore' : 'sem leitura confirmada nesta sessão'}. Registro no cofre não significa homologação fiscal.
           </Text>
           <Text style={styles.muted}>
             Município e provedor emissor: homologação não verificada nesta tela.
@@ -387,6 +454,55 @@ export function FiscalCenter() {
           </Text>
         </View>
       </View>
+
+      {canManageA1 ? (
+        <View style={styles.section} testID="fiscal-a1-vault">
+          <Text style={styles.sectionTitle}>Certificado A1 — cofre fiscal NFCore</Text>
+          <Text style={styles.muted}>
+            Uso exclusivo do proprietário autorizado após reautenticação. O arquivo .pfx e sua senha são enviados diretamente do navegador ao NFCore, nunca ao servidor IRON.
+          </Text>
+          <Text testID="fiscal-a1-vault-status" style={styles.bindingValue}>
+            {a1Status === 'STORED' ? 'Armazenado no Vault (homologação externa pendente)' :
+              a1Status === 'ABSENT' ? 'Nenhum certificado A1 encontrado' : 'Status ainda não confirmado'}
+          </Text>
+          {a1Error ? <Text testID="fiscal-a1-error" style={styles.error}>{a1Error}</Text> : null}
+          <ActionButton
+            secondary
+            testID="fiscal-a1-read-status"
+            label={a1Busy ? 'Consultando…' : 'Consultar A1 no cofre'}
+            disabled={a1Busy}
+            onPress={() => { void checkA1Status(); }}
+          />
+          {Platform.OS === 'web' ? (
+            <>
+              <ActionButton
+                secondary
+                testID="fiscal-a1-select-file"
+                label={a1File ? 'Arquivo selecionado: ' + a1File.name : 'Selecionar certificado .pfx/.p12'}
+                disabled={a1Busy}
+                onPress={selectA1File}
+              />
+              <Text style={styles.label}>Senha do certificado (não armazenada no IRON)</Text>
+              <TextInput
+                testID="fiscal-a1-password"
+                accessibilityLabel="Senha do certificado A1"
+                style={styles.input}
+                value={a1Password}
+                onChangeText={setA1Password}
+                secureTextEntry
+              />
+              <ActionButton
+                testID="fiscal-a1-upload"
+                label={a1Busy ? 'Validando no cofre…' : 'Enviar diretamente ao NFCore'}
+                disabled={a1Busy || !a1File || !a1Password || !binding?.active ||
+                  activation?.environment !== 'HOMOLOG'}
+                onPress={() => { void uploadA1(); }}
+              />
+            </>
+          ) : <Text style={styles.muted}>Cadastro A1 disponível pelo navegador Web autorizado.</Text>}
+          <Text style={styles.muted}>Emissão fiscal oficial, município, provedor e conformidade profissional permanecem sem homologação externa.</Text>
+        </View>
+      ) : null}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Vínculo fiscal da academia</Text>

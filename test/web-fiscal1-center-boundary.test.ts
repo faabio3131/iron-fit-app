@@ -7,7 +7,7 @@ test('FISCAL-1 is OWNER/SUPER_ADMIN-only and uses the existing administrative st
   expect(web).toContain("{ key: 'fiscal', label: 'Fiscal / NFS-e'");
   expect(web).toContain("roles: ['SUPER_ADMIN', 'OWNER']");
   expect(web).toContain("'financial', 'fiscal', 'saasBilling'");
-  expect(web).toContain("if (active === 'fiscal') return <FiscalCenter />");
+  expect(web).toContain("if (active === 'fiscal') return <FiscalCenter canManageA1={can('OWNER')} />");
 });
 
 test('FISCAL-1 uses canonical fiscal APIs without browser tenant/provider authority', () => {
