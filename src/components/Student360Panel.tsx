@@ -12,6 +12,23 @@ type StudentProfile = StudentSummary & {
 };
 type Assessment = { id: string; createdAt: string; weight?: number; bmi?: number; bodyFatPercent?: number };
 type Workout = { id: string; goal?: string; status: string; sessions?: unknown[] };
+type WorkoutExecution = {
+  id: string; workoutId: string; sessionId: string; sessionName: string;
+  workoutGoal: string | null; completedSets: number; completedAt: string;
+  source: 'STUDENT_SELF_REPORTED';
+};
+function validWorkoutHistory(value: unknown): value is WorkoutExecution[] {
+  return Array.isArray(value) && value.length <= 30 && value.every((row: unknown) => {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return false;
+    const item = row as Record<string, unknown>;
+    return typeof item.id === 'string' && typeof item.workoutId === 'string' &&
+      typeof item.sessionId === 'string' && typeof item.sessionName === 'string' &&
+      (item.workoutGoal === null || typeof item.workoutGoal === 'string') &&
+      Number.isSafeInteger(item.completedSets) && Number(item.completedSets) > 0 &&
+      typeof item.completedAt === 'string' && !Number.isNaN(Date.parse(item.completedAt)) &&
+      item.source === 'STUDENT_SELF_REPORTED';
+  });
+}
 type Booking = { id: string; date: string; status: string; slot?: { name?: string; startTime?: string } };
 type Credential = { id: string; active: boolean; type?: string; expiresAt?: string };
 type Charge = { id: string; amount: number; status?: string; dueDate?: string };
@@ -51,6 +68,7 @@ export function Student360Panel({ students, canReadWorkouts, canReadAccess, canR
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [workoutHistory, setWorkoutHistory] = useState<WorkoutExecution[] | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [charges, setCharges] = useState<Charge[]>([]);
@@ -69,15 +87,17 @@ export function Student360Panel({ students, canReadWorkouts, canReadAccess, canR
       api(`/students/${studentId}/assessments`),
       api(`/students/${studentId}/schedules`),
       canReadWorkouts ? api(`/students/${studentId}/workouts`) : Promise.resolve([]),
+      canReadWorkouts ? api(`/students/${studentId}/workout-executions`).catch(() => null) : Promise.resolve(null),
       canReadAccess ? api(`/access/credentials?studentId=${encodeURIComponent(studentId)}`) : Promise.resolve([]),
       canReadFinance ? api(`/financial/charges?studentId=${encodeURIComponent(studentId)}`) : Promise.resolve([]),
       canReadFinance ? api(`/financial/subscriptions?studentId=${encodeURIComponent(studentId)}`) : Promise.resolve([]),
-    ]).then(([person, history, schedule, training, access, debt, plans]) => {
+    ]).then(([person, history, schedule, training, executions, access, debt, plans]) => {
       if (!current) return;
       setProfile(person);
       setAssessments(Array.isArray(history) ? history : []);
       setBookings(Array.isArray(schedule) ? schedule : []);
       setWorkouts(Array.isArray(training) ? training : []);
+      setWorkoutHistory(validWorkoutHistory(executions) ? executions : null);
       setCredentials(Array.isArray(access) ? access : []);
       setCharges(Array.isArray(debt) ? debt : []);
       setSubscriptions(Array.isArray(plans) ? plans : []);
@@ -90,7 +110,7 @@ export function Student360Panel({ students, canReadWorkouts, canReadAccess, canR
 
   function choose(id: string) {
     setStudentId(id); setProfile(null); setLoading(true); setError('');
-    setPendingConsent(null); setCharges([]); setSubscriptions([]);
+    setPendingConsent(null); setCharges([]); setSubscriptions([]); setWorkoutHistory(null);
   }
   function refresh() {
     setLoading(true); setError(''); setReloadId((v) => v + 1);
@@ -166,6 +186,15 @@ export function Student360Panel({ students, canReadWorkouts, canReadAccess, canR
         {workouts.length ? workouts.slice(0, 12).map((w) => <Text key={w.id} style={styles.white}>
           {w.goal ?? 'Treino'} · {status(w.status)} · {w.sessions?.length ?? 0} sessão(ões)
         </Text>) : <Text style={styles.muted}>Sem treinos registrados.</Text>}
+        <Text style={styles.heading}>Sessões realizadas</Text>
+        <Text style={styles.muted}>Histórico autodeclarado pelo aluno, confirmado no servidor. Não equivale a presença física.</Text>
+        {workoutHistory === null ? <Text testID="student360-workout-history-unavailable" style={styles.muted}>
+          Histórico de execução indisponível. Atualize para consultar novamente.
+        </Text> : workoutHistory.length === 0 ? <Text style={styles.muted}>Nenhuma sessão realizada registrada.</Text>
+          : workoutHistory.map(entry => <View key={entry.id} testID="student360-workout-execution" style={styles.entry}>
+              <Text style={styles.white}>{entry.sessionName}</Text>
+              <Text style={styles.muted}>{entry.completedSets} séries · {day(entry.completedAt)}</Text>
+            </View>)}
       </Block> : null}
       <Block title="Agenda e presenças">
         {bookings.length ? bookings.slice(0, 20).map((b) => <Text key={b.id} style={styles.white}>
