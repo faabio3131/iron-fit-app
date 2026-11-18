@@ -115,6 +115,8 @@ describe('FISCAL-1 Fiscal Center', () => {
     const view = render(<FiscalCenter />);
     await waitFor(() => expect(view.getByTestId('fiscal-readiness-status').props.children)
       .toBe('Capacidade de NFS-e informada pelo serviço fiscal'));
+    expect(view.getByText('Ativação fiscal não concluída')).toBeTruthy();
+    expect(view.getByText('A1, município e provedor aguardam verificação')).toBeTruthy();
     expect(view.getByTestId('fiscal-operational-usage')).toBeTruthy();
     expect(view.getByText(/Autorizações confirmadas: 4/)).toBeTruthy();
     expect(view.getByText(/Não é faturamento, franquia contratada nem consumo cobrável/)).toBeTruthy();
