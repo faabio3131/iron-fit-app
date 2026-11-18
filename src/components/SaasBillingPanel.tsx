@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GlowCard } from './GlowCard';
 import { api } from '../services/api';
@@ -32,6 +32,10 @@ export function commercialOffersErrorMessage(reason: unknown): string {
   if (reason instanceof Error && reason.message === 'INVALID_COMMERCIAL_CATALOG')
     return 'O serviço comercial retornou um catálogo inválido. A contratação permanece bloqueada.';
   return 'Não foi possível consultar os planos. Atualize a situação ou tente novamente.';
+}
+function offerAttemptKey(offer: CommercialOffer) {
+  // A new price or cycle must never reuse the idempotency key of another offer.
+  return [offer.planCode, offer.interval, offer.amountMinor, offer.currency].join(':');
 }
 function validOffer(value: unknown): value is CommercialOffer {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -138,7 +142,12 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
   const [offers, setOffers] = useState<CommercialOffer[]>([]);
   const [offersError, setOffersError] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [checkoutPending, setCheckoutPending] = useState(false);
+  const [checkoutPendingKey, setCheckoutPendingKey] = useState<string | null>(null);
+  // The same invoice-bound request ID survives uncertain HTTP/URL-opening retries
+  // while this authenticated tenant panel remains mounted. Never send a price.
+  const checkoutAttempts = useRef(new Map<string, string>());
+  // Unlike React state, this prevents duplicate synchronous rapid presses.
+  const checkoutInFlight = useRef(false);
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
@@ -209,16 +218,23 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
   }
 
   async function beginCheckout(offer: CommercialOffer) {
-    if (!canPurchase || checkoutLoading || !validOffer(offer)) return;
+    if (!canPurchase || checkoutLoading || checkoutInFlight.current || !validOffer(offer)) return;
+    checkoutInFlight.current = true;
     setCheckoutLoading(true);
     setNotice('');
     setError('');
     try {
-      // Generate an opaque idempotency key once per attempt, never send a price from UI.
-      const requestId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.floor(Math.random() * 16);
-        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-      });
+      const fingerprint = offerAttemptKey(offer);
+      let requestId = checkoutAttempts.current.get(fingerprint);
+      if (!requestId) {
+        // Not an authentication credential: the Command S2S validates tenant,
+        // subscription, plan and the persisted invoice idempotency binding.
+        requestId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = Math.floor(Math.random() * 16);
+          return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+        });
+        checkoutAttempts.current.set(fingerprint, requestId);
+      }
       const result = await api('/commercial/billing/checkout', undefined, {
         method: 'POST', body: JSON.stringify({ planCode: offer.planCode, requestId }),
       });
@@ -227,11 +243,11 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
         throw new Error('A autoridade comercial não confirmou um checkout válido.');
       }
       await Linking.openURL(result.checkoutUrl);
-      setCheckoutPending(true);
+      setCheckoutPendingKey(fingerprint);
       setNotice('Checkout aberto na Cakto. O pagamento não libera acesso aqui: aguarde o webhook e atualize a situação.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Não foi possível abrir o checkout.');
-    } finally { setCheckoutLoading(false); }
+    } finally { checkoutInFlight.current = false; setCheckoutLoading(false); }
   }
 
   const agreement = billing?.agreement ?? null;
@@ -273,10 +289,10 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
           accessibilityState={{ disabled: checkoutLoading }}
           disabled={checkoutLoading} style={[styles.button, checkoutLoading && styles.disabled]}
           onPress={() => { void beginCheckout(offer); }}>
-          <Text style={styles.buttonText}>{checkoutLoading ? 'Preparando...' : 'Contratar na Cakto'}</Text>
+          <Text style={styles.buttonText}>{checkoutLoading ? 'Preparando...' : checkoutPendingKey === offerAttemptKey(offer) ? 'Retomar checkout na Cakto' : 'Contratar na Cakto'}</Text>
         </TouchableOpacity>
       </View>)}
-      {checkoutPending ? <Text testID="iron-cakto-await-webhook" style={styles.warning}>Pagamento aguardando confirmação oficial. Use “Atualizar situação” após a aprovação.</Text> : null}
+      {checkoutPendingKey ? <Text testID="iron-cakto-await-webhook" style={styles.warning}>Pagamento aguardando confirmação oficial. Use “Atualizar situação” após a aprovação.</Text> : null}
     </GlowCard> : null}
         {authority && !loading ? <>
       <GlowCard style={styles.card}>
