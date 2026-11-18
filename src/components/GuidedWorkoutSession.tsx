@@ -43,10 +43,7 @@ export function GuidedWorkoutSession({ session, onClose, onComplete }: {
   const saveInFlight = useRef(false);
   // An uncertain network retry reuses this ID; a new session gets a new ID.
   // It is an idempotency identifier, not a credential.
-  const requestId = useRef(
-    'guided_' + Date.now().toString(36) + '_' +
-    Math.random().toString(36).slice(2) + '_' + Math.random().toString(36).slice(2),
-  );
+  const requestId = useRef<string | null>(null);
   const announcedRest = useRef<number | null>(null);
   const current = exercises[exerciseIndex];
   const remaining = restEndsAt === null ? 0 : Math.max(0, Math.ceil((restEndsAt - now) / 1000));
@@ -77,6 +74,10 @@ export function GuidedWorkoutSession({ session, onClose, onComplete }: {
     setSaveStatus('saving');
     setSaveError('');
     try {
+      if (!requestId.current) {
+        requestId.current = 'guided_' + Date.now().toString(36) + '_' +
+          Math.random().toString(36).slice(2) + '_' + Math.random().toString(36).slice(2);
+      }
       await onComplete(requestId.current);
       setSaveStatus('saved');
     } catch (reason) {
