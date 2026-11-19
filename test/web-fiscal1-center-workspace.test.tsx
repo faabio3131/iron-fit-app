@@ -171,3 +171,36 @@ test('A1 validity is rendered only from a verified unexpired Vault response and 
   expect(view.queryByTestId('fiscal-a1-expiry')).toBeNull();
   expect(view.getByText('Status ainda não confirmado')).toBeTruthy();
 });
+
+
+test('OWNER must explicitly confirm A1 withdrawal; success requires NFCore absent readback', async () => {
+  mockApi.mockReset();
+  let removed=false;
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/financial/fiscal/scope-binding') return {environment:'HOMOLOG',externalTenantId:'t',externalUnitId:'u',active:true};
+    if (path === '/financial/fiscal/handoffs') return [];
+    if (path === '/financial/fiscal/a1/withdraw') {
+      removed=true;
+      return {status:'WITHDRAWN',officialRevocation:'NOT_PERFORMED',officialHomologation:'NOT_VERIFIED'};
+    }
+    if (path === '/financial/fiscal/a1/status') return removed ?
+      {status:'ABSENT',expiresAt:null,source:'NFCORE_VAULT_READBACK',officialHomologation:'NOT_VERIFIED'} :
+      {status:'STORED',expiresAt:'2099-01-01T00:00:00.000Z',source:'NFCORE_VAULT_READBACK',officialHomologation:'NOT_VERIFIED'};
+    throw new Error('unavailable');
+  });
+  const view=render(<FiscalCenter canManageA1 />);
+  await waitFor(()=>expect(view.getByTestId('fiscal-a1-withdraw-open')).toBeTruthy());
+  fireEvent.press(view.getByTestId('fiscal-a1-withdraw-open'));
+  expect(removed).toBe(false);
+  fireEvent.press(view.getByTestId('fiscal-a1-withdraw-cancel'));
+  expect(removed).toBe(false);
+  fireEvent.press(view.getByTestId('fiscal-a1-withdraw-open'));
+  fireEvent.press(view.getByTestId('fiscal-a1-withdraw-confirm'));
+  await waitFor(()=>expect(view.getByText(/Certificado retirado do cofre NFCore/)).toBeTruthy());
+  expect(view.getByText('Nenhum certificado A1 encontrado')).toBeTruthy();
+  expect(mockApi.mock.calls.filter(([path])=>path==='/financial/fiscal/a1/withdraw')).toHaveLength(1);
+  view.unmount();
+  const denied=render(<FiscalCenter />);
+  await waitFor(()=>expect(denied.getByText(/Vínculo/)).toBeTruthy());
+  expect(denied.queryByTestId('fiscal-a1-withdraw-open')).toBeNull();
+});

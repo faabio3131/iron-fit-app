@@ -34,3 +34,6 @@ AUDITAR → IMPLEMENTAR DELTAS ACUMULADOS → TESTAR alterações → DIFF → C
 
 ### CURRENT — recibos, legibilidade e fechamento residual
 #132 amplia área comercial com reenvio de comprovante Cakto apenas para fatura paga e referência autorizada, sem enviar e-mail arbitrário, sem comprovar entrega. Backend #277/Command #218 governam segurança e rate limit. Refinamento O23 preserva asset/verde oficial, melhora contraste, legendas, hierarquia Cockpit e tamanho de alvos interativos; revisão visual real ainda necessária. CI da revisão anterior #44443766278 SUCCESS; novo HEAD necessita gate. Sem merge, deploy ou homologação.
+
+### CURRENT — P6 retirada local A1
+NFCore #562 + backend #277: UI de proprietário com confirmação explícita de retirada no cofre, somente HOMOLOG e vínculo ativo; status ABSENT apenas com readback NFCore. Sem efeito sobre revogação ICP-Brasil, sem certificado real, sem alteração fiscal oficial. Teste focado adicionado; CI da nova HEAD necessária.

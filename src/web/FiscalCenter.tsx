@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -183,6 +183,8 @@ export function FiscalCenter({ canManageA1 = false }: { canManageA1?: boolean })
   const [a1File, setA1File] = useState<{ name: string; size: number; arrayBuffer: () => Promise<ArrayBuffer> } | null>(null);
   const [a1Password, setA1Password] = useState('');
   const [a1Busy, setA1Busy] = useState(false);
+  const [a1WithdrawConfirm, setA1WithdrawConfirm] = useState(false);
+  const withdrawInFlight = useRef(false);
   const [a1Status, setA1Status] = useState<'NOT_VERIFIED' | 'STORED' | 'ABSENT'>('NOT_VERIFIED');
   const [a1ExpiresAt, setA1ExpiresAt] = useState<string | null>(null);
   const [a1Error, setA1Error] = useState('');
@@ -305,6 +307,43 @@ export function FiscalCenter({ canManageA1 = false }: { canManageA1?: boolean })
       setA1ExpiresAt(null);
       setA1Error('O status do certificado não pôde ser confirmado no NFCore.');
     } finally { setA1Busy(false); }
+  }
+
+  async function withdrawA1() {
+    if (!canManageA1 || a1Busy || !a1WithdrawConfirm || withdrawInFlight.current ||
+        !binding?.active || binding.environment !== 'HOMOLOG') return;
+    withdrawInFlight.current = true;
+    setA1Busy(true);
+    setA1WithdrawConfirm(false);
+    setA1Error('');
+    setNotice('');
+    setA1File(null);
+    setA1Password('');
+    try {
+      const requestId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.floor(Math.random() * 16);
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+      });
+      const result = await api('/financial/fiscal/a1/withdraw', undefined, {
+        method: 'POST', body: JSON.stringify({ requestId }),
+      });
+      if (result?.status !== 'WITHDRAWN' || result?.officialRevocation !== 'NOT_PERFORMED' ||
+          result?.officialHomologation !== 'NOT_VERIFIED') throw new Error('unconfirmed');
+      const readback = await api('/financial/fiscal/a1/status');
+      if (readback?.status !== 'ABSENT' || readback?.expiresAt !== null ||
+          readback?.source !== 'NFCORE_VAULT_READBACK' ||
+          readback?.officialHomologation !== 'NOT_VERIFIED') throw new Error('unconfirmed readback');
+      setA1Status('ABSENT');
+      setA1ExpiresAt(null);
+      setNotice('Certificado retirado do cofre NFCore. O certificado não foi revogado perante a ICP-Brasil.');
+    } catch {
+      setA1Status('NOT_VERIFIED');
+      setA1ExpiresAt(null);
+      setA1Error('Não foi possível confirmar a retirada. Consulte o cofre antes de solicitar novamente.');
+    } finally {
+      withdrawInFlight.current = false;
+      setA1Busy(false);
+    }
   }
 
   async function uploadA1() {
@@ -485,6 +524,22 @@ export function FiscalCenter({ canManageA1 = false }: { canManageA1?: boolean })
             disabled={a1Busy}
             onPress={() => { void checkA1Status(); }}
           />
+          {binding?.active && binding.environment === 'HOMOLOG' ? <>
+            <ActionButton
+              danger secondary testID="fiscal-a1-withdraw-open"
+              label="Retirar certificado do cofre"
+              disabled={a1Busy || a1WithdrawConfirm}
+              onPress={() => setA1WithdrawConfirm(true)}
+            />
+            {a1WithdrawConfirm ? <View testID="fiscal-a1-withdraw-confirmation">
+              <Text style={styles.muted}>A retirada impede novos usos deste A1 no cofre de homologação e invalida delegações pendentes. Não revoga o certificado na ICP-Brasil. Confirme somente se deseja retirar o arquivo.</Text>
+              <ActionButton danger testID="fiscal-a1-withdraw-confirm"
+                label="Confirmar retirada do cofre" disabled={a1Busy}
+                onPress={() => { void withdrawA1(); }} />
+              <ActionButton secondary label="Manter certificado" testID="fiscal-a1-withdraw-cancel"
+                disabled={a1Busy} onPress={() => setA1WithdrawConfirm(false)} />
+            </View> : null}
+          </> : null}
           {Platform.OS === 'web' ? (
             <>
               <ActionButton
