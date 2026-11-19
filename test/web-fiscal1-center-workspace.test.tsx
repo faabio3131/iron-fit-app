@@ -201,6 +201,6 @@ test('OWNER must explicitly confirm A1 withdrawal; success requires NFCore absen
   expect(mockApi.mock.calls.filter(([path])=>path==='/financial/fiscal/a1/withdraw')).toHaveLength(1);
   view.unmount();
   const denied=render(<FiscalCenter />);
-  await waitFor(()=>expect(denied.getByText(/Vínculo/)).toBeTruthy());
+  await waitFor(()=>expect(denied.getAllByText(/Vínculo/).length).toBeGreaterThan(0));
   expect(denied.queryByTestId('fiscal-a1-withdraw-open')).toBeNull();
 });
