@@ -31,3 +31,6 @@ Finalizar **o app existente**, não demo ou visualização paralela. Todas as te
 
 ## Procedimento
 AUDITAR → IMPLEMENTAR DELTAS ACUMULADOS → TESTAR alterações → DIFF → CI FINAL → MERGE SE GATE VERDE → PÓS-MERGE. Não abrir PR por correção pequena; preservar gates automáticos. Sempre registrar repos, branch, SHA, PR, CI, ambiente, bloqueador e próxima ação. Não inventar PASS.
+
+### CURRENT — recibos, legibilidade e fechamento residual
+#132 amplia área comercial com reenvio de comprovante Cakto apenas para fatura paga e referência autorizada, sem enviar e-mail arbitrário, sem comprovar entrega. Backend #277/Command #218 governam segurança e rate limit. Refinamento O23 preserva asset/verde oficial, melhora contraste, legendas, hierarquia Cockpit e tamanho de alvos interativos; revisão visual real ainda necessária. CI da revisão anterior #44443766278 SUCCESS; novo HEAD necessita gate. Sem merge, deploy ou homologação.

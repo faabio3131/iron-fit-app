@@ -77,6 +77,7 @@ type CanonicalBillingReadback = {
     createdAt?: string | null;
     paymentRecordedAt?: string | null;
     recordedPaymentStatus?: string | null;
+    receiptReference?: string | null;
   }>;
   historyTruncated?: boolean | null;
   settlementConfirmedByThisView: false;
@@ -112,7 +113,8 @@ function validCanonicalBilling(value: unknown): value is CanonicalBillingReadbac
       Number.isSafeInteger(row.amountMinor) && row.amountMinor > 0 &&
       row.currency === 'BRL' && row.periodEnd !== undefined && optionalDate(row.periodEnd) &&
       optionalDate(row.createdAt) && optionalDate(row.paymentRecordedAt) &&
-      (row.recordedPaymentStatus == null || (typeof row.recordedPaymentStatus === 'string' && /^[a-zA-Z_]{1,40}$/.test(row.recordedPaymentStatus)));
+      (row.recordedPaymentStatus == null || (typeof row.recordedPaymentStatus === 'string' && /^[a-zA-Z_]{1,40}$/.test(row.recordedPaymentStatus))) &&
+      (row.receiptReference == null || (typeof row.receiptReference === 'string' && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(row.receiptReference) && row.status === 'paid' && row.recordedPaymentStatus === 'received'));
   });
 }
 type BillingState = {
@@ -161,6 +163,8 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
   const [offers, setOffers] = useState<CommercialOffer[]>([]);
   const [offersError, setOffersError] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [receiptBusy, setReceiptBusy] = useState(false);
+  const receiptInFlight = useRef(false);
   const [checkoutPendingKey, setCheckoutPendingKey] = useState<string | null>(null);
   // The same invoice-bound request ID survives uncertain HTTP/URL-opening retries
   // while this authenticated tenant panel remains mounted. Never send a price.
@@ -273,6 +277,34 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
     } finally { checkoutInFlight.current = false; setCheckoutLoading(false); }
   }
 
+  async function resendReceipt(reference: string) {
+    if (!canPurchase || !authority || receiptInFlight.current || !canonical?.invoices.some(invoice =>
+      invoice.receiptReference === reference && invoice.status === 'paid' && invoice.recordedPaymentStatus === 'received')) return;
+    receiptInFlight.current = true;
+    setReceiptBusy(true);
+    setNotice('');
+    setError('');
+    try {
+      const requestId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.floor(Math.random() * 16);
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+      });
+      const result = await api('/commercial/billing/receipt/resend', undefined, {
+        method: 'POST', body: JSON.stringify({ invoiceId: reference, requestId }),
+      });
+      if (result?.provider !== 'CAKTO' || result?.status !== 'EMAIL_RESEND_ACCEPTED' ||
+          result?.deliveryConfirmed !== false) throw new Error('unconfirmed');
+      setNotice('A Cakto aceitou o reenvio ao e-mail original da compra. Confira a caixa de entrada e o spam; a entrega ainda não foi confirmada.');
+    } catch (reason) {
+      const status = (reason as {status?:number}|null)?.status;
+      setError(status === 429 ? 'Aguarde antes de solicitar outro comprovante.' :
+        'O reenvio não foi confirmado. Confira a caixa de entrada e tente novamente mais tarde.');
+    } finally {
+      receiptInFlight.current = false;
+      setReceiptBusy(false);
+    }
+  }
+
   async function openSubscriptionManagement() {
     if (!canPurchase || !canonical?.subscription || canonical.subscription.caktoManagementAvailable !== true ||
         !['active', 'past_due', 'pending', 'suspended'].includes(canonical.subscription.status.toLowerCase())) return;
@@ -382,7 +414,7 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
       </GlowCard>
       {canonical ? <GlowCard style={styles.card}>
         <Text style={styles.title}>Faturas no FM Command</Text>
-        <Text style={styles.muted}>Faturas registradas para sua academia. Este histórico não substitui o recibo oficial do pagamento.</Text>
+        <Text style={styles.muted}>Faturas registradas para sua academia. O recibo de pagamento é enviado pela Cakto ao e-mail original da compra; não substitui a nota fiscal.</Text>
         {canonical.historyTruncated === true ? <Text style={styles.muted}>Exibindo as 24 faturas mais recentes.</Text> : canonical.historyTruncated == null ? <Text style={styles.muted}>A consulta não informa se o histórico está completo.</Text> : null}
         {canonical.invoices.length ? canonical.invoices.map((invoice, index) => <View key={index} style={styles.invoice}>
           <View style={styles.invoiceHeader}>
@@ -391,6 +423,7 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
           </View>
           <Text style={styles.muted}>Data da fatura: {readableDate(invoice.createdAt)} · Período até: {readableDate(invoice.periodEnd)}</Text>
           {invoice.recordedPaymentStatus ? <Text testID={'iron-invoice-payment-' + index} style={styles.muted}>Pagamento: {statusLabel(invoice.recordedPaymentStatus.toUpperCase())} · Registro: {readableDate(invoice.paymentRecordedAt)}</Text> : null}
+          {canPurchase && invoice.receiptReference ? <TouchableOpacity testID={'iron-receipt-resend-' + index} accessibilityRole="button" accessibilityState={{disabled:receiptBusy}} disabled={receiptBusy} style={[styles.button,receiptBusy&&styles.disabled]} onPress={()=>{void resendReceipt(invoice.receiptReference!);}}><Text style={styles.buttonText}>{receiptBusy?'Solicitando…':'Reenviar comprovante ao e-mail da compra'}</Text></TouchableOpacity> : null}
         </View>) : <Text style={styles.muted}>Nenhuma fatura comercial registrada para esta academia no FM Command.</Text>}
       </GlowCard> : <GlowCard style={styles.card}>
         <Text style={styles.title}>Registros anteriores da assinatura</Text>
@@ -435,16 +468,16 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
   heading: { flexGrow: 1, flexBasis: 190, gap: 4 },
   title: { color: colors.accent, fontSize: 17, fontWeight: '800' },
-  muted: { color: '#afbed0', fontSize: 12, lineHeight: 18 },
+  muted: { color: '#c3cfdd', fontSize: 14, lineHeight: 21 },
   warning: { color: '#f3c18b', fontSize: 12, lineHeight: 18 },
   error: { color: '#fca5a5', fontSize: 12 },
   authority: { backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, padding: 12, gap: 8 },
   authorityTitle: { color: colors.text, fontWeight: '800', fontSize: 13 },
-  button: { alignSelf: 'flex-start', backgroundColor: colors.accent, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 9 },
+  button: { alignSelf: 'flex-start', maxWidth: '100%', minHeight: 44, justifyContent: 'center', backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 9 },
   buttonText: { color: colors.onAccent, fontWeight: '800', fontSize: 12 },
   disabled: { opacity: 0.45 },
   statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderBottomWidth: 1, borderBottomColor: '#29384c', paddingVertical: 10 },
-  statusLabel: { color: '#a8b9cc', fontSize: 12 },
+  statusLabel: { color: '#c3cfdd', fontSize: 13, flexShrink: 1 },
   statusValue: { color: '#f0f7fa', fontWeight: '800', fontSize: 12, textAlign: 'right', flexShrink: 1 },
   offerRow: { paddingVertical: 12, gap: 8, borderBottomWidth: 1, borderBottomColor: '#29384c' },
   offerHeading: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 },

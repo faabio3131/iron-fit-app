@@ -769,7 +769,8 @@ const styles = StyleSheet.create({
   navTextActive: { color: '#2BF47A' },
   content: { flex: 1 },
   contentInner: { padding: 22, width: '100%', maxWidth: 1400, alignSelf: 'center' },
-  pageHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16 },
+  contentInnerCompact: { padding: 12 },
+  pageHead: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16 },
   title: { color: '#f8fafc', fontSize: 26, fontWeight: '800' },
 
   // Blocos/seções: a borda e o brilho no hover vêm do GlowCard; aqui só
@@ -788,10 +789,10 @@ const styles = StyleSheet.create({
   rowFieldValue: { color: '#e2e8f0', fontSize: 12, fontWeight: '600', textAlign: 'right', flexShrink: 1 },
   json: { color: '#94a3b8', fontSize: 11, lineHeight: 16 },
 
-  muted: { color: '#94a3b8', fontSize: 13, lineHeight: 18 },
+  muted: { color: '#c0ccda', fontSize: 14, lineHeight: 21 },
   form: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginVertical: 10 },
   fieldWrap: { minWidth: 180, flexGrow: 1, flexBasis: 210 },
-  label: { color: '#94a3b8', fontSize: 11, fontWeight: '700', marginBottom: 5 },
+  label: { color: '#c0ccda', fontSize: 13, fontWeight: '700', marginBottom: 5 },
   input: { minHeight: 44, color: '#f8fafc', backgroundColor: '#0b1120', borderWidth: 1, borderColor: '#2a3650', borderRadius: 9, padding: 10 },
   button: { minHeight: 44, alignSelf: 'flex-start', backgroundColor: '#2BF47A', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 10, marginTop: 4 },
   secondary: { backgroundColor: '#172033', borderWidth: 1, borderColor: '#334155' },

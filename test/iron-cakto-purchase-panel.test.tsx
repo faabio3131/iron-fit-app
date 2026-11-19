@@ -353,3 +353,34 @@ test('OWNER can open the official buyer subscription portal without mutating loc
     expect(readonly.queryByTestId('iron-cakto-manage-subscription')).toBeNull();
   } finally { open.mockRestore(); }
 });
+
+
+test('OWNER resends the original receipt only for an eligible paid invoice; no recipient or settlement trust',async()=>{
+  const reference='fa9c7a11-5725-4495-bc16-f09a86c52d3e';
+  mockApi.mockImplementation(async(path:string)=>{
+    if(path==='/saas-billing/authority')return authority;
+    if(path==='/saas-billing/current')return{authority};
+    if(path==='/commercial/billing/current')return{
+      source:'FM_COMMAND_CANONICAL',authority:'FM_COMMAND',checkedAt:'2026-11-18T15:00:00.000Z',
+      settlementConfirmedByThisView:false,subscription:null,
+      invoices:[{status:'paid',amountMinor:26900,currency:'BRL',periodEnd:null,recordedPaymentStatus:'received',receiptReference:reference},
+        {status:'refunded',amountMinor:26900,currency:'BRL',periodEnd:null,recordedPaymentStatus:'refunded'}],
+    };
+    if(path==='/commercial/billing/offers')return{plans:[offer]};
+    if(path==='/commercial/billing/receipt/resend')return{provider:'CAKTO',status:'EMAIL_RESEND_ACCEPTED',deliveryConfirmed:false};
+    throw new Error('unexpected');
+  });
+  const view=render(<SaasBillingPanel canPurchase/>);
+  await waitFor(()=>expect(view.getByTestId('iron-receipt-resend-0')).toBeTruthy());
+  expect(view.queryByTestId('iron-receipt-resend-1')).toBeNull();
+  fireEvent.press(view.getByTestId('iron-receipt-resend-0'));
+  await waitFor(()=>expect(view.getByText(/entrega ainda não foi confirmada/)).toBeTruthy());
+  const calls=mockApi.mock.calls.filter(([path])=>path==='/commercial/billing/receipt/resend');
+  expect(calls).toHaveLength(1);
+  expect(Object.keys(JSON.parse(calls[0][2].body)).sort()).toEqual(['invoiceId','requestId']);
+  expect(JSON.parse(calls[0][2].body).invoiceId).toBe(reference);
+  view.unmount();
+  const readonly=render(<SaasBillingPanel/>);
+  await waitFor(()=>expect(readonly.getByText('Faturas no FM Command')).toBeTruthy());
+  expect(readonly.queryByTestId('iron-receipt-resend-0')).toBeNull();
+});
