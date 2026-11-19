@@ -153,7 +153,7 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
     try {
       const [authorityResponse, current] = await Promise.all([
         api('/saas-billing/authority'),
-        api('/saas-billing/current'),
+        api('/saas-billing/current').catch(() => null),
       ]);
       if (
         authorityResponse?.billingAuthority !== 'FM_COMMAND' ||
@@ -161,13 +161,17 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
         authorityResponse?.localMutationsEnabled !== false ||
         authorityResponse?.providerWebhooksAccepted !== false ||
         authorityResponse?.mode !== 'COMMAND_CENTRALIZED' ||
-        current?.authority?.billingAuthority !== 'FM_COMMAND' ||
-        current?.authority?.localMutationsEnabled !== false ||
-        current?.authority?.providerWebhooksAccepted !== false
+        (current !== null && (
+          current?.authority?.billingAuthority !== 'FM_COMMAND' ||
+          current?.authority?.localMutationsEnabled !== false ||
+          current?.authority?.providerWebhooksAccepted !== false
+        ))
       ) {
         throw new Error('Autoridade de cobrança não confirmada. Operações comerciais permanecem bloqueadas.');
       }
       setAuthority(authorityResponse);
+      // Legacy compatibility is not an authority dependency. Its unavailability
+      // must not block canonical readback or validated offers.
       setBilling(current);
       try {
         const official: unknown = await api('/commercial/billing/current');
@@ -337,7 +341,9 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
         <Text style={styles.muted}>{legacy
           ? 'Histórico local de leitura, não uma posição financeira homologada do FM Command.'
           : 'Projeção disponibilizada pelo backend do IRON. Confirme cobranças e pagamentos no sistema corporativo.'}</Text>
-        {agreement ? <>
+        {billing === null ? <Text testID="saas-billing-legacy-unavailable" style={styles.warning}>
+          Histórico anterior indisponível nesta consulta. Não representa ausência de assinatura ou faturas.
+        </Text> : agreement ? <>
           <View style={styles.statusRow}>
             <Text style={styles.statusLabel}>Status no registro antigo</Text>
             <Text testID="saas-billing-state" style={styles.statusValue}>{statusLabel(agreement.status)}</Text>
@@ -357,7 +363,7 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
       {!canonical ? <GlowCard style={styles.card}>
         <Text style={styles.title}>Histórico de faturas do IRON</Text>
         <Text style={styles.muted}>Registros do módulo anterior, disponibilizados somente para consulta. Eles não substituem as faturas e liquidações do FM Command.</Text>
-        {invoices.length ? invoices.slice(0, 24).map((invoice) => <View key={invoice.id} style={styles.invoice}>
+        {billing === null ? <Text style={styles.warning}>Histórico anterior de faturas indisponível nesta consulta.</Text> : invoices.length ? invoices.slice(0, 24).map((invoice) => <View key={invoice.id} style={styles.invoice}>
           <View style={styles.invoiceHeader}>
             <Text style={styles.invoiceTitle}>{statusLabel(invoice.status)}</Text>
             <Text style={styles.invoiceTitle}>{money(invoice.amountDueMinor, invoice.currency)}</Text>
