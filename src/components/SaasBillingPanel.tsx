@@ -71,30 +71,42 @@ type CanonicalBillingReadback = {
     amountMinor: number;
     currency: 'BRL';
     periodEnd: string | null;
+    createdAt?: string | null;
+    paymentRecordedAt?: string | null;
+    recordedPaymentStatus?: string | null;
   }>;
+  historyTruncated?: boolean | null;
   settlementConfirmedByThisView: false;
 };
+function optionalDate(value: unknown): boolean {
+  return value == null || (typeof value === 'string' && Number.isFinite(Date.parse(value)));
+}
 function validCanonicalBilling(value: unknown): value is CanonicalBillingReadback {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const data = value as Record<string, unknown>;
   if (data.source !== 'FM_COMMAND_CANONICAL' || data.authority !== 'FM_COMMAND' ||
       data.settlementConfirmedByThisView !== false || typeof data.checkedAt !== 'string' ||
+      !Number.isFinite(Date.parse(data.checkedAt)) ||
+      (data.historyTruncated != null && typeof data.historyTruncated !== 'boolean') ||
       !Array.isArray(data.invoices) || data.invoices.length > 24) return false;
   if (data.subscription !== null) {
     if (!data.subscription || typeof data.subscription !== 'object' ||
         Array.isArray(data.subscription)) return false;
     const record = data.subscription as Record<string, unknown>;
-    if (typeof record.status !== 'string' || record.status.length > 40 ||
+    if (typeof record.planCode !== 'string' || !/^[A-Z][A-Z0-9_]{1,63}$/.test(record.planCode) ||
+        typeof record.status !== 'string' || record.status.length > 40 ||
         (record.planName !== null && typeof record.planName !== 'string') ||
         (record.interval !== null && !['monthly', 'yearly'].includes(String(record.interval))) ||
-        (record.paidThrough !== null && typeof record.paidThrough !== 'string')) return false;
+        record.paidThrough === undefined || !optionalDate(record.paidThrough)) return false;
   }
   return data.invoices.every((item: unknown) => {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
     const row = item as Record<string, unknown>;
     return typeof row.status === 'string' && typeof row.amountMinor === 'number' &&
       Number.isSafeInteger(row.amountMinor) && row.amountMinor > 0 &&
-      row.currency === 'BRL' && (row.periodEnd === null || typeof row.periodEnd === 'string');
+      row.currency === 'BRL' && row.periodEnd !== undefined && optionalDate(row.periodEnd) &&
+      optionalDate(row.createdAt) && optionalDate(row.paymentRecordedAt) &&
+      (row.recordedPaymentStatus == null || (typeof row.recordedPaymentStatus === 'string' && /^[a-zA-Z_]{1,40}$/.test(row.recordedPaymentStatus)));
   });
 }
 type BillingState = {
@@ -110,6 +122,7 @@ const statuses: Record<string, string> = {
   CANCELLED: 'Cancelada', PAID: 'Paga', PENDING: 'Pendente', OVERDUE: 'Vencida',
   OPEN: 'Aberta', FAILED: 'Falhou', VOID: 'Anulada', DRAFT: 'Rascunho',
   GRACE: 'Em período de tolerância', UNPAID: 'Não paga',
+  RECEIVED: 'Recebimento registrado', REFUNDED: 'Estornada', CHARGEBACK: 'Contestada',
 };
 function statusLabel(value?: string) {
   return value ? statuses[value] ?? 'Estado não identificado' : 'Não informado';
@@ -222,7 +235,7 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
   }
 
   async function beginCheckout(offer: CommercialOffer) {
-    if (!canPurchase || checkoutLoading || checkoutInFlight.current || !validOffer(offer)) return;
+    if (!canPurchase || checkoutLoading || checkoutInFlight.current || !validOffer(offer) || !canOpenOffer(offer)) return;
     checkoutInFlight.current = true;
     setCheckoutLoading(true);
     setNotice('');
@@ -248,7 +261,7 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
       }
       await Linking.openURL(result.checkoutUrl);
       setCheckoutPendingKey(fingerprint);
-      setNotice('Checkout aberto na Cakto. O pagamento não libera acesso aqui: aguarde o webhook e atualize a situação.');
+      setNotice('Checkout aberto na Cakto. Após o pagamento, aguarde a confirmação oficial e atualize a situação.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Não foi possível abrir o checkout.');
     } finally { checkoutInFlight.current = false; setCheckoutLoading(false); }
@@ -257,13 +270,20 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
   const agreement = billing?.agreement ?? null;
   const invoices = Array.isArray(billing?.invoices) ? billing!.invoices! : [];
   const legacy = billing?.projection === 'LEGACY_READ_ONLY';
+  const currentSubscription = canonical?.subscription;
+  const currentStatus = currentSubscription?.status.toUpperCase();
+  const existingContract = !!currentSubscription && currentStatus !== 'PENDING' &&
+    currentStatus !== 'CANCELED' && currentStatus !== 'CANCELLED';
+  const pendingContract = currentStatus === 'PENDING';
+  const canOpenOffer = (offer: CommercialOffer) => !existingContract &&
+    (!pendingContract || (currentSubscription?.planCode === offer.planCode && currentSubscription?.interval === offer.interval));
 
   return <View testID="saas-billing-panel">
     <GlowCard style={styles.card}>
       <View style={styles.header}>
         <View style={styles.heading}>
           <Text style={styles.title}>Assinatura IRON</Text>
-          <Text style={styles.muted}>Administração comercial centralizada pela FM Tecnologia no FM Command.</Text>
+          <Text style={styles.muted}>Consulte seu plano, pagamentos e opções de contratação.</Text>
         </View>
         <TouchableOpacity testID="saas-billing-refresh" accessibilityRole="button" style={[styles.button, loading && styles.disabled]}
           disabled={loading} onPress={() => { void refresh(); }}>
@@ -274,15 +294,17 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
       {error ? <Text testID="saas-billing-authority-error" style={styles.error}>{error}</Text> : null}
       {notice ? <Text style={styles.warning}>{notice}</Text> : null}
       {authority ? <View testID="saas-billing-command-authority" style={styles.authority}>
-        <Text style={styles.authorityTitle}>Cobrança SaaS sob autoridade do FM Command</Text>
-        <Text style={styles.muted}>Planos, checkout, cobrança, pagamento, renovação, mudança e cancelamento não podem ser executados pelo sistema antigo de cobranças. A licença e os acessos são definidos pelas operações corporativas governadas.</Text>
-        <Text style={styles.warning}>A confirmação do pagamento ocorre exclusivamente pela Cakto e pelo FM Command; retornar do checkout não ativa a licença.</Text>
+        <Text style={styles.authorityTitle}>Assinatura administrada pela FM Tecnologia</Text>
+        <Text style={styles.muted}>A contratação e os pagamentos são realizados pela Cakto. Os dados comerciais abaixo vêm do serviço oficial de cobrança.</Text>
+        <Text style={styles.warning}>O acesso aos recursos é atualizado após a confirmação oficial do pagamento.</Text>
       </View> : null}
     </GlowCard>
 
     {authority && !loading && canPurchase ? <GlowCard style={styles.card}>
       <Text style={styles.title}>Contratar IRON FIT CORE</Text>
-      <Text style={styles.muted}>Escolha uma oferta cadastrada no FM Command. A compra será vinculada à sua academia por uma fatura exclusiva e finalizada na Cakto.</Text>
+      <Text style={styles.muted}>Veja os valores oficiais de contratação. A compra é vinculada à sua academia e finalizada na Cakto.</Text>
+      {existingContract ? <Text testID="iron-existing-contract" style={styles.muted}>Você já possui uma assinatura registrada. Uma nova contratação não substitui o contrato atual. Mudanças e cancelamento exigem a operação autorizada da FM Tecnologia.</Text> : null}
+      {pendingContract ? <Text style={styles.muted}>Há uma contratação pendente. Retome a oferta correspondente à fatura já gerada.</Text> : null}
       {offersError ? <Text testID="iron-cakto-offers-unavailable" style={styles.warning}>{offersError}</Text> : null}
       {offers.map((offer) => <View key={offer.planCode + ':' + offer.interval} style={styles.offerRow}>
         <View style={styles.offerHeading}>
@@ -290,10 +312,10 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
           <Text style={styles.offerPrice}>{money(offer.amountMinor, offer.currency)}</Text>
         </View>
         <TouchableOpacity testID={'iron-cakto-buy-' + offer.planCode} accessibilityRole="button"
-          accessibilityState={{ disabled: checkoutLoading }}
-          disabled={checkoutLoading} style={[styles.button, checkoutLoading && styles.disabled]}
+          accessibilityState={{ disabled: checkoutLoading || !canOpenOffer(offer) }}
+          disabled={checkoutLoading || !canOpenOffer(offer)} style={[styles.button, (checkoutLoading || !canOpenOffer(offer)) && styles.disabled]}
           onPress={() => { void beginCheckout(offer); }}>
-          <Text style={styles.buttonText}>{checkoutLoading ? 'Preparando...' : checkoutPendingKey === offerAttemptKey(offer) ? 'Retomar checkout na Cakto' : 'Contratar na Cakto'}</Text>
+          <Text style={styles.buttonText}>{checkoutLoading ? 'Preparando...' : !canOpenOffer(offer) ? 'Indisponível para o contrato atual' : pendingContract || checkoutPendingKey === offerAttemptKey(offer) ? 'Retomar checkout na Cakto' : 'Contratar na Cakto'}</Text>
         </TouchableOpacity>
       </View>)}
       {checkoutPendingKey ? <Text testID="iron-cakto-await-webhook" style={styles.warning}>Pagamento aguardando confirmação oficial. Use “Atualizar situação” após a aprovação.</Text> : null}
@@ -319,7 +341,11 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
             <Text style={styles.statusLabel}>Cobertura paga registrada até</Text>
             <Text style={styles.statusValue}>{readableDate(canonical.subscription.paidThrough)}</Text>
           </View>
-          <Text style={styles.muted}>Dados oficiais de assinatura registrados no FM Command. A liberação de recursos depende exclusivamente da licença confirmada no IRON.</Text>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Próxima renovação confirmada</Text>
+            <Text style={styles.statusValue}>Não informada pelo serviço de cobrança</Text>
+          </View>
+          <Text style={styles.muted}>Dados consultados em {readableDate(canonical.checkedAt)}. A cobertura registrada não confirma a próxima cobrança.</Text>
         </> : <Text testID="saas-billing-canonical-empty" style={styles.muted}>
           O FM Command não tem uma assinatura comercial registrada para esta academia nesta consulta. O período gratuito do IRON é consultado separadamente.
         </Text>) : <Text testID="saas-billing-command-unavailable" style={styles.warning}>
@@ -328,13 +354,15 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
       </GlowCard>
       {canonical ? <GlowCard style={styles.card}>
         <Text style={styles.title}>Faturas no FM Command</Text>
-        <Text style={styles.muted}>Registros financeiros da FM Tecnologia. Uma fatura ou evento de pagamento não ativa a licença sem confirmação oficial.</Text>
+        <Text style={styles.muted}>Faturas registradas para sua academia. Este histórico não substitui o recibo oficial do pagamento.</Text>
+        {canonical.historyTruncated === true ? <Text style={styles.muted}>Exibindo as 24 faturas mais recentes.</Text> : canonical.historyTruncated == null ? <Text style={styles.muted}>A consulta não informa se o histórico está completo.</Text> : null}
         {canonical.invoices.length ? canonical.invoices.map((invoice, index) => <View key={index} style={styles.invoice}>
           <View style={styles.invoiceHeader}>
             <Text style={styles.invoiceTitle}>{statusLabel(invoice.status.toUpperCase())}</Text>
             <Text style={styles.invoiceTitle}>{money(invoice.amountMinor, invoice.currency)}</Text>
           </View>
-          <Text style={styles.muted}>Período até: {readableDate(invoice.periodEnd)}</Text>
+          <Text style={styles.muted}>Data da fatura: {readableDate(invoice.createdAt)} · Período até: {readableDate(invoice.periodEnd)}</Text>
+          {invoice.recordedPaymentStatus ? <Text testID={'iron-invoice-payment-' + index} style={styles.muted}>Pagamento: {statusLabel(invoice.recordedPaymentStatus.toUpperCase())} · Registro: {readableDate(invoice.paymentRecordedAt)}</Text> : null}
         </View>) : <Text style={styles.muted}>Nenhuma fatura comercial registrada para esta academia no FM Command.</Text>}
       </GlowCard> : <GlowCard style={styles.card}>
         <Text style={styles.title}>Registros anteriores da assinatura</Text>
