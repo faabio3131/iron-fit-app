@@ -37,3 +37,7 @@ AUDITAR → IMPLEMENTAR DELTAS ACUMULADOS → TESTAR alterações → DIFF → C
 
 ### CURRENT — P6 retirada local A1
 NFCore #562 + backend #277: UI de proprietário com confirmação explícita de retirada no cofre, somente HOMOLOG e vínculo ativo; status ABSENT apenas com readback NFCore. Sem efeito sobre revogação ICP-Brasil, sem certificado real, sem alteração fiscal oficial. Teste focado adicionado; CI da nova HEAD necessária.
+
+
+### CURRENT 19/11/2026 — P3 integrado, saldo P6/O23
+- PR #133 funcional, sem refinamento de estilos, MERGED na main `73c1a263632135fd4a41a924001e011931e67023`; CI pré-merge #44614672989 SUCCESS. CI pós-merge #44625645098 em execução no checkpoint. #132 reconciliada com main; permanece somente saldo P6/A1 e refinamentos #110/estilos. Preservar todos os componentes e testes do HEAD anterior. Revisão independente fiscal e aceite visual específico ainda exigidos; sem produção ou deploy neste checkpoint.
