@@ -65,6 +65,9 @@ type CanonicalBillingReadback = {
     interval: 'monthly' | 'yearly' | null;
     status: string;
     paidThrough: string | null;
+    nextPaymentAt?: string | null;
+    scheduleObservedAt?: string | null;
+    caktoManagementAvailable?: boolean;
   };
   invoices: Array<{
     status: string;
@@ -97,7 +100,10 @@ function validCanonicalBilling(value: unknown): value is CanonicalBillingReadbac
         typeof record.status !== 'string' || record.status.length > 40 ||
         (record.planName !== null && typeof record.planName !== 'string') ||
         (record.interval !== null && !['monthly', 'yearly'].includes(String(record.interval))) ||
-        record.paidThrough === undefined || !optionalDate(record.paidThrough)) return false;
+        record.paidThrough === undefined || !optionalDate(record.paidThrough) ||
+        !optionalDate(record.nextPaymentAt) || !optionalDate(record.scheduleObservedAt) ||
+        (record.nextPaymentAt != null && record.scheduleObservedAt == null) ||
+        (record.caktoManagementAvailable != null && typeof record.caktoManagementAvailable !== 'boolean')) return false;
   }
   return data.invoices.every((item: unknown) => {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
@@ -268,7 +274,7 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
   }
 
   async function openSubscriptionManagement() {
-    if (!canPurchase || !canonical?.subscription ||
+    if (!canPurchase || !canonical?.subscription || canonical.subscription.caktoManagementAvailable !== true ||
         !['active', 'past_due', 'pending', 'suspended'].includes(canonical.subscription.status.toLowerCase())) return;
     setError('');
     try {
@@ -357,10 +363,11 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
           </View>
           <View style={styles.statusRow}>
             <Text style={styles.statusLabel}>Próxima renovação confirmada</Text>
-            <Text style={styles.statusValue}>Não informada pelo serviço de cobrança</Text>
+            <Text testID="iron-next-renewal" style={styles.statusValue}>{canonical.subscription.nextPaymentAt ? readableDate(canonical.subscription.nextPaymentAt) : 'Não informada pelo serviço de cobrança'}</Text>
           </View>
           <Text style={styles.muted}>Dados consultados em {readableDate(canonical.checkedAt)}. A cobertura registrada não confirma a próxima cobrança.</Text>
-          {canPurchase && ['active', 'past_due', 'pending', 'suspended'].includes(canonical.subscription.status.toLowerCase()) ? <>
+          {canonical.subscription.scheduleObservedAt ? <Text style={styles.muted}>Agenda de cobrança consultada em {readableDate(canonical.subscription.scheduleObservedAt)}.</Text> : null}
+          {canPurchase && canonical.subscription.caktoManagementAvailable === true && ['active', 'past_due', 'pending', 'suspended'].includes(canonical.subscription.status.toLowerCase()) ? <>
             <TouchableOpacity testID="iron-cakto-manage-subscription" accessibilityRole="button"
               style={styles.button} onPress={() => { void openSubscriptionManagement(); }}>
               <Text style={styles.buttonText}>Gerenciar ou cancelar na Cakto</Text>

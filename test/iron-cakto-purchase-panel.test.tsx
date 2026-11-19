@@ -330,7 +330,9 @@ test('OWNER can open the official buyer subscription portal without mutating loc
     if (path === '/commercial/billing/current') return {
       source: 'FM_COMMAND_CANONICAL', authority: 'FM_COMMAND',
       checkedAt: '2026-11-18T15:00:00.000Z', settlementConfirmedByThisView: false,
-      subscription: { planCode: 'IRON_PRO', planName: 'IRON Pro', interval: 'monthly', status: 'active', paidThrough: '2026-12-18T00:00:00.000Z' },
+      subscription: { planCode: 'IRON_PRO', planName: 'IRON Pro', interval: 'monthly', status: 'active', paidThrough: '2026-12-18T00:00:00.000Z',
+        nextPaymentAt: '2026-12-20T00:00:00.000Z', scheduleObservedAt: '2026-11-18T15:00:00.000Z',
+        caktoManagementAvailable: true },
       invoices: [], historyTruncated: false,
     };
     if (path === '/commercial/billing/offers') return { plans: [offer] };
@@ -340,6 +342,7 @@ test('OWNER can open the official buyer subscription portal without mutating loc
   try {
     const view = render(<SaasBillingPanel canPurchase />);
     await waitFor(() => expect(view.getByTestId('iron-cakto-manage-subscription')).toBeTruthy());
+    expect(view.getByTestId('iron-next-renewal').props.children).toBe('20/12/2026');
     fireEvent.press(view.getByTestId('iron-cakto-manage-subscription'));
     await waitFor(() => expect(open).toHaveBeenCalledWith('https://assinatura.cakto.com.br/'));
     expect(mockApi.mock.calls.some(([, , opts]) => opts?.method === 'POST')).toBe(false);
