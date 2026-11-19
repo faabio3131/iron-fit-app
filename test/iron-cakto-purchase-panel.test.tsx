@@ -252,3 +252,45 @@ test('P3 different offers have distinct invoice keys and retrying a completed ch
     expect(requests.map((x) => x.planCode)).toEqual(['IRON_PRO', 'IRON_SCALE', 'IRON_PRO']);
   } finally { open.mockRestore(); }
 });
+
+test('legacy projection outage does not hide authoritative subscription or validated checkout offers', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') throw Object.assign(new Error('legacy unavailable'), { status: 503 });
+    if (path === '/commercial/billing/current') return {
+      source: 'FM_COMMAND_CANONICAL', authority: 'FM_COMMAND',
+      checkedAt: '2026-11-18T15:00:00.000Z', settlementConfirmedByThisView: false,
+      subscription: { planCode: 'IRON_PRO', planName: 'IRON Pro', interval: 'monthly', status: 'pending', paidThrough: null },
+      invoices: [],
+    };
+    if (path === '/commercial/billing/offers') return { plans: [offer] };
+    throw new Error('unexpected path ' + path);
+  });
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('saas-billing-canonical-plan')).toBeTruthy());
+  expect(view.getByTestId('iron-cakto-buy-IRON_PRO')).toBeTruthy();
+  expect(view.queryByTestId('saas-billing-legacy-absence')).toBeNull();
+});
+
+test('when both readbacks fail, unavailable historical data is not reported as absent', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    throw Object.assign(new Error('unavailable'), { status: 503 });
+  });
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('saas-billing-legacy-unavailable')).toBeTruthy());
+  expect(view.queryByTestId('saas-billing-legacy-absence')).toBeNull();
+  expect(view.queryByTestId('iron-cakto-buy-IRON_PRO')).toBeNull();
+});
+
+test('conflicting authority still blocks commercial actions', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') return { authority: { ...authority, localMutationsEnabled: true } };
+    throw new Error('unexpected path ' + path);
+  });
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('saas-billing-authority-error')).toBeTruthy());
+  expect(view.queryByTestId('iron-cakto-buy-IRON_PRO')).toBeNull();
+  expect(mockApi).not.toHaveBeenCalledWith('/commercial/billing/offers');
+});
