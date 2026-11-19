@@ -161,6 +161,7 @@ test('A1 validity is rendered only from a verified unexpired Vault response and 
     throw new Error('unavailable');
   });
   const view = render(<FiscalCenter canManageA1 />);
+  await waitFor(() => expect(view.getByTestId('fiscal-a1-read-status')).toBeTruthy());
   fireEvent.press(view.getByTestId('fiscal-a1-read-status'));
   await waitFor(() => expect(view.getByTestId('fiscal-a1-expiry')).toBeTruthy());
   expect(view.getByText(/Validade informada pelo cofre/)).toBeTruthy();

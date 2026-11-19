@@ -267,6 +267,20 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
     } finally { checkoutInFlight.current = false; setCheckoutLoading(false); }
   }
 
+  async function openSubscriptionManagement() {
+    if (!canPurchase || !canonical?.subscription ||
+        !['active', 'past_due', 'pending', 'suspended'].includes(canonical.subscription.status.toLowerCase())) return;
+    setError('');
+    try {
+      // Official buyer portal: no tenant IDs, emails, tokens or secrets in URL;
+      // Cakto independently authenticates the buyer. A visit is NOT a cancellation.
+      await Linking.openURL('https://assinatura.cakto.com.br/');
+      setNotice('Gerencie a assinatura com o e-mail usado na compra. Após qualquer alteração, atualize a situação para consultar a confirmação oficial.');
+    } catch {
+      setError('Não foi possível abrir a área de assinaturas da Cakto.');
+    }
+  }
+
   const agreement = billing?.agreement ?? null;
   const invoices = Array.isArray(billing?.invoices) ? billing!.invoices! : [];
   const legacy = billing?.projection === 'LEGACY_READ_ONLY';
@@ -303,7 +317,7 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
     {authority && !loading && canPurchase ? <GlowCard style={styles.card}>
       <Text style={styles.title}>Contratar IRON FIT CORE</Text>
       <Text style={styles.muted}>Veja os valores oficiais de contratação. A compra é vinculada à sua academia e finalizada na Cakto.</Text>
-      {existingContract ? <Text testID="iron-existing-contract" style={styles.muted}>Você já possui uma assinatura registrada. Uma nova contratação não substitui o contrato atual. Mudanças e cancelamento exigem a operação autorizada da FM Tecnologia.</Text> : null}
+      {existingContract ? <Text testID="iron-existing-contract" style={styles.muted}>Você já possui uma assinatura registrada. Uma nova contratação não substitui o contrato atual. Consulte a gestão da assinatura abaixo; a troca de plano depende das opções autorizadas.</Text> : null}
       {pendingContract ? <Text style={styles.muted}>Há uma contratação pendente. Retome a oferta correspondente à fatura já gerada.</Text> : null}
       {offersError ? <Text testID="iron-cakto-offers-unavailable" style={styles.warning}>{offersError}</Text> : null}
       {offers.map((offer) => <View key={offer.planCode + ':' + offer.interval} style={styles.offerRow}>
@@ -346,6 +360,13 @@ export function SaasBillingPanel({ onCommercialStateChanged, canPurchase = false
             <Text style={styles.statusValue}>Não informada pelo serviço de cobrança</Text>
           </View>
           <Text style={styles.muted}>Dados consultados em {readableDate(canonical.checkedAt)}. A cobertura registrada não confirma a próxima cobrança.</Text>
+          {canPurchase && ['active', 'past_due', 'pending', 'suspended'].includes(canonical.subscription.status.toLowerCase()) ? <>
+            <TouchableOpacity testID="iron-cakto-manage-subscription" accessibilityRole="button"
+              style={styles.button} onPress={() => { void openSubscriptionManagement(); }}>
+              <Text style={styles.buttonText}>Gerenciar ou cancelar na Cakto</Text>
+            </TouchableOpacity>
+            <Text style={styles.muted}>O portal oficial solicita o e-mail da compra. O IRON não cancela ou altera o plano localmente; consulte a situação após a confirmação.</Text>
+          </> : null}
         </> : <Text testID="saas-billing-canonical-empty" style={styles.muted}>
           O FM Command não tem uma assinatura comercial registrada para esta academia nesta consulta. O período gratuito do IRON é consultado separadamente.
         </Text>) : <Text testID="saas-billing-command-unavailable" style={styles.warning}>
