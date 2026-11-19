@@ -146,3 +146,27 @@ describe('FISCAL-1 Fiscal Center', () => {
   });
 
 });
+
+
+test('A1 validity is rendered only from a verified unexpired Vault response and cleared on failure', async () => {
+  mockApi.mockReset();
+  let expired = false;
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/financial/fiscal/scope-binding') return { environment: 'HOMOLOG', externalTenantId: 't', externalUnitId: 'u', active: true };
+    if (path === '/financial/fiscal/handoffs') return [];
+    if (path === '/financial/fiscal/a1/status') return {
+      status: 'STORED', source: 'NFCORE_VAULT_READBACK', officialHomologation: 'NOT_VERIFIED',
+      expiresAt: expired ? '2000-01-01T00:00:00.000Z' : '2099-01-01T00:00:00.000Z',
+    };
+    throw new Error('unavailable');
+  });
+  const view = render(<FiscalCenter canManageA1 />);
+  fireEvent.press(view.getByTestId('fiscal-a1-read-status'));
+  await waitFor(() => expect(view.getByTestId('fiscal-a1-expiry')).toBeTruthy());
+  expect(view.getByText(/Validade informada pelo cofre/)).toBeTruthy();
+  expired = true;
+  fireEvent.press(view.getByTestId('fiscal-a1-read-status'));
+  await waitFor(() => expect(view.getByTestId('fiscal-a1-error')).toBeTruthy());
+  expect(view.queryByTestId('fiscal-a1-expiry')).toBeNull();
+  expect(view.getByText('Status ainda não confirmado')).toBeTruthy();
+});

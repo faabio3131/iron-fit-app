@@ -184,6 +184,7 @@ export function FiscalCenter({ canManageA1 = false }: { canManageA1?: boolean })
   const [a1Password, setA1Password] = useState('');
   const [a1Busy, setA1Busy] = useState(false);
   const [a1Status, setA1Status] = useState<'NOT_VERIFIED' | 'STORED' | 'ABSENT'>('NOT_VERIFIED');
+  const [a1ExpiresAt, setA1ExpiresAt] = useState<string | null>(null);
   const [a1Error, setA1Error] = useState('');
   const [cancelId, setCancelId] = useState('');
   const [cancelJustification, setCancelJustification] = useState('');
@@ -293,10 +294,15 @@ export function FiscalCenter({ canManageA1 = false }: { canManageA1?: boolean })
       const status = await api('/financial/fiscal/a1/status');
       if ((status?.status !== 'STORED' && status?.status !== 'ABSENT') ||
           status?.officialHomologation !== 'NOT_VERIFIED' ||
-          status?.source !== 'NFCORE_VAULT_READBACK') throw new Error('invalid status');
+          status?.source !== 'NFCORE_VAULT_READBACK' ||
+          (status.status === 'STORED' && (typeof status.expiresAt !== 'string' ||
+            !Number.isFinite(Date.parse(status.expiresAt)) || Date.parse(status.expiresAt) <= Date.now())) ||
+          (status.status === 'ABSENT' && status.expiresAt !== null)) throw new Error('invalid status');
       setA1Status(status.status);
+      setA1ExpiresAt(status.status === 'STORED' ? status.expiresAt : null);
     } catch {
       setA1Status('NOT_VERIFIED');
+      setA1ExpiresAt(null);
       setA1Error('O status do certificado não pôde ser confirmado no NFCore.');
     } finally { setA1Busy(false); }
   }
@@ -315,14 +321,18 @@ export function FiscalCenter({ canManageA1 = false }: { canManageA1?: boolean })
       const readback = await api('/financial/fiscal/a1/status');
       if (readback?.status !== 'STORED' ||
           readback?.officialHomologation !== 'NOT_VERIFIED' ||
-          readback?.source !== 'NFCORE_VAULT_READBACK') {
+          readback?.source !== 'NFCORE_VAULT_READBACK' ||
+          typeof readback.expiresAt !== 'string' ||
+          !Number.isFinite(Date.parse(readback.expiresAt)) || Date.parse(readback.expiresAt) <= Date.now()) {
         throw new Error('unconfirmed readback');
       }
       setA1Status('STORED');
+      setA1ExpiresAt(readback.expiresAt);
       setA1File(null);
       setNotice('Certificado A1 armazenado no cofre NFCore. Homologação oficial ainda não comprovada.');
     } catch {
       setA1Status('NOT_VERIFIED');
+      setA1ExpiresAt(null);
       setA1Error('O cofre não confirmou o A1. Revise o vínculo fiscal e solicite nova delegação.');
     } finally {
       // Never persist the password in browser storage, application logs or IRON API.
@@ -465,6 +475,8 @@ export function FiscalCenter({ canManageA1 = false }: { canManageA1?: boolean })
             {a1Status === 'STORED' ? 'Armazenado no Vault (homologação externa pendente)' :
               a1Status === 'ABSENT' ? 'Nenhum certificado A1 encontrado' : 'Status ainda não confirmado'}
           </Text>
+          {a1Status === 'STORED' && a1ExpiresAt ? <Text testID="fiscal-a1-expiry" style={styles.muted}>Validade informada pelo cofre: {new Date(a1ExpiresAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (Brasília).</Text> : null}
+          {a1Status === 'STORED' ? <Text style={styles.muted}>Para substituir o certificado, envie o novo A1 pelo mesmo fluxo seguro. A revogação do certificado e a homologação oficial são controles distintos.</Text> : null}
           {a1Error ? <Text testID="fiscal-a1-error" style={styles.error}>{a1Error}</Text> : null}
           <ActionButton
             secondary
@@ -493,7 +505,7 @@ export function FiscalCenter({ canManageA1 = false }: { canManageA1?: boolean })
               />
               <ActionButton
                 testID="fiscal-a1-upload"
-                label={a1Busy ? 'Validando no cofre…' : 'Enviar diretamente ao NFCore'}
+                label={a1Busy ? 'Validando no cofre…' : a1Status === 'STORED' ? 'Substituir certificado no NFCore' : 'Enviar diretamente ao NFCore'}
                 disabled={a1Busy || !a1File || !a1Password || !binding?.active ||
                   activation?.environment !== 'HOMOLOG'}
                 onPress={() => { void uploadA1(); }}
