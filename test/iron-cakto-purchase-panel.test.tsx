@@ -133,7 +133,9 @@ test('OWNER sees canonical FM Command subscription and invoices instead of mista
       checkedAt: '2026-11-17T15:00:00.000Z', settlementConfirmedByThisView: false,
       subscription: { planCode: 'IRON_PRO_MONTHLY', planName: 'IRON Pro',
         interval: 'monthly', status: 'pending', paidThrough: null },
-      invoices: [{ status: 'pending', amountMinor: 26900, currency: 'BRL', periodEnd: null }],
+      historyTruncated: true,
+      invoices: [{ status: 'pending', amountMinor: 26900, currency: 'BRL', periodEnd: null,
+        createdAt: '2026-11-17T14:00:00.000Z', recordedPaymentStatus: 'received', paymentRecordedAt: '2026-11-17T14:30:00.000Z' }],
     };
     if (path === '/commercial/billing/offers') return { plans: [offer] };
     throw new Error('Unexpected path ' + path);
@@ -143,6 +145,9 @@ test('OWNER sees canonical FM Command subscription and invoices instead of mista
   expect(view.getAllByText(/IRON Pro/).length).toBeGreaterThan(0);
   expect(view.getByTestId('saas-billing-canonical-status')).toBeTruthy();
   expect(view.getByText('Faturas no FM Command')).toBeTruthy();
+  expect(view.getByText('Exibindo as 24 faturas mais recentes.')).toBeTruthy();
+  expect(view.getByTestId('iron-invoice-payment-0')).toBeTruthy();
+  expect(view.getByText(/Recebimento registrado/)).toBeTruthy();
   expect(view.queryByText('Não registrado')).toBeNull();
   expect(view.queryByTestId('saas-billing-legacy-absence')).toBeNull();
   expect(view.getByTestId('iron-cakto-buy-IRON_PRO')).toBeTruthy();
@@ -251,4 +256,131 @@ test('P3 different offers have distinct invoice keys and retrying a completed ch
     expect(requests[0].requestId).not.toBe(requests[1].requestId);
     expect(requests.map((x) => x.planCode)).toEqual(['IRON_PRO', 'IRON_SCALE', 'IRON_PRO']);
   } finally { open.mockRestore(); }
+});
+
+test('legacy projection outage does not hide authoritative subscription or validated checkout offers', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') throw Object.assign(new Error('legacy unavailable'), { status: 503 });
+    if (path === '/commercial/billing/current') return {
+      source: 'FM_COMMAND_CANONICAL', authority: 'FM_COMMAND',
+      checkedAt: '2026-11-18T15:00:00.000Z', settlementConfirmedByThisView: false,
+      subscription: { planCode: 'IRON_PRO', planName: 'IRON Pro', interval: 'monthly', status: 'pending', paidThrough: null },
+      invoices: [],
+    };
+    if (path === '/commercial/billing/offers') return { plans: [offer] };
+    throw new Error('unexpected path ' + path);
+  });
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('saas-billing-canonical-plan')).toBeTruthy());
+  expect(view.getByTestId('iron-cakto-buy-IRON_PRO')).toBeTruthy();
+  expect(view.queryByTestId('saas-billing-legacy-absence')).toBeNull();
+});
+
+test('when both readbacks fail, unavailable historical data is not reported as absent', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    throw Object.assign(new Error('unavailable'), { status: 503 });
+  });
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('saas-billing-legacy-unavailable')).toBeTruthy());
+  expect(view.queryByTestId('saas-billing-legacy-absence')).toBeNull();
+  expect(view.queryByTestId('iron-cakto-buy-IRON_PRO')).toBeNull();
+});
+
+test('conflicting authority still blocks commercial actions', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') return { authority: { ...authority, localMutationsEnabled: true } };
+    throw new Error('unexpected path ' + path);
+  });
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('saas-billing-authority-error')).toBeTruthy());
+  expect(view.queryByTestId('iron-cakto-buy-IRON_PRO')).toBeNull();
+  expect(mockApi).not.toHaveBeenCalledWith('/commercial/billing/offers');
+});
+
+
+test('active subscription cannot be replaced by a second initial checkout', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') return { authority };
+    if (path === '/commercial/billing/current') return {
+      source: 'FM_COMMAND_CANONICAL', authority: 'FM_COMMAND',
+      checkedAt: '2026-11-18T15:00:00.000Z', settlementConfirmedByThisView: false,
+      subscription: { planCode: 'IRON_PRO', planName: 'IRON Pro', interval: 'monthly', status: 'active', paidThrough: '2026-12-18T00:00:00.000Z' },
+      invoices: [], historyTruncated: false,
+    };
+    if (path === '/commercial/billing/offers') return { plans: [offer] };
+    throw new Error('unexpected path ' + path);
+  });
+  const view = render(<SaasBillingPanel canPurchase />);
+  await waitFor(() => expect(view.getByTestId('iron-existing-contract')).toBeTruthy());
+  const button = view.getByTestId('iron-cakto-buy-IRON_PRO');
+  expect(button.props.accessibilityState.disabled).toBe(true);
+  fireEvent.press(button);
+  expect(mockApi.mock.calls.some(([path]) => path === '/commercial/billing/checkout')).toBe(false);
+});
+
+
+test('OWNER can open the official buyer subscription portal without mutating local billing', async () => {
+  mockApi.mockImplementation(async (path: string) => {
+    if (path === '/saas-billing/authority') return authority;
+    if (path === '/saas-billing/current') return { authority };
+    if (path === '/commercial/billing/current') return {
+      source: 'FM_COMMAND_CANONICAL', authority: 'FM_COMMAND',
+      checkedAt: '2026-11-18T15:00:00.000Z', settlementConfirmedByThisView: false,
+      subscription: { planCode: 'IRON_PRO', planName: 'IRON Pro', interval: 'monthly', status: 'active', paidThrough: '2026-12-18T00:00:00.000Z',
+        nextPaymentAt: '2026-12-20T00:00:00.000Z', scheduleObservedAt: '2026-11-18T15:00:00.000Z',
+        caktoManagementAvailable: true },
+      invoices: [], historyTruncated: false,
+    };
+    if (path === '/commercial/billing/offers') return { plans: [offer] };
+    throw new Error('unexpected path ' + path);
+  });
+  const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  try {
+    const view = render(<SaasBillingPanel canPurchase />);
+    await waitFor(() => expect(view.getByTestId('iron-cakto-manage-subscription')).toBeTruthy());
+    expect(view.getByTestId('iron-next-renewal').props.children).toBe('20/12/2026');
+    fireEvent.press(view.getByTestId('iron-cakto-manage-subscription'));
+    await waitFor(() => expect(open).toHaveBeenCalledWith('https://assinatura.cakto.com.br/'));
+    expect(mockApi.mock.calls.some(([, , opts]) => opts?.method === 'POST')).toBe(false);
+    expect(view.queryByText('Cancelada')).toBeNull();
+    view.unmount();
+    const readonly = render(<SaasBillingPanel />);
+    await waitFor(() => expect(readonly.getByTestId('saas-billing-canonical-status')).toBeTruthy());
+    expect(readonly.queryByTestId('iron-cakto-manage-subscription')).toBeNull();
+  } finally { open.mockRestore(); }
+});
+
+
+test('OWNER resends the original receipt only for an eligible paid invoice; no recipient or settlement trust',async()=>{
+  const reference='fa9c7a11-5725-4495-bc16-f09a86c52d3e';
+  mockApi.mockImplementation(async(path:string)=>{
+    if(path==='/saas-billing/authority')return authority;
+    if(path==='/saas-billing/current')return{authority};
+    if(path==='/commercial/billing/current')return{
+      source:'FM_COMMAND_CANONICAL',authority:'FM_COMMAND',checkedAt:'2026-11-18T15:00:00.000Z',
+      settlementConfirmedByThisView:false,subscription:null,
+      invoices:[{status:'paid',amountMinor:26900,currency:'BRL',periodEnd:null,recordedPaymentStatus:'received',receiptReference:reference},
+        {status:'refunded',amountMinor:26900,currency:'BRL',periodEnd:null,recordedPaymentStatus:'refunded'}],
+    };
+    if(path==='/commercial/billing/offers')return{plans:[offer]};
+    if(path==='/commercial/billing/receipt/resend')return{provider:'CAKTO',status:'EMAIL_RESEND_ACCEPTED',deliveryConfirmed:false};
+    throw new Error('unexpected');
+  });
+  const view=render(<SaasBillingPanel canPurchase/>);
+  await waitFor(()=>expect(view.getByTestId('iron-receipt-resend-0')).toBeTruthy());
+  expect(view.queryByTestId('iron-receipt-resend-1')).toBeNull();
+  fireEvent.press(view.getByTestId('iron-receipt-resend-0'));
+  await waitFor(()=>expect(view.getByText(/entrega ainda não foi confirmada/)).toBeTruthy());
+  const calls=mockApi.mock.calls.filter(([path])=>path==='/commercial/billing/receipt/resend');
+  expect(calls).toHaveLength(1);
+  expect(Object.keys(JSON.parse(calls[0][2].body)).sort()).toEqual(['invoiceId','requestId']);
+  expect(JSON.parse(calls[0][2].body).invoiceId).toBe(reference);
+  view.unmount();
+  const readonly=render(<SaasBillingPanel/>);
+  await waitFor(()=>expect(readonly.getByText('Faturas no FM Command')).toBeTruthy());
+  expect(readonly.queryByTestId('iron-receipt-resend-0')).toBeNull();
 });

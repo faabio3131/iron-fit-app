@@ -42,7 +42,8 @@ test('C03 IRON billing is read-only under proven FM Command authority, with no o
     path === '/saas-billing/change-plan' || path === '/saas-billing/cancel')).toBe(false);
   expect(view.queryByTestId('saas-billing-cancel-period-end')).toBeNull();
   expect(view.queryByTestId('saas-billing-open-checkout')).toBeNull();
-  expect(view.getByText(/não podem ser executados pelo sistema antigo de cobranças/)).toBeTruthy();
+  expect(view.getByText(/Assinatura administrada pela FM Tecnologia/)).toBeTruthy();
+  expect(view.queryByTestId('iron-cakto-manage-subscription')).toBeNull();
 });
 
 test('C03 translates historical invoice and agreement, preserving minor units and not exposing raw JSON', async () => {
