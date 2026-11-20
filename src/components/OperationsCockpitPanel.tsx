@@ -82,7 +82,7 @@ export function OperationsCockpitPanel({ academyName, operatorName, summary, att
         <View style={styles.heroText}>
           <Text style={styles.eyebrow}>PAINEL DE OPERAÇÃO</Text>
           <Text style={styles.heroTitle}>{academyName?.trim() || 'Sua academia'}</Text>
-          <Text style={styles.hint}>Visão operacional de {operatorName || 'sua equipe'} · Dados canônicos do IRON</Text>
+          <Text style={styles.hint}>Visão operacional de {operatorName || 'sua equipe'}</Text>
           <Text style={styles.freshness}>Data de referência: {summary?.generatedAt ? date(summary.generatedAt) : 'Não informada'}</Text>
         </View>
         <TouchableOpacity accessibilityRole="button" testID="cockpit-refresh" style={[styles.button, refreshing && styles.disabled]}
@@ -170,21 +170,21 @@ export function OperationsCockpitPanel({ academyName, operatorName, summary, att
   </View>;
 }
 const styles = StyleSheet.create({
-  hero: { padding: 20, marginBottom: 12 },
+  hero: { padding: 20, marginBottom: 16, backgroundColor: '#101e1a', borderColor: '#2BF47A' },
   heroRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   heroText: { flexGrow: 1, flexBasis: 220, gap: 6 },
   eyebrow: { color: '#2BF47A', letterSpacing: 1.6, fontSize: 13, fontWeight: '800' },
   heroTitle: { color: '#f8fafc', fontWeight: '900', fontSize: 23 },
-  freshness: { color: '#8497aa', fontSize: 11 },
-  hint: { color: '#aabbd0', fontSize: 12, lineHeight: 18 },
+  freshness: { color: '#b5c6d4', fontSize: 13, lineHeight: 19 },
+  hint: { color: '#c3cfdd', fontSize: 14, lineHeight: 21 },
   card: { padding: 16, marginBottom: 12 }, inner: { marginTop: 12, gap: 8 },
   title: { color: '#2BF47A', fontSize: 17, fontWeight: '800' },
   subtitle: { color: '#f1f5f9', fontSize: 13, fontWeight: '800' },
   kpis: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   kpi: { padding: 14, flexGrow: 1, flexBasis: 164, borderRadius: 12, gap: 4 },
-  kpiLabel: { color: '#2BF47A', fontWeight: '700', fontSize: 12 },
+  kpiLabel: { color: '#d4f9e0', fontWeight: '700', fontSize: 13 },
   kpiValue: { color: '#eefcf3', fontWeight: '900', fontSize: 27 },
-  kpiNote: { color: '#8497aa', fontSize: 11 },
+  kpiNote: { color: '#bac8d7', fontSize: 13, lineHeight: 18 },
   bars: { minHeight: 124, flexDirection: 'row', alignItems: 'flex-end', gap: 7, paddingVertical: 8 },
   barCell: { alignItems: 'center', flexGrow: 1, flexBasis: 25, gap: 6 },
   barValue: { color: '#e2e8f0', fontWeight: '700', fontSize: 11 },
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   shortcuts: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   shortcut: { minWidth: 158, flexBasis: 185, flexGrow: 1, borderRadius: 10, padding: 12, gap: 4 },
   shortcutTitle: { color: '#2BF47A', fontWeight: '800', fontSize: 13 },
-  button: { backgroundColor: '#2BF47A', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 9, alignSelf: 'flex-start' },
+  button: { minHeight: 44, maxWidth: '100%', justifyContent: 'center', backgroundColor: '#2BF47A', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 9, alignSelf: 'flex-start' },
   buttonText: { color: '#051609', fontWeight: '800', fontSize: 12 },
   disabled: { opacity: 0.5 },
 });
